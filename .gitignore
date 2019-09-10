@@ -1,3 +1,4 @@
+# CMake temp/cache files
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
@@ -7,3 +8,22 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+build
+
+# Visual Studio files
+/.vs
+
+# Visual Studio Code files
+/.vscode
+*.code-workspace 
+
+# OSX files
+.DS_Store
+
+# CLion files
+/.idea
+cmake-build-debug
+
+# vi files
+.clang_complete
+.syntastic_cpp_config
