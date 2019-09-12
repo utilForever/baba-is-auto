@@ -27,3 +27,7 @@ cmake-build-debug
 # vi files
 .clang_complete
 .syntastic_cpp_config
+
+# Python files
+*.pyc
+/.pytest_cache
