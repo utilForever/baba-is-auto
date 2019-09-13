@@ -34,7 +34,7 @@ set(CMAKE_MACOSX_RPATH ON)
 
 # Project modules
 add_subdirectory(Libraries/doctest)
-add_subdirectory(Sources)
+add_subdirectory(Sources/baba-is-auto)
 add_subdirectory(Tests/UnitTests)
 
 # Code coverage - Debug only
