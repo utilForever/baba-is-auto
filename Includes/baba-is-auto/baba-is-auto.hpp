@@ -8,10 +8,10 @@
 #define BABA_IS_AUTO_HPP
 
 #include <baba-is-auto/Enums/WordEnums.hpp>
-#include <baba-is-auto/Objects/Noun.hpp>
-#include <baba-is-auto/Objects/Operator.hpp>
-#include <baba-is-auto/Objects/Property.hpp>
 #include <baba-is-auto/Test.hpp>
+#include <baba-is-auto/Words/Noun.hpp>
+#include <baba-is-auto/Words/Operator.hpp>
+#include <baba-is-auto/Words/Property.hpp>
 #include <baba-is-auto/baba-is-auto.hpp>
 
 #endif  // BABA_IS_AUTO_HPP
