@@ -10,6 +10,7 @@
 #include <baba-is-auto/Enums/RuleEnums.hpp>
 #include <baba-is-auto/Enums/WordEnums.hpp>
 #include <baba-is-auto/Rules/Rule.hpp>
+#include <baba-is-auto/Rules/RuleManager.hpp>
 #include <baba-is-auto/Words/Noun.hpp>
 #include <baba-is-auto/Words/Operator.hpp>
 #include <baba-is-auto/Words/Property.hpp>
