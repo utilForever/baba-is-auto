@@ -19,7 +19,7 @@ class Property
 
     //! Constructs a property.
     //! \param _type The property type.
-    Property(PropertyType _type);
+    explicit Property(PropertyType _type);
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.

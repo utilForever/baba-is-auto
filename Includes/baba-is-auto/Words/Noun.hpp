@@ -23,7 +23,7 @@ class Noun
 
     //! Constructs a noun.
     //! \param _type The noun type.
-    Noun(NounType _type);
+    explicit Noun(NounType _type);
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.

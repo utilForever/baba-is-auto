@@ -9,8 +9,10 @@ TEST_CASE("RuleManager - Basic")
 {
     RuleManager ruleManager;
 
-    const Rule rule1(NounType::BABA, OpType::IS, PropertyType::YOU);
-    const Rule rule2(NounType::KEKE, OpType::IS, PropertyType::STOP);
+    const Rule rule1{ Noun(NounType::BABA), Operator(OpType::IS),
+                      Property(PropertyType::YOU) };
+    const Rule rule2{ Noun(NounType::KEKE), Operator(OpType::IS),
+                      Property(PropertyType::STOP) };
 
     ruleManager.Add(rule1);
     CHECK(ruleManager.GetNumRules() == 1);

@@ -19,7 +19,7 @@ class Operator
 
     //! Constructs a operator.
     //! \param _type The operator type.
-    Operator(OpType _type);
+    explicit Operator(OpType _type);
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.
