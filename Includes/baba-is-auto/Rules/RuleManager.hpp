@@ -27,6 +27,10 @@ class RuleManager
     //! \param noun1 A second noun word.
     void Add(Noun noun1, Operator op, Noun noun2);
 
+    //! Gets the number of rules.
+    //! \return The number of rules.
+    std::size_t GetNumRules() const;
+
  private:
     std::vector<Rule> m_rules;
 };

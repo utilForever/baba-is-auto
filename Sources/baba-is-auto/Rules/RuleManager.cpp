@@ -25,4 +25,9 @@ void RuleManager::Add(Noun noun1, Operator op, Noun noun2)
 
     m_rules.emplace_back(rule);
 }
+
+std::size_t RuleManager::GetNumRules() const
+{
+    return m_rules.size();
+}
 }  // namespace baba_is_auto
