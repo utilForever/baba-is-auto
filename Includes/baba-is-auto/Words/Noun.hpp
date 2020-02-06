@@ -17,6 +17,22 @@ namespace baba_is_auto
 //!
 struct Noun
 {
+    //! Default constructor.
+    Noun() = default;
+
+    //! Constructs a noun.
+    //! \param _type The noun type.
+    Noun(NounType _type) : type(_type)
+    {
+        // Do nothing
+    }
+
+    //! Operator overloading for ==.
+    bool operator==(const Noun& rhs) const
+    {
+        return type == rhs.type;
+    }
+
     NounType type;
 };
 }  // namespace baba_is_auto

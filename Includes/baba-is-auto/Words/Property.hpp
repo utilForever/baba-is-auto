@@ -13,6 +13,22 @@ namespace baba_is_auto
 //!
 struct Property
 {
+    //! Default constructor.
+    Property() = default;
+
+    //! Constructs a property.
+    //! \param _type The property type.
+    Property(PropertyType _type) : type(_type)
+    {
+        // Do nothing
+    }
+
+    //! Operator overloading for ==.
+    bool operator==(const Property& rhs) const
+    {
+        return type == rhs.type;
+    }
+
     PropertyType type;
 };
 }  // namespace baba_is_auto
