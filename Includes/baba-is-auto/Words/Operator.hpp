@@ -6,28 +6,25 @@
 namespace baba_is_auto
 {
 //!
-//! \brief Operator struct.
+//! \brief Operator class.
 //!
-//! This struct represents operator. An operator is a word that goes in between
+//! This class represents operator. An operator is a word that goes in between
 //! properties and nouns to show the relation between them.
 //!
-struct Operator
+class Operator
 {
+ public:
     //! Default constructor.
     Operator() = default;
 
     //! Constructs a operator.
     //! \param _type The operator type.
-    Operator(OpType _type) : type(_type)
-    {
-        // Do nothing
-    }
+    Operator(OpType _type);
 
     //! Operator overloading for ==.
-    bool operator==(const Operator& rhs) const
-    {
-        return type == rhs.type;
-    }
+    //! \param rhs A right side of Rule object.
+    //! \return The value that indicates two objects are equal.
+    bool operator==(const Operator& rhs) const;
 
     OpType type;
 };

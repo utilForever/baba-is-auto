@@ -6,28 +6,25 @@
 namespace baba_is_auto
 {
 //!
-//! \brief Property struct.
+//! \brief Property class.
 //!
-//! This struct represents property. A property is something that can be
+//! This class represents property. A property is something that can be
 //! attached to noun words to alter their behavior.
 //!
-struct Property
+class Property
 {
+ public:
     //! Default constructor.
     Property() = default;
 
     //! Constructs a property.
     //! \param _type The property type.
-    Property(PropertyType _type) : type(_type)
-    {
-        // Do nothing
-    }
+    Property(PropertyType _type);
 
     //! Operator overloading for ==.
-    bool operator==(const Property& rhs) const
-    {
-        return type == rhs.type;
-    }
+    //! \param rhs A right side of Rule object.
+    //! \return The value that indicates two objects are equal.
+    bool operator==(const Property& rhs) const;
 
     PropertyType type;
 };
