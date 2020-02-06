@@ -32,12 +32,14 @@ enum class OpType
 #define X(a) a,
 #include "OpType.def"
 #undef X
+    NEAR
 };
 
 const std::string OP_TYPE_STR[] = {
 #define X(a) #a,
 #include "OpType.def"
 #undef X
+    "NEAR"
 };
 
 //! \brief An enumerator for identifying the property of the word.
