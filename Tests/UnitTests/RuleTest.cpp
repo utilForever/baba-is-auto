@@ -5,18 +5,19 @@
 
 using namespace baba_is_auto;
 
-TEST_CASE("RuleManager - Add")
+TEST_CASE("RuleManager - Basic")
 {
     RuleManager ruleManager;
 
-    Noun baba{};
-    baba.type = NounType::BABA;
+    const Rule rule1(NounType::BABA, OpType::IS, PropertyType::YOU);
+    const Rule rule2(NounType::KEKE, OpType::IS, PropertyType::STOP);
 
-    Operator is{};
-    is.type = OpType::IS;
+    ruleManager.Add(rule1);
+    CHECK(ruleManager.GetNumRules() == 1);
 
-    Property you{};
-    you.type = PropertyType::YOU;
+    ruleManager.Add(rule2);
+    CHECK(ruleManager.GetNumRules() == 2);
 
-    ruleManager.Add(baba, is, you);
+    ruleManager.Remove(rule2);
+    CHECK(ruleManager.GetNumRules() == 1);
 }
