@@ -7,6 +7,7 @@
 #ifndef BABA_IS_AUTO_HPP
 #define BABA_IS_AUTO_HPP
 
+#include <baba-is-auto/Enums/RuleEnums.hpp>
 #include <baba-is-auto/Enums/WordEnums.hpp>
 #include <baba-is-auto/Words/Noun.hpp>
 #include <baba-is-auto/Words/Operator.hpp>
