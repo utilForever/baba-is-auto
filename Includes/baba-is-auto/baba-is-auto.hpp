@@ -9,6 +9,7 @@
 
 #include <baba-is-auto/Enums/RuleEnums.hpp>
 #include <baba-is-auto/Enums/WordEnums.hpp>
+#include <baba-is-auto/Games/Game.hpp>
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/Rule.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
