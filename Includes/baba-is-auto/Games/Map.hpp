@@ -1,7 +1,10 @@
 #ifndef BABA_IS_AUTO_MAP_HPP
 #define BABA_IS_AUTO_MAP_HPP
 
-#include <cstdlib>
+#include <baba-is-auto/Enums/GameEnums.hpp>
+#include <baba-is-auto/Games/Object.hpp>
+
+#include <vector>
 
 namespace baba_is_auto
 {
@@ -18,9 +21,23 @@ class Map
     //! \param height The size of the height.
     Map(std::size_t width, std::size_t height);
 
+    //! Assigns an object to the map.
+    //! \param row The number of row.
+    //! \param col The number of column.
+    //! \param type An object type to assign to the map.
+    void Assign(std::size_t row, std::size_t col, ObjectType type);
+
+    //! Assigns an object to the map.
+    //! \param row The number of row.
+    //! \param col The number of column.
+    //! \return An object at row and column.
+    Object At(std::size_t row, std::size_t col);
+
  private:
     std::size_t m_width = 0;
     std::size_t m_height = 0;
+
+    std::vector<Object> m_objects;
 };
 }  // namespace baba_is_auto
 
