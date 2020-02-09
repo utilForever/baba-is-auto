@@ -21,6 +21,9 @@ enum class ObjectType
 #define X(a) a,
 #include "PropertyType.def"
 #undef X
+#define X(a) a,
+#include "IconType.def"
+#undef X
 };
 }  // namespace baba_is_auto
 
