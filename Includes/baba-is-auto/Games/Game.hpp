@@ -19,6 +19,10 @@ class Game
     //! \param filename The file name to load a map.
     Game(std::string_view filename);
 
+    //! Gets a map object.
+    //! \return A map object.
+    Map& GetMap();
+
  private:
     Map m_map;
 };
