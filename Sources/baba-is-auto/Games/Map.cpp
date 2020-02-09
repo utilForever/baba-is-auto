@@ -29,6 +29,20 @@ void Map::Load(std::string_view filename)
     }
 }
 
+void Map::Show() const
+{
+    for (std::size_t y = 0; y < m_height; ++y)
+    {
+        for (std::size_t x = 0; x < m_width; ++x)
+        {
+            printf("%3d ",
+                   static_cast<int>(m_objects.at(y * m_width + x).GetType()));
+        }
+
+        printf("\n");
+    }
+}
+
 void Map::Assign(std::size_t row, std::size_t col, ObjectType type)
 {
     m_objects.at(row * m_width + col) = Object(type);

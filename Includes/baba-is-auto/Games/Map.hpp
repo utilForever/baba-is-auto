@@ -29,6 +29,9 @@ class Map
     //! \param filename The file name to load.
     void Load(std::string_view filename);
 
+    //! Shows the map.
+    void Show() const;
+
     //! Assigns an object to the map.
     //! \param row The number of row.
     //! \param col The number of column.
