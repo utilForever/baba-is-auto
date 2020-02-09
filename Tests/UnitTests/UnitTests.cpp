@@ -3,10 +3,18 @@
 
 #undef NEAR
 
+#include <baba-is-auto/Games/Game.hpp>
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
 using namespace baba_is_auto;
+
+TEST_CASE("Game - Basic")
+{
+    Game game(MAPS_DIR "BabaIsYou.txt");
+
+    CHECK_NOTHROW(game.GetMap().Show());
+}
 
 TEST_CASE("Map - Basic")
 {
