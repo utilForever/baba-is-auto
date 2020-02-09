@@ -3,6 +3,8 @@
 
 #include <baba-is-auto/Games/Map.hpp>
 
+#include <string>
+
 namespace baba_is_auto
 {
 //!
@@ -13,10 +15,9 @@ namespace baba_is_auto
 class Game
 {
  public:
-    //! Constructs game with given \p width and \p height.
-    //! \param width The size of the width.
-    //! \param height The size of the height.
-    Game(std::size_t width, std::size_t height);
+    //! Constructs game with given \p mapFileName.
+    //! \param filename The file name to load a map.
+    Game(std::string_view filename);
 
  private:
     Map m_map;

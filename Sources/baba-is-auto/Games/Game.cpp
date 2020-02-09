@@ -2,8 +2,8 @@
 
 namespace baba_is_auto
 {
-Game::Game(std::size_t width, std::size_t height) : m_map(width, height)
+Game::Game(std::string_view filename)
 {
-    // Do nothing
+    m_map.Load(filename);
 }
 }  // namespace baba_is_auto
