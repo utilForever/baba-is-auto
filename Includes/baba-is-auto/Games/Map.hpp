@@ -4,6 +4,7 @@
 #include <baba-is-auto/Enums/GameEnums.hpp>
 #include <baba-is-auto/Games/Object.hpp>
 
+#include <string_view>
 #include <vector>
 
 namespace baba_is_auto
@@ -16,10 +17,17 @@ namespace baba_is_auto
 class Map
 {
  public:
+    //! Default constructor.
+    Map() = default;
+
     //! Constructs map with given \p width and \p height.
     //! \param width The size of the width.
     //! \param height The size of the height.
     Map(std::size_t width, std::size_t height);
+
+    //! Loads the data of the map.
+    //! \param filename The file name to load.
+    void Load(std::string_view filename);
 
     //! Assigns an object to the map.
     //! \param row The number of row.

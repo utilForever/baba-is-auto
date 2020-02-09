@@ -1,5 +1,7 @@
 #include <baba-is-auto/Games/Map.hpp>
 
+#include <fstream>
+
 namespace baba_is_auto
 {
 Map::Map(std::size_t width, std::size_t height)
@@ -10,6 +12,20 @@ Map::Map(std::size_t width, std::size_t height)
     for (std::size_t i = 0; i < m_width * m_height; ++i)
     {
         m_objects.emplace_back(ObjectType::EMPTY);
+    }
+}
+
+void Map::Load(std::string_view filename)
+{
+    std::ifstream mapFile(filename.data());
+
+    mapFile >> m_width >> m_height;
+
+    int val = 0;
+    for (std::size_t i = 0; i < m_width * m_height; ++i)
+    {
+        mapFile >> val;
+        m_objects.emplace_back(static_cast<ObjectType>(val));
     }
 }
 
