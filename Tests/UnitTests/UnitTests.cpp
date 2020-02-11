@@ -14,6 +14,9 @@ TEST_CASE("Game - Basic")
     Game game(MAPS_DIR "BabaIsYou.txt");
 
     CHECK_NOTHROW(game.GetMap().Show());
+
+    CHECK(game.GetMap().At(4, 1).GetType() == ObjectType::ICON_BABA);
+    CHECK(game.GetMap().At(4, 9).GetType() == ObjectType::ICON_FLAG);
 }
 
 TEST_CASE("Map - Basic")
