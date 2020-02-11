@@ -2,6 +2,7 @@
 #define BABA_IS_AUTO_GAME_HPP
 
 #include <baba-is-auto/Games/Map.hpp>
+#include <baba-is-auto/Rules/RuleManager.hpp>
 
 #include <string>
 
@@ -23,8 +24,13 @@ class Game
     //! \return A map object.
     Map& GetMap();
 
+    //! Gets a rule manager object.
+    //! \return A rule manager object.
+    RuleManager& GetRuleManager();
+
  private:
     Map m_map;
+    RuleManager m_ruleManager;
 };
 }  // namespace baba_is_auto
 

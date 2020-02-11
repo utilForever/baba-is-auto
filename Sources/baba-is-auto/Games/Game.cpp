@@ -11,4 +11,9 @@ Map& Game::GetMap()
 {
     return m_map;
 }
+
+RuleManager& Game::GetRuleManager()
+{
+    return m_ruleManager;
+}
 }  // namespace baba_is_auto
