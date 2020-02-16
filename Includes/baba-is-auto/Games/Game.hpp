@@ -1,6 +1,7 @@
 #ifndef BABA_IS_AUTO_GAME_HPP
 #define BABA_IS_AUTO_GAME_HPP
 
+#include <baba-is-auto/Enums/RuleEnums.hpp>
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
@@ -32,6 +33,12 @@ class Game
     RuleManager& GetRuleManager();
 
  private:
+    //! Parses a rule that satisfies the condition.
+    //! \param row The number of row.
+    //! \param col The number of column.
+    //! \param direction The direction to check the rule.
+    void ParseRule(std::size_t row, std::size_t col, RuleDirection direction);
+
     Map m_map;
     RuleManager m_ruleManager;
 };
