@@ -20,6 +20,9 @@ class Game
     //! \param filename The file name to load a map.
     Game(std::string_view filename);
 
+    //! Initializes game to parse initial rules.
+    void Initialize();
+
     //! Gets a map object.
     //! \return A map object.
     Map& GetMap();

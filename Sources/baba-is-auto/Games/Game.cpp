@@ -7,6 +7,11 @@ Game::Game(std::string_view filename)
     m_map.Load(filename);
 }
 
+void Game::Initialize()
+{
+    m_map.ParseRules();
+}
+
 Map& Game::GetMap()
 {
     return m_map;
