@@ -32,6 +32,9 @@ class Map
     //! Shows the map.
     void Show() const;
 
+    //! Parses the rules.
+    void ParseRules();
+
     //! Assigns an object to the map.
     //! \param row The number of row.
     //! \param col The number of column.
