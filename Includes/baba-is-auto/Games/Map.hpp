@@ -25,6 +25,14 @@ class Map
     //! \param height The size of the height.
     Map(std::size_t width, std::size_t height);
 
+    //! Gets the width of the map.
+    //! \return The width of the map.
+    std::size_t GetWidth() const;
+
+    //! Gets the height of the map.
+    //! \return The height of the map.
+    std::size_t GetHeight() const;
+
     //! Loads the data of the map.
     //! \param filename The file name to load.
     void Load(std::string_view filename);

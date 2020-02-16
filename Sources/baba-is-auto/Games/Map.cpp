@@ -15,6 +15,16 @@ Map::Map(std::size_t width, std::size_t height)
     }
 }
 
+std::size_t Map::GetWidth() const
+{
+    return m_width;
+}
+
+std::size_t Map::GetHeight() const
+{
+    return m_height;
+}
+
 void Map::Load(std::string_view filename)
 {
     std::ifstream mapFile(filename.data());
