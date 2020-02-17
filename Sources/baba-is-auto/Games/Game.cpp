@@ -20,6 +20,8 @@ void Game::Initialize()
             ParseRule(y, x, RuleDirection::VERTICAL);
         }
     }
+
+    m_playerType = m_ruleManager.GetPlayer();
 }
 
 Map& Game::GetMap()
@@ -30,6 +32,11 @@ Map& Game::GetMap()
 RuleManager& Game::GetRuleManager()
 {
     return m_ruleManager;
+}
+
+ObjectType Game::GetPlayerType() const
+{
+    return m_playerType;
 }
 
 void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)

@@ -32,6 +32,10 @@ class Game
     //! \return A rule manager object.
     RuleManager& GetRuleManager();
 
+    //! Gets the object type of player.
+    //! \return The object type of player.
+    ObjectType GetPlayerType() const;
+
  private:
     //! Parses a rule that satisfies the condition.
     //! \param row The number of row.
@@ -41,6 +45,8 @@ class Game
 
     Map m_map;
     RuleManager m_ruleManager;
+
+    ObjectType m_playerType = ObjectType::ICON_EMPTY;
 };
 }  // namespace baba_is_auto
 
