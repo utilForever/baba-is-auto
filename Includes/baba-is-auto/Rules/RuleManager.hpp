@@ -27,6 +27,10 @@ class RuleManager
     //! \return The number of rules.
     std::size_t GetNumRules() const;
 
+    //! Gets the object type for player.
+    //! \return The object type for player.
+    ObjectType GetPlayer() const;
+
  private:
     std::vector<Rule> m_rules;
 };
