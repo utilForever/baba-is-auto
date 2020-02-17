@@ -28,8 +28,7 @@ class Rule
     //! \return The value that indicates two objects are equal.
     bool operator==(const Rule& rhs) const;
 
- private:
-    std::tuple<Object, Object, Object> m_objects;
+    std::tuple<Object, Object, Object> objects;
 };
 }  // namespace baba_is_auto
 
