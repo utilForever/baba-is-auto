@@ -21,6 +21,8 @@ TEST_CASE("Game - Basic")
     game.Initialize();
 
     CHECK(game.GetRuleManager().GetNumRules() == 4);
+    CHECK(game.GetPlayerType() != ObjectType::ICON_EMPTY);
+    CHECK(game.GetPlayerType() == ObjectType::ICON_BABA);
 }
 
 TEST_CASE("Map - Basic")
