@@ -29,7 +29,7 @@ class RuleManager
 
     //! Gets the object type for player.
     //! \return The object type for player.
-    ObjectType GetPlayer() const;
+    ObjectType FindPlayer() const;
 
  private:
     std::vector<Rule> m_rules;

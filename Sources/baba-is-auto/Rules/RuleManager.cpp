@@ -24,7 +24,7 @@ std::size_t RuleManager::GetNumRules() const
     return m_rules.size();
 }
 
-ObjectType RuleManager::GetPlayer() const
+ObjectType RuleManager::FindPlayer() const
 {
     for (auto& rule : m_rules)
     {

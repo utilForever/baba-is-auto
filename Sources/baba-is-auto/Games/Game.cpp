@@ -21,7 +21,7 @@ void Game::Initialize()
         }
     }
 
-    m_playerIcon = m_ruleManager.GetPlayer();
+    m_playerIcon = m_ruleManager.FindPlayer();
 }
 
 Map& Game::GetMap()
