@@ -25,6 +25,11 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetRuleManager().GetNumRules() == 4);
 
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
+
+    auto pos = game.GetMap().GetPositions(game.GetPlayerIcon());
+    CHECK(pos.size() == 1);
+    CHECK(pos[0].first == 4);
+    CHECK(pos[0].second == 1);
 }
 
 TEST_CASE("Map - Basic")
