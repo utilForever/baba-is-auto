@@ -62,6 +62,16 @@ constexpr bool IsPropertyType(ObjectType type)
 {
     return (type > ObjectType::PROPERTY_TYPE && type < ObjectType::ICON_TYPE);
 }
+
+//! \brief An enumerator for identifying the direction.
+enum class Direction
+{
+    NONE,
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+};
 }  // namespace baba_is_auto
 
 #endif  // BABA_IS_AUTO_WORD_ENUMS_HPP
