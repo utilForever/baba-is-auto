@@ -21,7 +21,7 @@ void Game::Initialize()
         }
     }
 
-    m_playerType = m_ruleManager.GetPlayer();
+    m_playerIcon = m_ruleManager.GetPlayer();
 }
 
 Map& Game::GetMap()
@@ -34,9 +34,9 @@ RuleManager& Game::GetRuleManager()
     return m_ruleManager;
 }
 
-ObjectType Game::GetPlayerType() const
+ObjectType Game::GetPlayerIcon() const
 {
-    return m_playerType;
+    return m_playerIcon;
 }
 
 void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)

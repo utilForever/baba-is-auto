@@ -32,9 +32,9 @@ class Game
     //! \return A rule manager object.
     RuleManager& GetRuleManager();
 
-    //! Gets the object type of player.
-    //! \return The object type of player.
-    ObjectType GetPlayerType() const;
+    //! Gets an icon type that represents player.
+    //! \return An icon type that represents player.
+    ObjectType GetPlayerIcon() const;
 
  private:
     //! Parses a rule that satisfies the condition.
@@ -46,7 +46,7 @@ class Game
     Map m_map;
     RuleManager m_ruleManager;
 
-    ObjectType m_playerType = ObjectType::ICON_EMPTY;
+    ObjectType m_playerIcon = ObjectType::ICON_EMPTY;
 };
 }  // namespace baba_is_auto
 

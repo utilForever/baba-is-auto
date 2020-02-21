@@ -18,11 +18,13 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetMap().At(4, 1).GetType() == ObjectType::ICON_BABA);
     CHECK(game.GetMap().At(4, 9).GetType() == ObjectType::ICON_FLAG);
 
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
+
     game.Initialize();
 
     CHECK(game.GetRuleManager().GetNumRules() == 4);
-    CHECK(game.GetPlayerType() != ObjectType::ICON_EMPTY);
-    CHECK(game.GetPlayerType() == ObjectType::ICON_BABA);
+
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
 }
 
 TEST_CASE("Map - Basic")
