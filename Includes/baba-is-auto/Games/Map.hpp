@@ -9,6 +9,8 @@
 
 namespace baba_is_auto
 {
+using Position = std::pair<std::size_t, std::size_t>;
+
 //!
 //! \brief Map class.
 //!
@@ -50,7 +52,12 @@ class Map
     //! \param row The number of row.
     //! \param col The number of column.
     //! \return An object at row and column.
-    Object At(std::size_t row, std::size_t col);
+    Object At(std::size_t row, std::size_t col) const;
+
+    //! Gets a list of icon positions.
+    //! \param type An object type to get a list of positions.
+    //! \return A list of icon positions.
+    std::vector<Position> GetPositions(ObjectType type) const;
 
  private:
     std::size_t m_width = 0;

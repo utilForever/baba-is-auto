@@ -58,8 +58,26 @@ void Map::Assign(std::size_t row, std::size_t col, ObjectType type)
     m_objects.at(row * m_width + col) = Object(type);
 }
 
-Object Map::At(std::size_t row, std::size_t col)
+Object Map::At(std::size_t row, std::size_t col) const
 {
     return m_objects.at(row * m_width + col);
+}
+
+std::vector<Position> Map::GetPositions(ObjectType type) const
+{
+    std::vector<Position> res;
+
+    for (std::size_t y = 0; y < m_height; ++y)
+    {
+        for (std::size_t x = 0; x < m_width; ++x)
+        {
+            if (At(y, x).GetType() == type)
+            {
+                res.emplace_back(std::make_pair(y, x));
+            }
+        }
+    }
+
+    return res;
 }
 }  // namespace baba_is_auto
