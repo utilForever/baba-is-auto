@@ -30,6 +30,25 @@ TEST_CASE("Game - Basic")
     CHECK(pos.size() == 1);
     CHECK(pos[0].first == 4);
     CHECK(pos[0].second == 1);
+
+    game.MovePlayer(Direction::UP);
+    CHECK(game.GetMap().At(3, 1).GetType() == ObjectType::ICON_BABA);
+    CHECK(game.GetMap().At(4, 1).GetType() == ObjectType::ICON_EMPTY);
+
+    game.MovePlayer(Direction::UP);
+    CHECK(game.GetMap().At(3, 1).GetType() == ObjectType::ICON_BABA);
+    CHECK(game.GetMap().At(2, 1).GetType() == ObjectType::ICON_WALL);
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(3, 4).GetType() == ObjectType::ICON_BABA);
+    CHECK(game.GetMap().At(3, 3).GetType() == ObjectType::ICON_EMPTY);
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(3, 5).GetType() == ObjectType::ICON_BABA);
+    CHECK(game.GetMap().At(3, 6).GetType() == ObjectType::ICON_ROCK);
+    CHECK(game.GetMap().At(3, 4).GetType() == ObjectType::ICON_EMPTY);
 }
 
 TEST_CASE("Map - Basic")
