@@ -15,8 +15,8 @@ TEST_CASE("Game - Basic")
 
     CHECK_NOTHROW(game.GetMap().Show());
 
-    CHECK(game.GetMap().At(4, 1).GetType() == ObjectType::ICON_BABA);
-    CHECK(game.GetMap().At(4, 9).GetType() == ObjectType::ICON_FLAG);
+    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(4, 9).HasType(ObjectType::ICON_FLAG));
 
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
 
@@ -32,49 +32,51 @@ TEST_CASE("Game - Basic")
     CHECK(pos[0].second == 1);
 
     game.MovePlayer(Direction::UP);
-    CHECK(game.GetMap().At(3, 1).GetType() == ObjectType::ICON_BABA);
-    CHECK(game.GetMap().At(4, 1).GetType() == ObjectType::ICON_EMPTY);
+    CHECK(game.GetMap().At(3, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_EMPTY));
 
     game.MovePlayer(Direction::UP);
-    CHECK(game.GetMap().At(3, 1).GetType() == ObjectType::ICON_BABA);
-    CHECK(game.GetMap().At(2, 1).GetType() == ObjectType::ICON_WALL);
+    CHECK(game.GetMap().At(3, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::ICON_WALL));
 
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::RIGHT);
-    CHECK(game.GetMap().At(3, 4).GetType() == ObjectType::ICON_BABA);
-    CHECK(game.GetMap().At(3, 3).GetType() == ObjectType::ICON_EMPTY);
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(3, 3).HasType(ObjectType::ICON_EMPTY));
 
     game.MovePlayer(Direction::RIGHT);
-    CHECK(game.GetMap().At(3, 5).GetType() == ObjectType::ICON_BABA);
-    CHECK(game.GetMap().At(3, 6).GetType() == ObjectType::ICON_ROCK);
-    CHECK(game.GetMap().At(3, 4).GetType() == ObjectType::ICON_EMPTY);
+    CHECK(game.GetMap().At(3, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(3, 6).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_EMPTY));
 }
 
 TEST_CASE("Map - Basic")
 {
     Map map(5, 5);
 
-    map.Assign(3, 4, ObjectType::BABA);
-    CHECK(map.At(3, 3).GetType() == ObjectType::EMPTY);
-    CHECK(map.At(3, 4).GetType() == ObjectType::BABA);
+    map.AddObject(3, 4, ObjectType::BABA);
+    CHECK(map.At(3, 3).HasType(ObjectType::ICON_EMPTY));
+    CHECK(map.At(3, 4).HasType(ObjectType::BABA));
 }
 
 TEST_CASE("RuleManager - Basic")
 {
     RuleManager ruleManager;
 
-    const Rule rule1{ Object(ObjectType::BABA), Object(ObjectType::IS),
-                      Object(ObjectType::YOU) };
-    const Rule rule2{ Object(ObjectType::KEKE), Object(ObjectType::IS),
-                      Object(ObjectType::STOP) };
+    const Rule rule1{ Object(std::vector<ObjectType>{ ObjectType::BABA }),
+                      Object(std::vector<ObjectType>{ ObjectType::IS }),
+                      Object(std::vector<ObjectType>{ ObjectType::YOU }) };
+    const Rule rule2{ Object(std::vector<ObjectType>{ ObjectType::KEKE }),
+                      Object(std::vector<ObjectType>{ ObjectType::IS }),
+                      Object(std::vector<ObjectType>{ ObjectType::STOP }) };
 
-    ruleManager.Add(rule1);
+    ruleManager.AddRule(rule1);
     CHECK(ruleManager.GetNumRules() == 1);
 
-    ruleManager.Add(rule2);
+    ruleManager.AddRule(rule2);
     CHECK(ruleManager.GetNumRules() == 2);
 
-    ruleManager.Remove(rule2);
+    ruleManager.RemoveRule(rule2);
     CHECK(ruleManager.GetNumRules() == 1);
 }
