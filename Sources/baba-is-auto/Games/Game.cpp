@@ -131,4 +131,41 @@ bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
 
     return true;
 }
+
+void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir)
+{
+    int row = static_cast<int>(_row);
+    int col = static_cast<int>(_col);
+
+    int dRow = 0, dCol = 0;
+    if (dir == Direction::UP)
+    {
+        dRow = -1;
+    }
+    else if (dir == Direction::DOWN)
+    {
+        dRow = 1;
+    }
+    else if (dir == Direction::LEFT)
+    {
+        dCol = -1;
+    }
+    else if (dir == Direction::RIGHT)
+    {
+        dCol = 1;
+    }
+
+    row += dRow;
+    col += dCol;
+
+    const ObjectType obj = m_map.At(row, col).GetType();
+
+    if (m_ruleManager.HasProperty(obj, ObjectType::PUSH))
+    {
+        ProcessMove(row, col, dir);
+    }
+
+    m_map.Assign(row, col, m_map.At(_row, _col).GetType());
+    m_map.Assign(_row, _col, ObjectType::ICON_EMPTY);
+}
 }  // namespace baba_is_auto

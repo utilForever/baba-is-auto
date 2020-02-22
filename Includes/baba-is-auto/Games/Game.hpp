@@ -50,6 +50,12 @@ class Game
     //! \return The flag indicates that an object can move.
     bool CanMove(std::size_t _row, std::size_t _col, Direction dir);
 
+    //! Processes the move of the player.
+    //! \param _row The number of row.
+    //! \param _col The number of column.
+    //! \param dir The direction to move.
+    void ProcessMove(std::size_t _row, std::size_t _col, Direction dir);
+
     Map m_map;
     RuleManager m_ruleManager;
 
