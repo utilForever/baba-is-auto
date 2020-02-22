@@ -42,11 +42,17 @@ class Map
     //! Shows the map.
     void Show() const;
 
-    //! Assigns an object to the map.
+    //! Adds an object to the map.
     //! \param row The number of row.
     //! \param col The number of column.
-    //! \param type An object type to assign to the map.
-    void Assign(std::size_t row, std::size_t col, ObjectType type);
+    //! \param type An object type to add to the map.
+    void AddObject(std::size_t row, std::size_t col, ObjectType type);
+
+    //! Removes an object from the map.
+    //! \param row The number of row.
+    //! \param col The number of column.
+    //! \param type An object type to remove from the map.
+    void RemoveObject(std::size_t row, std::size_t col, ObjectType type);
 
     //! Assigns an object to the map.
     //! \param row The number of row.
