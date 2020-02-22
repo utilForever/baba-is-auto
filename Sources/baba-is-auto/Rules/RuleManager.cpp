@@ -5,12 +5,12 @@
 
 namespace baba_is_auto
 {
-void RuleManager::Add(Rule rule)
+void RuleManager::AddRule(const Rule& rule)
 {
     m_rules.emplace_back(rule);
 }
 
-void RuleManager::Remove(Rule rule)
+void RuleManager::RemoveRule(const Rule& rule)
 {
     const auto iter = std::find(m_rules.begin(), m_rules.end(), rule);
     if (iter != m_rules.end())

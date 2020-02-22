@@ -17,11 +17,11 @@ class RuleManager
  public:
     //! Adds a rule.
     //! \param rule The rule.
-    void Add(Rule rule);
+    void AddRule(const Rule& rule);
 
     //! Removes a rule.
     //! \param rule The rule.
-    void Remove(Rule rule);
+    void RemoveRule(const Rule& rule);
 
     //! Gets the number of rules.
     //! \return The number of rules.
