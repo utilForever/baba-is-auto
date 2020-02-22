@@ -39,4 +39,27 @@ ObjectType RuleManager::FindPlayer() const
 
     return ObjectType::ICON_EMPTY;
 }
+
+bool RuleManager::HasProperty(ObjectType object, ObjectType property)
+{
+    const int nounVal = static_cast<int>(object);
+    const int iconTypeVal = static_cast<int>(ObjectType::ICON_TYPE);
+
+    // Check object is an icon
+    if (nounVal > iconTypeVal)
+    {
+        object = static_cast<ObjectType>(nounVal - iconTypeVal);
+    }
+
+    for (auto& rule : m_rules)
+    {
+        if (std::get<0>(rule.objects).GetType() == object &&
+            std::get<2>(rule.objects).GetType() == property)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 }  // namespace baba_is_auto
