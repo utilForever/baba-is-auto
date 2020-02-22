@@ -36,6 +36,14 @@ class Object
     //! \return The value that indicates two objects are equal.
     bool operator==(const Object& rhs) const;
 
+    //! Adds an object type.
+    //! \param type An object type to add.
+    void Add(ObjectType type);
+
+    //! Removes an object type.
+    //! \param type An object type to remove.
+    void Remove(ObjectType type);
+
     //! Gets a list of object types.
     //! \return A list of object types.
     std::vector<ObjectType> GetTypes() const;
