@@ -77,4 +77,58 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
         }
     }
 }
+
+bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
+{
+    int row = static_cast<int>(_row);
+    int col = static_cast<int>(_col);
+
+    const auto width = static_cast<int>(m_map.GetWidth());
+    const auto height = static_cast<int>(m_map.GetHeight());
+
+    int dRow = 0, dCol = 0;
+    if (dir == Direction::UP)
+    {
+        dRow = -1;
+    }
+    else if (dir == Direction::DOWN)
+    {
+        dRow = 1;
+    }
+    else if (dir == Direction::LEFT)
+    {
+        dCol = -1;
+    }
+    else if (dir == Direction::RIGHT)
+    {
+        dCol = 1;
+    }
+
+    row += dRow;
+    col += dCol;
+
+    // Check boundary
+    if (row < 0 || row >= height || col < 0 || col >= width)
+    {
+        return false;
+    }
+
+    const ObjectType obj = m_map.At(row, col).GetType();
+
+    // Check the icon has property 'STOP'.
+    if (m_ruleManager.HasProperty(obj, ObjectType::STOP))
+    {
+        return false;
+    }
+
+    if (m_ruleManager.HasProperty(obj, ObjectType::PUSH))
+    {
+        if (!CanMove(row, col, dir))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
 }  // namespace baba_is_auto

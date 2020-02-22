@@ -43,6 +43,13 @@ class Game
     //! \param direction The direction to check the rule.
     void ParseRule(std::size_t row, std::size_t col, RuleDirection direction);
 
+    //! Checks an object can move.
+    //! \param _row The number of row.
+    //! \param _col The number of column.
+    //! \param dir The direction to move.
+    //! \return The flag indicates that an object can move.
+    bool CanMove(std::size_t _row, std::size_t _col, Direction dir);
+
     Map m_map;
     RuleManager m_ruleManager;
 
