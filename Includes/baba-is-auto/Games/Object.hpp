@@ -3,6 +3,8 @@
 
 #include <baba-is-auto/Enums/GameEnums.hpp>
 
+#include <vector>
+
 namespace baba_is_auto
 {
 //!
@@ -26,20 +28,20 @@ class Object
     Object() = default;
 
     //! Constructs an object.
-    //! \param type The object type.
-    explicit Object(ObjectType type);
+    //! \param types A list of object types.
+    explicit Object(std::vector<ObjectType> types);
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Object object.
     //! \return The value that indicates two objects are equal.
     bool operator==(const Object& rhs) const;
 
-    //! Gets the type of an object.
-    //! \return The type of an object.
-    ObjectType GetType() const;
+    //! Gets a list of object types.
+    //! \return A list of object types.
+    std::vector<ObjectType> GetTypes() const;
 
  private:
-    ObjectType m_type;
+    std::vector<ObjectType> m_types;
 };
 }  // namespace baba_is_auto
 

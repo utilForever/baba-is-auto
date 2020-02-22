@@ -2,18 +2,18 @@
 
 namespace baba_is_auto
 {
-Object::Object(ObjectType type) : m_type(type)
+Object::Object(std::vector<ObjectType> types) : m_types(std::move(types))
 {
     // Do nothing
 }
 
 bool Object::operator==(const Object& rhs) const
 {
-    return m_type == rhs.m_type;
+    return m_types == rhs.m_types;
 }
 
-ObjectType Object::GetType() const
+std::vector<ObjectType> Object::GetTypes() const
 {
-    return m_type;
+    return m_types;
 }
 }  // namespace baba_is_auto
