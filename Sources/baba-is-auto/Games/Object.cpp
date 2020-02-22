@@ -16,6 +16,11 @@ bool Object::operator==(const Object& rhs) const
 
 void Object::Add(ObjectType type)
 {
+    if (m_types.size() == 1 && m_types.at(0) == ObjectType::ICON_EMPTY)
+    {
+        m_types.clear();
+    }
+
     if (std::find(m_types.begin(), m_types.end(), type) == m_types.end())
     {
         m_types.emplace_back(type);
@@ -28,6 +33,11 @@ void Object::Remove(ObjectType type)
         std::remove_if(m_types.begin(), m_types.end(),
                        [&](ObjectType& _type) { return type == _type; }),
         m_types.end());
+
+    if (m_types.empty())
+    {
+        m_types.emplace_back(ObjectType::ICON_EMPTY);
+    }
 }
 
 std::vector<ObjectType> Object::GetTypes() const
