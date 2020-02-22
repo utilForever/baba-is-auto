@@ -39,6 +39,19 @@ ObjectType Game::GetPlayerIcon() const
     return m_playerIcon;
 }
 
+void Game::MovePlayer(Direction dir)
+{
+    auto positions = GetMap().GetPositions(m_playerIcon);
+
+    for (auto& [row, col] : positions)
+    {
+        if (CanMove(row, col, dir))
+        {
+            ProcessMove(row, col, dir);
+        }
+    }
+}
+
 void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
 {
     const std::size_t width = m_map.GetWidth();

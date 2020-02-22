@@ -36,6 +36,10 @@ class Game
     //! \return An icon type that represents player.
     ObjectType GetPlayerIcon() const;
 
+    //! Moves the icon that represents player.
+    //! \param dir The direction to move the player.
+    void MovePlayer(Direction dir);
+
  private:
     //! Parses a rule that satisfies the condition.
     //! \param row The number of row.
