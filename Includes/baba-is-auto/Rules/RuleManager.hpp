@@ -32,10 +32,10 @@ class RuleManager
     ObjectType FindPlayer() const;
 
     //! Checks an object has specific property.
-    //! \param object The object to check it has property.
+    //! \param types A list of object types to check it has property.
     //! \param property The property to check.
     //! \return The flag indicates that an object has specific property.
-    bool HasProperty(ObjectType object, ObjectType property);
+    bool HasProperty(const std::vector<ObjectType>& types, ObjectType property);
 
  private:
     std::vector<Rule> m_rules;
