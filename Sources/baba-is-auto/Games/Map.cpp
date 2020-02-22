@@ -8,11 +8,6 @@ Map::Map(std::size_t width, std::size_t height)
     : m_width(width), m_height(height)
 {
     m_objects.reserve(m_width * m_height);
-
-    for (std::size_t i = 0; i < m_width * m_height; ++i)
-    {
-        m_objects.emplace_back(ObjectType::EMPTY);
-    }
 }
 
 std::size_t Map::GetWidth() const
@@ -35,7 +30,8 @@ void Map::Load(std::string_view filename)
     for (std::size_t i = 0; i < m_width * m_height; ++i)
     {
         mapFile >> val;
-        m_objects.emplace_back(static_cast<ObjectType>(val));
+        m_objects.emplace_back(
+            std::vector<ObjectType>{ static_cast<ObjectType>(val) });
     }
 }
 
@@ -45,8 +41,8 @@ void Map::Show() const
     {
         for (std::size_t x = 0; x < m_width; ++x)
         {
-            printf("%3d ",
-                   static_cast<int>(m_objects.at(y * m_width + x).GetType()));
+            // printf("%3d ",
+            //       static_cast<int>(m_objects.at(y * m_width + x).GetType()));
         }
 
         printf("\n");
@@ -55,7 +51,7 @@ void Map::Show() const
 
 void Map::Assign(std::size_t row, std::size_t col, ObjectType type)
 {
-    m_objects.at(row * m_width + col) = Object(type);
+    m_objects.at(row * m_width + col) = Object({ type });
 }
 
 Object Map::At(std::size_t row, std::size_t col) const
@@ -71,7 +67,7 @@ std::vector<Position> Map::GetPositions(ObjectType type) const
     {
         for (std::size_t x = 0; x < m_width; ++x)
         {
-            if (At(y, x).GetType() == type)
+            if (At(y, x).HasType(type))
             {
                 res.emplace_back(std::make_pair(y, x));
             }

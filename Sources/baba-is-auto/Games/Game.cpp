@@ -64,10 +64,10 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
             return;
         }
 
-        if (IsNounType(m_map.At(row, col).GetType()) &&
-            IsVerbType(m_map.At(row, col + 1).GetType()) &&
-            (IsNounType(m_map.At(row, col + 2).GetType()) ||
-             IsPropertyType(m_map.At(row, col + 2).GetType())))
+        if (m_map.At(row, col).HasNounType() &&
+            m_map.At(row, col + 1).HasVerbType() &&
+            (m_map.At(row, col + 2).HasNounType() ||
+             m_map.At(row, col + 2).HasPropertyType()))
         {
             m_ruleManager.Add({ m_map.At(row, col), m_map.At(row, col + 1),
                                 m_map.At(row, col + 2) });
@@ -80,10 +80,10 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
             return;
         }
 
-        if (IsNounType(m_map.At(row, col).GetType()) &&
-            IsVerbType(m_map.At(row + 1, col).GetType()) &&
-            (IsNounType(m_map.At(row + 2, col).GetType()) ||
-             IsPropertyType(m_map.At(row + 2, col).GetType())))
+        if (m_map.At(row, col).HasNounType() &&
+            m_map.At(row + 1, col).HasVerbType() &&
+            (m_map.At(row + 2, col).HasNounType() ||
+             m_map.At(row + 2, col).HasPropertyType()))
         {
             m_ruleManager.Add({ m_map.At(row, col), m_map.At(row + 1, col),
                                 m_map.At(row + 2, col) });
@@ -126,15 +126,15 @@ bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
         return false;
     }
 
-    const ObjectType obj = m_map.At(row, col).GetType();
+    const std::vector<ObjectType> types = m_map.At(row, col).GetTypes();
 
     // Check the icon has property 'STOP'.
-    if (m_ruleManager.HasProperty(obj, ObjectType::STOP))
+    if (m_ruleManager.HasProperty(types, ObjectType::STOP))
     {
         return false;
     }
 
-    if (m_ruleManager.HasProperty(obj, ObjectType::PUSH))
+    if (m_ruleManager.HasProperty(types, ObjectType::PUSH))
     {
         if (!CanMove(row, col, dir))
         {
@@ -171,14 +171,14 @@ void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir)
     row += dRow;
     col += dCol;
 
-    const ObjectType obj = m_map.At(row, col).GetType();
+    const std::vector<ObjectType> types = m_map.At(row, col).GetTypes();
 
-    if (m_ruleManager.HasProperty(obj, ObjectType::PUSH))
+    if (m_ruleManager.HasProperty(types, ObjectType::PUSH))
     {
         ProcessMove(row, col, dir);
     }
 
-    m_map.Assign(row, col, m_map.At(_row, _col).GetType());
-    m_map.Assign(_row, _col, ObjectType::ICON_EMPTY);
+    //m_map.Assign(row, col, m_map.At(_row, _col).GetType());
+    //m_map.Assign(_row, _col, ObjectType::ICON_EMPTY);
 }
 }  // namespace baba_is_auto
