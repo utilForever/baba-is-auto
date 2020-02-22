@@ -13,8 +13,6 @@ TEST_CASE("Game - Basic")
 {
     Game game(MAPS_DIR "BabaIsYou.txt");
 
-    CHECK_NOTHROW(game.GetMap().Show());
-
     CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetMap().At(4, 9).HasType(ObjectType::ICON_FLAG));
 
