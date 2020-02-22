@@ -19,6 +19,23 @@ void RuleManager::RemoveRule(const Rule& rule)
     }
 }
 
+std::vector<Rule> RuleManager::GetRules(ObjectType type) const
+{
+    std::vector<Rule> ret;
+
+    for (auto& rule : m_rules)
+    {
+        if (std::get<0>(rule.objects).HasType(type) ||
+            std::get<1>(rule.objects).HasType(type) ||
+            std::get<2>(rule.objects).HasType(type))
+        {
+            ret.emplace_back(rule);
+        }
+    }
+
+    return ret;
+}
+
 std::size_t RuleManager::GetNumRules() const
 {
     return m_rules.size();

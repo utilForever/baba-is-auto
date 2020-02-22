@@ -23,6 +23,11 @@ class RuleManager
     //! \param rule The rule.
     void RemoveRule(const Rule& rule);
 
+    //! Gets a list of rules that has specific type.
+    //! \param type The object type to find a rule.
+    //! \return A list of rules that has specific type.
+    std::vector<Rule> GetRules(ObjectType type) const;
+
     //! Gets the number of rules.
     //! \return The number of rules.
     std::size_t GetNumRules() const;
