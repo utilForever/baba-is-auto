@@ -45,6 +45,18 @@ class Object
     //! \return The flag indicates that the object has specific type.
     bool HasType(ObjectType type) const;
 
+    //! Checks the object has noun type.
+    //! \return The flag indicates that the object has noun type.
+    bool HasNounType() const;
+
+    //! Checks the object has verb type.
+    //! \return The flag indicates that the object has verb type.
+    bool HasVerbType() const;
+
+    //! Checks the object has property type.
+    //! \return The flag indicates that the object has property type.
+    bool HasPropertyType() const;
+
  private:
     std::vector<ObjectType> m_types;
 };
