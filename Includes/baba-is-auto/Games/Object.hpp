@@ -40,6 +40,11 @@ class Object
     //! \return A list of object types.
     std::vector<ObjectType> GetTypes() const;
 
+    //! Checks the object has specific type.
+    //! \param type An object type to check.
+    //! \return The flag indicates that the object has specific type.
+    bool HasType(ObjectType type) const;
+
  private:
     std::vector<ObjectType> m_types;
 };

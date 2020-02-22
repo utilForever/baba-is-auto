@@ -16,4 +16,9 @@ std::vector<ObjectType> Object::GetTypes() const
 {
     return m_types;
 }
+
+bool Object::HasType(ObjectType type) const
+{
+    return std::find(m_types.begin(), m_types.end(), type) != m_types.end();
+}
 }  // namespace baba_is_auto
