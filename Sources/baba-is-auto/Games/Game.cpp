@@ -47,7 +47,7 @@ void Game::MovePlayer(Direction dir)
     {
         if (CanMove(row, col, dir))
         {
-            ProcessMove(row, col, dir);
+            ProcessMove(row, col, dir, m_playerIcon);
         }
     }
 }
@@ -69,8 +69,8 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
             (m_map.At(row, col + 2).HasNounType() ||
              m_map.At(row, col + 2).HasPropertyType()))
         {
-            m_ruleManager.Add({ m_map.At(row, col), m_map.At(row, col + 1),
-                                m_map.At(row, col + 2) });
+            m_ruleManager.AddRule({ m_map.At(row, col), m_map.At(row, col + 1),
+                                    m_map.At(row, col + 2) });
         }
     }
     else if (direction == RuleDirection::VERTICAL)
@@ -85,8 +85,8 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
             (m_map.At(row + 2, col).HasNounType() ||
              m_map.At(row + 2, col).HasPropertyType()))
         {
-            m_ruleManager.Add({ m_map.At(row, col), m_map.At(row + 1, col),
-                                m_map.At(row + 2, col) });
+            m_ruleManager.AddRule({ m_map.At(row, col), m_map.At(row + 1, col),
+                                    m_map.At(row + 2, col) });
         }
     }
 }
@@ -145,7 +145,8 @@ bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
     return true;
 }
 
-void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir)
+void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
+                       ObjectType type)
 {
     int row = static_cast<int>(_row);
     int col = static_cast<int>(_col);
@@ -175,10 +176,20 @@ void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir)
 
     if (m_ruleManager.HasProperty(types, ObjectType::PUSH))
     {
-        ProcessMove(row, col, dir);
+        auto rules = m_ruleManager.GetRules(ObjectType::PUSH);
+
+        for (auto& rule : rules)
+        {
+            const auto nounVal =
+                static_cast<int>(std::get<0>(rule.objects).GetTypes()[0]);
+            const auto nounType = static_cast<ObjectType>(
+                nounVal + static_cast<int>(ObjectType::ICON_TYPE));
+
+            ProcessMove(row, col, dir, nounType);
+        }
     }
 
-    //m_map.Assign(row, col, m_map.At(_row, _col).GetType());
-    //m_map.Assign(_row, _col, ObjectType::ICON_EMPTY);
+    m_map.AddObject(row, col, type);
+    m_map.RemoveObject(_row, _col, type);
 }
 }  // namespace baba_is_auto

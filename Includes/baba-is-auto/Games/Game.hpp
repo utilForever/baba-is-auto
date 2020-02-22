@@ -58,7 +58,9 @@ class Game
     //! \param _row The number of row.
     //! \param _col The number of column.
     //! \param dir The direction to move.
-    void ProcessMove(std::size_t _row, std::size_t _col, Direction dir);
+    //! \param type The object type to move.
+    void ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
+                     ObjectType type);
 
     Map m_map;
     RuleManager m_ruleManager;
