@@ -15,13 +15,7 @@ TEST_CASE("Game - Basic")
 
     CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetMap().At(4, 9).HasType(ObjectType::ICON_FLAG));
-
-    CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
-
-    game.Initialize();
-
     CHECK(game.GetRuleManager().GetNumRules() == 4);
-
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
 
     auto pos = game.GetMap().GetPositions(game.GetPlayerIcon());
@@ -56,6 +50,19 @@ TEST_CASE("Game - Basic")
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::RIGHT);
     CHECK(game.GetPlayState() == PlayState::WON);
+}
+
+TEST_CASE("Game - Lost")
+{
+    Game game(MAPS_DIR "SimpleMap.txt");
+
+    CHECK(game.GetMap().At(2, 0).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetRuleManager().GetNumRules() == 1);
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+
+    game.MovePlayer(Direction::UP);
+    CHECK(game.GetRuleManager().GetNumRules() == 0);
+    CHECK(game.GetPlayState() == PlayState::LOST);
 }
 
 TEST_CASE("Map - Basic")
