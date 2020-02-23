@@ -32,6 +32,10 @@ class Game
     //! \return A rule manager object.
     RuleManager& GetRuleManager();
 
+    //! Gets the play state of the game.
+    //! \return The play state of the game.
+    PlayState GetPlayState() const;
+
     //! Gets an icon type that represents player.
     //! \return An icon type that represents player.
     ObjectType GetPlayerIcon() const;
@@ -65,6 +69,7 @@ class Game
     Map m_map;
     RuleManager m_ruleManager;
 
+    PlayState m_playState = PlayState::INVALID;
     ObjectType m_playerIcon = ObjectType::ICON_EMPTY;
 };
 }  // namespace baba_is_auto

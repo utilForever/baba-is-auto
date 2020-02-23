@@ -34,6 +34,11 @@ RuleManager& Game::GetRuleManager()
     return m_ruleManager;
 }
 
+PlayState Game::GetPlayState() const
+{
+    return m_playState;
+}
+
 ObjectType Game::GetPlayerIcon() const
 {
     return m_playerIcon;
