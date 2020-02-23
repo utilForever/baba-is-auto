@@ -5,24 +5,10 @@ namespace baba_is_auto
 Game::Game(std::string_view filename)
 {
     m_map.Load(filename);
-}
 
-void Game::Initialize()
-{
-    const std::size_t width = m_map.GetWidth();
-    const std::size_t height = m_map.GetHeight();
-
-    for (std::size_t y = 0; y < height; ++y)
-    {
-        for (std::size_t x = 0; x < width; ++x)
-        {
-            ParseRule(y, x, RuleDirection::HORIZONTAL);
-            ParseRule(y, x, RuleDirection::VERTICAL);
-        }
-    }
+    ParseRules();
 
     m_playState = PlayState::PLAYING;
-    m_playerIcon = m_ruleManager.FindPlayer();
 }
 
 Map& Game::GetMap()
@@ -57,7 +43,27 @@ void Game::MovePlayer(Direction dir)
         }
     }
 
+    ParseRules();
     CheckPlayState();
+}
+
+void Game::ParseRules()
+{
+    m_ruleManager.ClearRules();
+
+    const std::size_t width = m_map.GetWidth();
+    const std::size_t height = m_map.GetHeight();
+
+    for (std::size_t y = 0; y < height; ++y)
+    {
+        for (std::size_t x = 0; x < width; ++x)
+        {
+            ParseRule(y, x, RuleDirection::HORIZONTAL);
+            ParseRule(y, x, RuleDirection::VERTICAL);
+        }
+    }
+
+    m_playerIcon = m_ruleManager.FindPlayer();
 }
 
 void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)

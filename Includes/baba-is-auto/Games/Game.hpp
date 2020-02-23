@@ -21,9 +21,6 @@ class Game
     //! \param filename The file name to load a map.
     Game(std::string_view filename);
 
-    //! Initializes game to parse initial rules.
-    void Initialize();
-
     //! Gets a map object.
     //! \return A map object.
     Map& GetMap();
@@ -45,6 +42,9 @@ class Game
     void MovePlayer(Direction dir);
 
  private:
+    //! Parses a list of rules.
+    void ParseRules();
+
     //! Parses a rule that satisfies the condition.
     //! \param row The number of row.
     //! \param col The number of column.
