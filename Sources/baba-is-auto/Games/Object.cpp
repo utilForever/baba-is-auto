@@ -50,6 +50,17 @@ bool Object::HasType(ObjectType type) const
     return std::find(m_types.begin(), m_types.end(), type) != m_types.end();
 }
 
+bool Object::HasTextType() const
+{
+    if (m_types.size() != 1)
+    {
+        return false;
+    }
+
+    return static_cast<int>(m_types[0]) <=
+           static_cast<int>(ObjectType::ICON_TYPE);
+}
+
 bool Object::HasNounType() const
 {
     for (auto& type : m_types)

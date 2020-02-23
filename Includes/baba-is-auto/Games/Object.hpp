@@ -53,6 +53,10 @@ class Object
     //! \return The flag indicates that the object has specific type.
     bool HasType(ObjectType type) const;
 
+    //! Checks the object has text type.
+    //! \return The flag indicates that the object has text type.
+    bool HasTextType() const;
+
     //! Checks the object has noun type.
     //! \return The flag indicates that the object has noun type.
     bool HasNounType() const;
