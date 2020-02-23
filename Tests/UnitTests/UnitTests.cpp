@@ -47,6 +47,15 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetMap().At(3, 5).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetMap().At(3, 6).HasType(ObjectType::ICON_ROCK));
     CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_EMPTY));
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::DOWN);
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetPlayState() == PlayState::WON);
 }
 
 TEST_CASE("Map - Basic")
