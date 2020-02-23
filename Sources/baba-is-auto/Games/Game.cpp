@@ -142,7 +142,8 @@ bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
         return false;
     }
 
-    if (m_ruleManager.HasProperty(types, ObjectType::PUSH))
+    if (m_ruleManager.HasProperty(types, ObjectType::PUSH) ||
+        m_map.At(row, col).HasTextType())
     {
         if (!CanMove(row, col, dir))
         {
@@ -191,6 +192,10 @@ void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
             const ObjectType nounType = std::get<0>(rule.objects).GetTypes()[0];
             ProcessMove(row, col, dir, ConvertTextToIcon(nounType));
         }
+    }
+    else if (m_map.At(row, col).HasTextType())
+    {
+        ProcessMove(row, col, dir, types[0]);
     }
 
     m_map.AddObject(row, col, type);
