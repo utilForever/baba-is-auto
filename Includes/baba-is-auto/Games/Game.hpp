@@ -19,7 +19,7 @@ class Game
  public:
     //! Constructs game with given \p mapFileName.
     //! \param filename The file name to load a map.
-    Game(std::string_view filename);
+    explicit Game(std::string_view filename);
 
     //! Gets a map object.
     //! \return A map object.
