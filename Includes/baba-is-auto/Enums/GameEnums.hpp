@@ -63,6 +63,15 @@ constexpr bool IsPropertyType(ObjectType type)
     return (type > ObjectType::PROPERTY_TYPE && type < ObjectType::ICON_TYPE);
 }
 
+//! \brief An enumerator for identifying the play state.
+enum class PlayState
+{
+    INVALID,
+    PLAYING,
+    WON,
+    LOST
+};
+
 //! \brief An enumerator for identifying the direction.
 enum class Direction
 {
