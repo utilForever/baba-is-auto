@@ -47,10 +47,8 @@ ObjectType RuleManager::FindPlayer() const
     {
         if (std::get<2>(rule.objects).HasType(ObjectType::YOU))
         {
-            ObjectType obj = std::get<0>(rule.objects).GetTypes()[0];
-            return static_cast<ObjectType>(
-                static_cast<int>(obj) +
-                static_cast<int>(ObjectType::ICON_TYPE));
+            const ObjectType type = std::get<0>(rule.objects).GetTypes()[0];
+            return ConvertTextToIcon(type);
         }
     }
 
@@ -60,24 +58,16 @@ ObjectType RuleManager::FindPlayer() const
 bool RuleManager::HasProperty(const std::vector<ObjectType>& types,
                               ObjectType property)
 {
-    const int iconTypeVal = static_cast<int>(ObjectType::ICON_TYPE);
-
     for (auto type : types)
     {
-        const int nounVal = static_cast<int>(type);
+        type = ConvertIconToText(type);
 
-        // Check object is an icon
-        if (nounVal > iconTypeVal)
+        for (auto& rule : m_rules)
         {
-            type = static_cast<ObjectType>(nounVal - iconTypeVal);
-
-            for (auto& rule : m_rules)
+            if (std::get<0>(rule.objects).HasType(type) &&
+                std::get<2>(rule.objects).HasType(property))
             {
-                if (std::get<0>(rule.objects).HasType(type) &&
-                    std::get<2>(rule.objects).HasType(property))
-                {
-                    return true;
-                }
+                return true;
             }
         }
     }

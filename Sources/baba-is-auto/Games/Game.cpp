@@ -185,12 +185,8 @@ void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
 
         for (auto& rule : rules)
         {
-            const auto nounVal =
-                static_cast<int>(std::get<0>(rule.objects).GetTypes()[0]);
-            const auto nounType = static_cast<ObjectType>(
-                nounVal + static_cast<int>(ObjectType::ICON_TYPE));
-
-            ProcessMove(row, col, dir, nounType);
+            const ObjectType nounType = std::get<0>(rule.objects).GetTypes()[0];
+            ProcessMove(row, col, dir, ConvertTextToIcon(nounType));
         }
     }
 
