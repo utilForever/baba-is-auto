@@ -63,6 +63,40 @@ constexpr bool IsPropertyType(ObjectType type)
     return (type > ObjectType::PROPERTY_TYPE && type < ObjectType::ICON_TYPE);
 }
 
+//! Converts icon type to text type.
+//! \param type The icon type to convert.
+//! \return The converted text type.
+constexpr ObjectType ConvertIconToText(ObjectType type)
+{
+    const auto typeVal = static_cast<int>(type);
+    const auto iconTypeVal = static_cast<int>(ObjectType::ICON_TYPE);
+
+    if (typeVal <= iconTypeVal)
+    {
+        return type;
+    }
+
+    const int convertedVal = typeVal - iconTypeVal;
+    return static_cast<ObjectType>(convertedVal);
+}
+
+//! Converts text type to icon type.
+//! \param type The text type to convert.
+//! \return The converted icon type.
+constexpr ObjectType ConvertTextToIcon(ObjectType type)
+{
+    const auto typeVal = static_cast<int>(type);
+    const auto iconTypeVal = static_cast<int>(ObjectType::ICON_TYPE);
+
+    if (typeVal > iconTypeVal)
+    {
+        return type;
+    }
+
+    const int convertedVal = typeVal + iconTypeVal;
+    return static_cast<ObjectType>(convertedVal);
+}
+
 //! \brief An enumerator for identifying the play state.
 enum class PlayState
 {
