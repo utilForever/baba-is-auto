@@ -21,6 +21,7 @@ void Game::Initialize()
         }
     }
 
+    m_playState = PlayState::PLAYING;
     m_playerIcon = m_ruleManager.FindPlayer();
 }
 
@@ -55,6 +56,8 @@ void Game::MovePlayer(Direction dir)
             ProcessMove(row, col, dir, m_playerIcon);
         }
     }
+
+    CheckPlayState();
 }
 
 void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
@@ -192,5 +195,31 @@ void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
 
     m_map.AddObject(row, col, type);
     m_map.RemoveObject(_row, _col, type);
+}
+
+void Game::CheckPlayState()
+{
+    const auto youRules = m_ruleManager.GetRules(ObjectType::YOU);
+    if (youRules.empty())
+    {
+        m_playState = PlayState::LOST;
+        return;
+    }
+
+    auto winRules = m_ruleManager.GetRules(ObjectType::WIN);
+    auto positions = m_map.GetPositions(m_playerIcon);
+    for (auto& pos : positions)
+    {
+        for (auto& rule : winRules)
+        {
+            const ObjectType type = std::get<0>(rule.objects).GetTypes()[0];
+
+            if (m_map.At(pos.first, pos.second)
+                    .HasType(ConvertTextToIcon(type)))
+            {
+                m_playState = PlayState::WON;
+            }
+        }
+    }
 }
 }  // namespace baba_is_auto

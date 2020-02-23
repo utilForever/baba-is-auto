@@ -66,6 +66,9 @@ class Game
     void ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
                      ObjectType type);
 
+    //! Checks the play state of the game.
+    void CheckPlayState();
+
     Map m_map;
     RuleManager m_ruleManager;
 
