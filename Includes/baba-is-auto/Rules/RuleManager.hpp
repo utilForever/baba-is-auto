@@ -23,6 +23,9 @@ class RuleManager
     //! \param rule The rule.
     void RemoveRule(const Rule& rule);
 
+    //! Clears a list of rules.
+    void ClearRules();
+
     //! Gets a list of rules that has specific type.
     //! \param type The object type to find a rule.
     //! \return A list of rules that has specific type.

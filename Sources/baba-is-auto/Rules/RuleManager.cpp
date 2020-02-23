@@ -19,6 +19,11 @@ void RuleManager::RemoveRule(const Rule& rule)
     }
 }
 
+void RuleManager::ClearRules()
+{
+    m_rules.clear();
+}
+
 std::vector<Rule> RuleManager::GetRules(ObjectType type) const
 {
     std::vector<Rule> ret;
