@@ -32,6 +32,9 @@ endif()
 # Overrides
 set(CMAKE_MACOSX_RPATH ON)
 
+# Set resources
+set(MAPS_DIR ${PROJECT_SOURCE_DIR}/Resources/Maps)
+
 # Project modules
 add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/baba-is-auto)

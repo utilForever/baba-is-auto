@@ -1,10 +1,9 @@
 #ifndef BABA_IS_AUTO_RULE_HPP
 #define BABA_IS_AUTO_RULE_HPP
 
-#include <baba-is-auto/Enums/RuleEnums.hpp>
-#include <baba-is-auto/Words/Noun.hpp>
-#include <baba-is-auto/Words/Operator.hpp>
-#include <baba-is-auto/Words/Property.hpp>
+#include <baba-is-auto/Games/Object.hpp>
+
+#include <tuple>
 
 namespace baba_is_auto
 {
@@ -19,28 +18,17 @@ class Rule
 {
  public:
     //! Constructs a rule.
-    //! \param _noun A noun word.
-    //! \param _op An operator word.
-    //! \param _property A property word.
-    Rule(Noun _noun, Operator _op, Property _property);
-
-    //! Constructs a rule.
-    //! \param _noun1 A first noun word.
-    //! \param _op An operator word.
-    //! \param _noun2 A second noun word.
-    Rule(Noun _noun1, Operator _op, Noun _noun2);
+    //! \param obj1 A first object.
+    //! \param obj2 A second object.
+    //! \param obj3 A third object.
+    Rule(Object obj1, Object obj2, Object obj3);
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.
     //! \return The value that indicates two objects are equal.
     bool operator==(const Rule& rhs) const;
 
-    RuleType type{};
-
-    Noun noun1{};
-    Noun noun2{};
-    Operator op{};
-    Property property{};
+    std::tuple<Object, Object, Object> objects;
 };
 }  // namespace baba_is_auto
 

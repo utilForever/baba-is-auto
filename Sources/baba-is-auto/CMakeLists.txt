@@ -21,14 +21,25 @@ file(GLOB_RECURSE sources
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Custom-build event
-set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
-add_custom_command(
-    COMMAND python ${baba_is_auto_header_gen_py}
-    DEPENDS ${headers}
-    OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
-)
-add_custom_target(baba_is_auto_header_gen_py ALL
-    DEPENDS ${root_dir}/Includes/baba-is-auto.hpp) 
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
+    add_custom_command(
+        COMMAND python ${baba_is_auto_header_gen_py}
+        DEPENDS ${headers}
+        OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
+    )
+    add_custom_target(baba_is_auto_header_gen_py ALL
+        DEPENDS ${root_dir}/Includes/baba-is-auto.hpp)
+else ()
+    set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
+    add_custom_command(
+        COMMAND python3 ${baba_is_auto_header_gen_py}
+        DEPENDS ${headers}
+        OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
+    )
+    add_custom_target(baba_is_auto_header_gen_py ALL
+        DEPENDS ${root_dir}/Includes/baba-is-auto.hpp)
+endif ()
 
 # Build library
 add_library(${target}
