@@ -1,7 +1,11 @@
+#include <Enums/GameEnums.hpp>
+
 #include <pybind11/pybind11.h>
 
-PYBIND11_MODULE(pyRosetta, m)
+PYBIND11_MODULE(pyBaba, m)
 {
     m.doc() =
-        R"pbdoc(Hearthstone simulator with some reinforcement learning)pbdoc";
+        R"pbdoc(Baba Is You simulator with some reinforcement learning)pbdoc";
+
+    AddGameEnums(m);
 }
