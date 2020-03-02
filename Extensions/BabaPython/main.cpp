@@ -1,5 +1,6 @@
 #include <Enums/GameEnums.hpp>
 #include <Enums/RuleEnums.hpp>
+#include <Rules/Rule.hpp>
 
 #include <pybind11/pybind11.h>
 
@@ -10,6 +11,7 @@ PYBIND11_MODULE(pyBaba, m)
 
     AddGameEnums(m);
     AddGameEnumUtils(m);
-
     AddRuleEnums(m);
+
+    AddRule(m);
 }
