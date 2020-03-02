@@ -10,5 +10,6 @@
 #include <pybind11/pybind11.h>
 
 void AddGameEnums(pybind11::module& m);
+void AddGameEnumUtils(pybind11::module& m);
 
 #endif  // BABA_IS_AUTO_PYTHON_GAME_ENUMS_HPP

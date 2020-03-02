@@ -8,4 +8,5 @@ PYBIND11_MODULE(pyBaba, m)
         R"pbdoc(Baba Is You simulator with some reinforcement learning)pbdoc";
 
     AddGameEnums(m);
+    AddGameEnumUtils(m);
 }
