@@ -1,5 +1,8 @@
 #include <Enums/GameEnums.hpp>
 #include <Enums/RuleEnums.hpp>
+#include <Games/Game.hpp>
+#include <Games/Map.hpp>
+#include <Games/Object.hpp>
 #include <Rules/Rule.hpp>
 #include <Rules/RuleManager.hpp>
 
@@ -13,6 +16,10 @@ PYBIND11_MODULE(pyBaba, m)
     AddGameEnums(m);
     AddGameEnumUtils(m);
     AddRuleEnums(m);
+
+    AddGame(m);
+    AddMap(m);
+    AddObject(m);
 
     AddRule(m);
     AddRuleManager(m);
