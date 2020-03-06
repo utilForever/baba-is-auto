@@ -19,10 +19,10 @@ def main():
     header = os.path.join(dir_name, "../Includes/baba-is-auto/baba-is-auto.hpp")
     header_tmp = header + ".tmp"
     with open(header_tmp, "w") as header_file:
-        header_file.write("""// Copyright (c) 2019 Chris Ohk, Hyojang Kim
+        header_file.write("""// Copyright (c) 2020 Chris Ohk
 
-// We are making my contributions/submissions to this project solely in our
-// personal capacity and are not conveying any rights to any intellectual
+// I am making my contributions/submissions to this project solely in our
+// personal capacity and am not conveying any rights to any intellectual
 // property of any third parties.\n
 """)
         header_file.write("#ifndef BABA_IS_AUTO_HPP\n")

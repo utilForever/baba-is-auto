@@ -1,7 +1,7 @@
-// Copyright (c) 2019 Chris Ohk, Hyojang Kim
+// Copyright (c) 2020 Chris Ohk
 
-// We are making my contributions/submissions to this project solely in our
-// personal capacity and are not conveying any rights to any intellectual
+// I am making my contributions/submissions to this project solely in our
+// personal capacity and am not conveying any rights to any intellectual
 // property of any third parties.
 
 #ifndef BABA_IS_AUTO_PYTHON_GAME_ENUMS_HPP
