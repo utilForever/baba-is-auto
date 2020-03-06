@@ -22,5 +22,11 @@ RUN cmake .. -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 && \
     make -j "$(nproc)" && \
     make install && \
     bin/UnitTests
+
+WORKDIR /app/ENV3
+RUN cd .. && \
+    pip3 install -r requirements.txt && \
+    pip3 install . && \
+    python3 -m pytest ./Tests/PythonTests
     
 WORKDIR /
