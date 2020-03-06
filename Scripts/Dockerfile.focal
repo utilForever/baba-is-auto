@@ -22,8 +22,9 @@ RUN cmake .. && \
     bin/UnitTests
 
 WORKDIR /app/ENV3
-RUN pip3 install -r ../requirements.txt && \
-    pip3 install .. && \
-    python3 -m pytest ../Tests/PythonTests/
+RUN cd .. && \
+    pip3 install -r requirements.txt && \
+    pip3 install . && \
+    python3 -m pytest ./Tests/PythonTests
     
 WORKDIR /
