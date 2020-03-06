@@ -32,11 +32,10 @@ baba-is-auto is Baba Is You simulator using C++ with some reinforcement learning
     * Properties
   * Worlds
     * Map editor
-    * Console simulator
     * GUI simulator
   * Reinforcement learning
-    * Connecting with PyTorch C++ API
-    * Applying DQN and so on
+    * Add environment with OpenAI gym
+    * Apply REINFORCE, DQN and so on
   * API Support
     * Python
 
@@ -95,7 +94,7 @@ You can contact me via e-mail (utilForever at gmail.com). I am always happy to a
 
 The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2019 [Chris Ohk](http://www.github.com/utilForever) and [Hyojang Kim](https://github.com/biru100).
+Copyright &copy; 2020 [Chris Ohk](http://www.github.com/utilForever).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
