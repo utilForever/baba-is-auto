@@ -31,6 +31,10 @@ class Game
     //! \return A map object.
     Map& GetMap();
 
+    //! Gets a map object.
+    //! \return A map object.
+    const Map& GetMap() const;
+
     //! Gets a rule manager object.
     //! \return A rule manager object.
     RuleManager& GetRuleManager();

@@ -22,6 +22,11 @@ Map& Game::GetMap()
     return m_map;
 }
 
+const Map& Game::GetMap() const
+{
+    return m_map;
+}
+
 RuleManager& Game::GetRuleManager()
 {
     return m_ruleManager;
