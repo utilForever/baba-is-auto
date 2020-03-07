@@ -22,6 +22,7 @@ include_directories(Extensions/BabaPython/Includes)
 include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
 include_directories(Libraries/pybind11/include)
+include_directories(Libraries/random/include)
 
 # Compile options
 include(CMake/CompileOptions.cmake)
