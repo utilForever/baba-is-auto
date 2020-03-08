@@ -69,7 +69,7 @@ void Game::ParseRules()
     {
         for (std::size_t x = 0; x < width; ++x)
         {
-            m_map.At(x, y).isRule = false;
+            m_map.At(y, x).isRule = false;
 
             ParseRule(y, x, RuleDirection::HORIZONTAL);
             ParseRule(y, x, RuleDirection::VERTICAL);
