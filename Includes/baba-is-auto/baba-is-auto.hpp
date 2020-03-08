@@ -7,6 +7,7 @@
 #ifndef BABA_IS_AUTO_HPP
 #define BABA_IS_AUTO_HPP
 
+#include <baba-is-auto/Agents/IAgent.hpp>
 #include <baba-is-auto/Enums/GameEnums.hpp>
 #include <baba-is-auto/Enums/RuleEnums.hpp>
 #include <baba-is-auto/Games/Game.hpp>
