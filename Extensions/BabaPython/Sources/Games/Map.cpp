@@ -22,6 +22,11 @@ void AddMap(pybind11::module& m)
         .def("Load", &Map::Load)
         .def("AddObject", &Map::AddObject)
         .def("RemoveObject", &Map::RemoveObject)
-        .def("At", &Map::At)
+        .def("At",
+             static_cast<Object& (Map::*)(std::size_t, std::size_t)>(&Map::At))
+        .def(
+            "At",
+            static_cast<const Object& (Map::*)(std::size_t, std::size_t) const>(
+                &Map::At))
         .def("GetPositions", &Map::GetPositions);
 }
