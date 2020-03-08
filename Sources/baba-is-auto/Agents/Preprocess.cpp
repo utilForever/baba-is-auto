@@ -40,13 +40,20 @@ std::vector<float> Preprocess::StateToTensor(const Game& game)
 
             if (!objs.empty())
             {
+                bool isTextType = false;
+
                 for (auto& obj : objs)
                 {
                     tensor[ToIndex(x, y, TENSOR_DIM_MAP[obj])] = 1.0f;
+
+                    if (IsTextType(obj))
+                    {
+                        isTextType = true;
+                    }
                 }
 
                 tensor[ToIndex(x, y, TENSOR_DIM - 2)] =
-                    IsTextType(objs[0]) ? 1.0f : 0.0f;
+                    isTextType ? 1.0f : 0.0f;
                 tensor[ToIndex(x, y, TENSOR_DIM - 1)] =
                     game.GetMap().At(y, x).isRule ? 1.0f : 0.0f;
             }
