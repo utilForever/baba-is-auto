@@ -22,6 +22,11 @@ Map& Game::GetMap()
     return m_map;
 }
 
+const Map& Game::GetMap() const
+{
+    return m_map;
+}
+
 RuleManager& Game::GetRuleManager()
 {
     return m_ruleManager;
@@ -64,6 +69,14 @@ void Game::ParseRules()
     {
         for (std::size_t x = 0; x < width; ++x)
         {
+            m_map.At(y, x).isRule = false;
+        }
+    }
+
+    for (std::size_t y = 0; y < height; ++y)
+    {
+        for (std::size_t x = 0; x < width; ++x)
+        {
             ParseRule(y, x, RuleDirection::HORIZONTAL);
             ParseRule(y, x, RuleDirection::VERTICAL);
         }
@@ -91,6 +104,10 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
         {
             m_ruleManager.AddRule({ m_map.At(row, col), m_map.At(row, col + 1),
                                     m_map.At(row, col + 2) });
+
+            m_map.At(row, col).isRule = true;
+            m_map.At(row, col + 1).isRule = true;
+            m_map.At(row, col + 2).isRule = true;
         }
     }
     else if (direction == RuleDirection::VERTICAL)
@@ -107,6 +124,10 @@ void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
         {
             m_ruleManager.AddRule({ m_map.At(row, col), m_map.At(row + 1, col),
                                     m_map.At(row + 2, col) });
+
+            m_map.At(row, col).isRule = true;
+            m_map.At(row + 1, col).isRule = true;
+            m_map.At(row + 2, col).isRule = true;
         }
     }
 }

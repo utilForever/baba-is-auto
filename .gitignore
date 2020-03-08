@@ -31,3 +31,6 @@ cmake-build-debug
 # Python files
 *.pyc
 /.pytest_cache
+
+# RL files
+events.out.tfevents.*

@@ -30,6 +30,14 @@ enum class ObjectType
 #undef X
 };
 
+//! Checks \p type is text type.
+//! \param type The object type.
+//! \return The flag that indicates it is text type.
+constexpr bool IsTextType(ObjectType type)
+{
+    return type < ObjectType::ICON_TYPE;
+}
+
 //! Checks \p type is noun type.
 //! \param type The object type.
 //! \return The flag that indicates it is noun type.

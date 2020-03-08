@@ -57,7 +57,12 @@ void Map::RemoveObject(std::size_t row, std::size_t col, ObjectType type)
     m_objects.at(row * m_width + col).Remove(type);
 }
 
-Object Map::At(std::size_t row, std::size_t col) const
+Object& Map::At(std::size_t row, std::size_t col)
+{
+    return m_objects.at(row * m_width + col);
+}
+
+const Object& Map::At(std::size_t row, std::size_t col) const
 {
     return m_objects.at(row * m_width + col);
 }
