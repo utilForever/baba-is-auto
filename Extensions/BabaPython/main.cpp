@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Agents/IAgent.hpp>
+#include <Agents/Preprocess.hpp>
 #include <Agents/RandomAgent.hpp>
 #include <Enums/GameEnums.hpp>
 #include <Enums/RuleEnums.hpp>
@@ -22,6 +23,7 @@ PYBIND11_MODULE(pyBaba, m)
         R"pbdoc(Baba Is You simulator with some reinforcement learning)pbdoc";
 
     AddIAgent(m);
+    AddPreprocess(m);
     AddRandomAgent(m);
 
     AddGameEnums(m);
