@@ -4,6 +4,7 @@
 // personal capacity and am not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <Agents/IAgent.hpp>
 #include <Enums/GameEnums.hpp>
 #include <Enums/RuleEnums.hpp>
 #include <Games/Game.hpp>
@@ -18,6 +19,8 @@ PYBIND11_MODULE(pyBaba, m)
 {
     m.doc() =
         R"pbdoc(Baba Is You simulator with some reinforcement learning)pbdoc";
+
+    AddIAgent(m);
 
     AddGameEnums(m);
     AddGameEnumUtils(m);
