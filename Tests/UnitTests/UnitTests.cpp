@@ -9,6 +9,8 @@
 
 #undef NEAR
 
+#include <baba-is-auto/Agents/Preprocess.hpp>
+#include <baba-is-auto/Agents/RandomAgent.hpp>
 #include <baba-is-auto/Games/Game.hpp>
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
@@ -99,4 +101,45 @@ TEST_CASE("RuleManager - Basic")
 
     ruleManager.RemoveRule(rule2);
     CHECK(ruleManager.GetNumRules() == 1);
+}
+
+TEST_CASE("Preprocess - Basic")
+{
+    Game game(MAPS_DIR "BabaIsYou.txt");
+
+    const std::vector<float> tensor = Preprocess::StateToTensor(game);
+    CHECK_EQ(tensor.size(), Preprocess::TENSOR_DIM * game.GetMap().GetWidth() *
+                                game.GetMap().GetHeight());
+
+    const auto ToIndex = [](std::size_t x, std::size_t y, std::size_t c) {
+        return (c * 9 * 11) + (y * 9) + x;
+    };
+
+    CHECK_EQ(tensor[ToIndex(0, 0, 0)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(1, 0, 1)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(2, 0, 2)], 1.0f);
+
+    CHECK_EQ(tensor[ToIndex(0, 0, 14)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(1, 0, 14)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(2, 0, 14)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(3, 0, 14)], 0.0f);
+
+    CHECK_EQ(tensor[ToIndex(0, 0, 15)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(1, 0, 15)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(2, 0, 15)], 1.0f);
+    CHECK_EQ(tensor[ToIndex(3, 0, 15)], 0.0f);
+}
+
+TEST_CASE("RandomAgent - Basic")
+{
+    const Game game(MAPS_DIR "BabaIsYou.txt");
+
+    RandomAgent agent;
+
+    std::vector<Direction> actions = { Direction::UP, Direction::DOWN,
+                                       Direction::LEFT, Direction::RIGHT,
+                                       Direction::NONE };
+    const Direction action = agent.GetAction(game);
+
+    CHECK_NE(std::find(begin(actions), end(actions), action), end(actions));
 }
