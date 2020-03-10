@@ -44,6 +44,7 @@ void AddGameEnums(pybind11::module& m)
 
 void AddGameEnumUtils(pybind11::module& m)
 {
+    m.def("IsTextType", IsTextType);
     m.def("IsNounType", IsNounType);
     m.def("IsOpType", IsOpType);
     m.def("IsVerbType", IsVerbType);
