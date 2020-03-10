@@ -28,11 +28,11 @@ def test_game_basic():
     game.MovePlayer(pyBaba.Direction.RIGHT)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_BABA)
-    assert game.GetMap().At(3, 3).HasType(pyBaba.ObjectType.ICON_EMPTY)
+    assert game.GetMap().At(3, 3).HasType(pyBaba.ObjectType.ICON_TILE)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     assert game.GetMap().At(3, 5).HasType(pyBaba.ObjectType.ICON_BABA)
     assert game.GetMap().At(3, 6).HasType(pyBaba.ObjectType.ICON_ROCK)
-    assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_EMPTY)
+    assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_TILE)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     game.MovePlayer(pyBaba.Direction.DOWN)
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING
