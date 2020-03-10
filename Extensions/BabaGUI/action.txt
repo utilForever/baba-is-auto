@@ -1,0 +1,4 @@
+Direction.RIGHT
+Direction.RIGHT
+Direction.RIGHT
+Direction.DOWN
