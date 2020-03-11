@@ -1,6 +1,7 @@
 import pygame
 import pyBaba
 import config
+from gif_image import GIFImage
 
 
 class SpriteLoader:
@@ -12,9 +13,9 @@ class SpriteLoader:
                             pyBaba.ObjectType.ICON_TILE: 'TILE'}
 
         for i in self.icon_images:
-            self.icon_images[i] = pygame.transform.scale(pygame.image.load(
-                './sprites/icon/{}.gif'.format(self.icon_images[i])),
-                (config.BLOCK_SIZE, config.BLOCK_SIZE))
+            self.icon_images[i] = GIFImage(
+                './sprites/icon/{}.gif'.format(self.icon_images[i]))
+            self.icon_images[i].scale(1.0)
 
         self.text_images = {pyBaba.ObjectType.BABA: 'BABA',
                             pyBaba.ObjectType.IS: 'IS',
@@ -27,9 +28,9 @@ class SpriteLoader:
                             pyBaba.ObjectType.PUSH: 'PUSH'}
 
         for i in self.text_images:
-            self.text_images[i] = pygame.transform.scale(pygame.image.load(
-                './sprites/text/{}.gif'.format(self.text_images[i])),
-                (config.BLOCK_SIZE, config.BLOCK_SIZE))
+            self.text_images[i] = GIFImage(
+                './sprites/text/{}.gif'.format(self.text_images[i]))
+            self.text_images[i].scale(1.0)
 
 
 sprite_loader = SpriteLoader()

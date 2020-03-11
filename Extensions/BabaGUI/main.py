@@ -1,7 +1,6 @@
 import pygame
 import pyBaba
 import config
-import sprite_loader
 import sys
 
 game = pyBaba.Game("../../Resources/Maps/BabaIsYou.txt")
@@ -10,6 +9,7 @@ screen_size = (game.GetMap().GetWidth() * config.BLOCK_SIZE,
 screen = pygame.display.set_mode(
     (screen_size[0], screen_size[1]), pygame.DOUBLEBUF)
 
+import sprite_loader
 
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(y_pos, x_pos)
@@ -21,10 +21,8 @@ def draw_obj(x_pos, y_pos):
             if obj_type == pyBaba.ObjectType.ICON_EMPTY:
                 continue
             obj_image = sprite_loader.sprite_loader.icon_images[obj_type]
-        obj_rect = obj_image.get_rect()
-        obj_rect.topleft = (x_pos * config.BLOCK_SIZE,
-                            y_pos * config.BLOCK_SIZE)
-        screen.blit(obj_image, obj_rect)
+        obj_image.render(screen, (x_pos * config.BLOCK_SIZE,
+                                  y_pos * config.BLOCK_SIZE))
 
 
 def draw():
