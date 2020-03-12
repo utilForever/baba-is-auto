@@ -1,4 +1,3 @@
-import pygame
 import pyBaba
 import config
 from gif_image import GIFImage
@@ -31,6 +30,3 @@ class SpriteLoader:
             self.text_images[i] = GIFImage(
                 './sprites/text/{}.gif'.format(self.text_images[i]))
             self.text_images[i].scale(1.0)
-
-
-sprite_loader = SpriteLoader()

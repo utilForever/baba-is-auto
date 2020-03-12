@@ -9,17 +9,18 @@ screen_size = (game.GetMap().GetWidth() * config.BLOCK_SIZE,
                game.GetMap().GetHeight() * config.BLOCK_SIZE)
 screen = pygame.display.set_mode(
     (screen_size[0], screen_size[1]), pygame.DOUBLEBUF)
+sprite_loader = sprites.SpriteLoader()
 
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(y_pos, x_pos)
 
     for obj_type in objects.GetTypes():
         if pyBaba.IsTextType(obj_type):
-            obj_image = sprite_loader.sprite_loader.text_images[obj_type]
+            obj_image = sprite_loader.text_images[obj_type]
         else:
             if obj_type == pyBaba.ObjectType.ICON_EMPTY:
                 continue
-            obj_image = sprite_loader.sprite_loader.icon_images[obj_type]
+            obj_image = sprite_loader.icon_images[obj_type]
         obj_image.render(screen, (x_pos * config.BLOCK_SIZE,
                                   y_pos * config.BLOCK_SIZE))
 
