@@ -2,14 +2,13 @@ import pygame
 import pyBaba
 import config
 import sys
+import sprites
 
 game = pyBaba.Game("../../Resources/Maps/BabaIsYou.txt")
 screen_size = (game.GetMap().GetWidth() * config.BLOCK_SIZE,
                game.GetMap().GetHeight() * config.BLOCK_SIZE)
 screen = pygame.display.set_mode(
     (screen_size[0], screen_size[1]), pygame.DOUBLEBUF)
-
-import sprite_loader
 
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(y_pos, x_pos)
