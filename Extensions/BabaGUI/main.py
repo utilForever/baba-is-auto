@@ -11,6 +11,7 @@ screen = pygame.display.set_mode(
     (screen_size[0], screen_size[1]), pygame.DOUBLEBUF)
 sprite_loader = sprites.SpriteLoader()
 
+
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(y_pos, x_pos)
 

@@ -1,6 +1,6 @@
 import pyBaba
 import config
-from gif_image import GIFImage
+from images import GIFImage
 
 
 class SpriteLoader:
