@@ -23,7 +23,6 @@ class BabaEnv(gym.Env):
         ]
 
         self.action_size = len(self.action_space)
-
         self.seed()
 
     def seed(self, seed=None):
@@ -64,7 +63,8 @@ class BabaEnv(gym.Env):
 
 class BabaEnvBabaIsYou(BabaEnv):
     def __init__(self):
-        super(BabaEnvBabaIsYou, self).__init__("../../Resources/Maps/BabaIsYou.txt")
+        super(BabaEnvBabaIsYou, self).__init__(
+            "../../Resources/Maps/BabaIsYou.txt")
 
 
 register(

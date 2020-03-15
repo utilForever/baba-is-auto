@@ -32,6 +32,7 @@ class SpriteLoader:
                 './sprites/text/{}.gif'.format(self.text_images[i]))
             self.text_images[i].scale(1.0)
 
+
 class ResultImage(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -39,11 +40,13 @@ class ResultImage(pygame.sprite.Sprite):
     def update(self, status, screen_size):
         if status == pyBaba.PlayState.WON:
             self.size = max(screen_size[0], screen_size[1]) // 2
-            self.image = pygame.transform.scale(pygame.image.load('./sprites/won.png'), (self.size, self.size))
+            self.image = pygame.transform.scale(pygame.image.load(
+                './sprites/won.png'), (self.size, self.size))
             self.rect = self.image.get_rect()
             self.rect.center = (screen_size[0] // 2, screen_size[1] // 2)
         else:
             self.size = max(screen_size[0], screen_size[1]) // 2
-            self.image = pygame.transform.scale(pygame.image.load('./sprites/lost.png'), (self.size, self.size))
+            self.image = pygame.transform.scale(pygame.image.load(
+                './sprites/lost.png'), (self.size, self.size))
             self.rect = self.image.get_rect()
             self.rect.center = (screen_size[0] // 2, screen_size[1] // 2)
