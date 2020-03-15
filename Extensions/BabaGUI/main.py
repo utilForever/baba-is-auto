@@ -11,6 +11,9 @@ screen = pygame.display.set_mode(
     (screen_size[0], screen_size[1]), pygame.DOUBLEBUF)
 sprite_loader = sprites.SpriteLoader()
 
+result_image = sprites.ResultImage()
+result_image_group = pygame.sprite.Group()
+result_image_group.add(result_image)
 
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(y_pos, x_pos)
@@ -56,6 +59,14 @@ if __name__ == '__main__':
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         sys.exit()
+            if game.GetPlayState() == pyBaba.PlayState.WON:
+                result_image_group.update(pyBaba.PlayState.WON, screen_size)
+                result_image_group.draw(screen)
+            else:
+                result_image_group.update(pyBaba.PlayState.LOST, screen_size)
+                result_image_group.draw(screen)
+            pygame.display.flip()
+            continue
 
         for event in pygame.event.get():
             if event.type == pygame.USEREVENT:
