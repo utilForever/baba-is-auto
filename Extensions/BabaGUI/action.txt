@@ -2,3 +2,9 @@ Direction.RIGHT
 Direction.RIGHT
 Direction.RIGHT
 Direction.DOWN
+Direction.RIGHT
+Direction.RIGHT
+Direction.RIGHT
+Direction.RIGHT
+Direction.RIGHT
+Direction.UP
