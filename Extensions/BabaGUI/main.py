@@ -15,6 +15,7 @@ result_image = sprites.ResultImage()
 result_image_group = pygame.sprite.Group()
 result_image_group.add(result_image)
 
+
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(y_pos, x_pos)
 
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     pygame.font.init()
 
     action_dic = {"Direction.UP": pyBaba.Direction.UP, "Direction.DOWN": pyBaba.Direction.DOWN,
-                  "Direction:LEFT": pyBaba.Direction.LEFT, "Direction.RIGHT": pyBaba.Direction.RIGHT, "Direction.NONE": pyBaba.Direction.NONE}
+                  "Direction.LEFT": pyBaba.Direction.LEFT, "Direction.RIGHT": pyBaba.Direction.RIGHT, "Direction.NONE": pyBaba.Direction.NONE}
     action_file = open("./action.txt", 'r')
     actions = action_file.read().splitlines()
     action_file.close()
