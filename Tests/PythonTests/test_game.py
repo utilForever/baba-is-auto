@@ -28,11 +28,11 @@ def test_game_basic():
     game.MovePlayer(pyBaba.Direction.RIGHT)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_BABA)
-    assert game.GetMap().At(3, 3).HasType(pyBaba.ObjectType.ICON_EMPTY)
+    assert game.GetMap().At(3, 3).HasType(pyBaba.ObjectType.ICON_TILE)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     assert game.GetMap().At(3, 5).HasType(pyBaba.ObjectType.ICON_BABA)
     assert game.GetMap().At(3, 6).HasType(pyBaba.ObjectType.ICON_ROCK)
-    assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_EMPTY)
+    assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_TILE)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     game.MovePlayer(pyBaba.Direction.DOWN)
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING
@@ -40,6 +40,12 @@ def test_game_basic():
     game.MovePlayer(pyBaba.Direction.RIGHT)
     game.MovePlayer(pyBaba.Direction.RIGHT)
     assert game.GetPlayState() == pyBaba.PlayState.WON
+    game.Reset()
+    assert game.GetMap().At(4, 1).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(4, 9).HasType(pyBaba.ObjectType.ICON_FLAG)
+    assert game.GetRuleManager().GetNumRules() == 4
+    assert game.GetPlayerIcon() == pyBaba.ObjectType.ICON_BABA
+    assert game.GetPlayState() == pyBaba.PlayState.PLAYING
 
 def test_game_lost():
     game = pyBaba.Game("Resources/Maps/SimpleMap.txt")

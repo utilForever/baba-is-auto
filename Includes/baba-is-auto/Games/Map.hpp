@@ -33,6 +33,9 @@ class Map
     //! \param height The size of the height.
     Map(std::size_t width, std::size_t height);
 
+    //! Resets map data.
+    void Reset();
+
     //! Gets the width of the map.
     //! \return The width of the map.
     std::size_t GetWidth() const;
@@ -78,6 +81,7 @@ class Map
     std::size_t m_width = 0;
     std::size_t m_height = 0;
 
+    std::vector<Object> m_initObjects;
     std::vector<Object> m_objects;
 };
 }  // namespace baba_is_auto

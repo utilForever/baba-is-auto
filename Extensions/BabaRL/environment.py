@@ -4,27 +4,30 @@ from gym.envs.registration import register
 import numpy as np
 
 import pyBaba
+import rendering
 
 
 class BabaEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, path):
+    def __init__(self, enable_render=True):
         super(BabaEnv, self).__init__()
 
-        self.path = path
+        self.path = '../../Resources/Maps/BabaIsYou.txt'
+        self.game = pyBaba.Game(self.path)
+        self.renderer = rendering.Renderer(self.game)
 
         self.action_space = [
             pyBaba.Direction.UP,
             pyBaba.Direction.DOWN,
             pyBaba.Direction.LEFT,
-            pyBaba.Direction.RIGHT,
-            pyBaba.Direction.NONE
+            pyBaba.Direction.RIGHT
         ]
 
         self.action_size = len(self.action_space)
 
         self.seed()
+        self.reset()
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -32,10 +35,10 @@ class BabaEnv(gym.Env):
         return [seed]
 
     def reset(self):
-        self.game = pyBaba.Game(self.path)
+        self.game.Reset()
         self.done = False
 
-        return self._get_obs()
+        return self.get_obs()
 
     def step(self, action):
         self.game.MovePlayer(action)
@@ -49,27 +52,25 @@ class BabaEnv(gym.Env):
             self.done = True
             reward = 200
         else:
-            reward = -0.1
+            reward = -0.5
 
-        return self._get_obs(), reward, self.done, {}
+        return self.get_obs(), reward, self.done, {}
 
     def render(self, mode='human', close=False):
-        pass
+        if close:
+            self.renderer.quit_game()
 
-    def _get_obs(self):
+        return self.renderer.render(self.game.GetMap(), mode)
+
+    def get_obs(self):
         return np.array(
             pyBaba.Preprocess.StateToTensor(self.game),
             dtype=np.float32).reshape(-1, self.game.GetMap().GetHeight(), self.game.GetMap().GetWidth())
 
 
-class BabaEnvBabaIsYou(BabaEnv):
-    def __init__(self):
-        super(BabaEnvBabaIsYou, self).__init__("../../Resources/Maps/BabaIsYou.txt")
-
-
 register(
     id='baba-babaisyou-v0',
-    entry_point='environment:BabaEnvBabaIsYou',
-    max_episode_steps=1000,
+    entry_point='environment:BabaEnv',
+    max_episode_steps=200,
     nondeterministic=True
 )

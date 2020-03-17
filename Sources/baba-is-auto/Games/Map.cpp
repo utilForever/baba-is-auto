@@ -13,13 +13,21 @@ namespace baba_is_auto
 Map::Map(std::size_t width, std::size_t height)
     : m_width(width), m_height(height)
 {
+    m_initObjects.reserve(m_width * m_height);
     m_objects.reserve(m_width * m_height);
 
     for (std::size_t i = 0; i < m_width * m_height; ++i)
     {
+        m_initObjects.emplace_back(
+            std::vector<ObjectType>{ ObjectType::ICON_EMPTY });
         m_objects.emplace_back(
             std::vector<ObjectType>{ ObjectType::ICON_EMPTY });
     }
+}
+
+void Map::Reset()
+{
+    m_objects = m_initObjects;
 }
 
 std::size_t Map::GetWidth() const
@@ -42,6 +50,9 @@ void Map::Load(std::string_view filename)
     for (std::size_t i = 0; i < m_width * m_height; ++i)
     {
         mapFile >> val;
+
+        m_initObjects.emplace_back(
+            std::vector<ObjectType>{ static_cast<ObjectType>(val) });
         m_objects.emplace_back(
             std::vector<ObjectType>{ static_cast<ObjectType>(val) });
     }

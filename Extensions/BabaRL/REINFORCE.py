@@ -5,13 +5,14 @@ from torch.distributions import Categorical
 
 import copy
 
-from environment import BabaEnvBabaIsYou
+import gym
+import environment
 import pyBaba
 
 from tensorboardX import SummaryWriter
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-env = BabaEnvBabaIsYou()
+env = gym.make('baba-babaisyou-v0')
 
 
 class Network(nn.Module):
@@ -23,7 +24,7 @@ class Network(nn.Module):
         self.conv3 = nn.Conv2d(128, 128, 3, padding=1)
         self.conv4 = nn.Conv2d(128, 128, 3, padding=1)
         self.conv5 = nn.Conv2d(128, 1, 1, padding=0)
-        self.fc = nn.Linear(99, 5)
+        self.fc = nn.Linear(99, 4)
 
         self.log_probs = []
         self.rewards = []
@@ -96,10 +97,13 @@ if __name__ == '__main__':
         state = env.reset().reshape(1, -1, 9, 11)
 
         step = 0
-        while step < 3000:
+        while step < 200:
             global_step += 1
 
             action = get_action(state)
+
+            env.render()
+
             next_state, reward, done, _ = env.step(action)
             next_state = next_state.reshape(1, -1, 9, 11)
 
