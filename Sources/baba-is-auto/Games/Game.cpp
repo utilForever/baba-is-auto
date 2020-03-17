@@ -17,6 +17,15 @@ Game::Game(std::string_view filename)
     m_playState = PlayState::PLAYING;
 }
 
+void Game::Reset()
+{
+    m_map.Reset();
+
+    ParseRules();
+
+    m_playState = PlayState::PLAYING;
+}
+
 Map& Game::GetMap()
 {
     return m_map;

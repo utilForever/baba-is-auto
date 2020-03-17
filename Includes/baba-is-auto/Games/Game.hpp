@@ -27,6 +27,9 @@ class Game
     //! \param filename The file name to load a map.
     explicit Game(std::string_view filename);
 
+    //! Resets map and rule data.
+    void Reset();
+
     //! Gets a map object.
     //! \return A map object.
     Map& GetMap();
