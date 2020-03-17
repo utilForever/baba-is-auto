@@ -68,10 +68,7 @@ class Renderer():
                     self.quit_game()
 
     def quit_game(self):
-        try:
-            self.game_over = True
-            if self.enable_render is True:
-                pygame.display.quit()
-            pygame.quit()
-        except Exception:
-            pass
+        self.game_over = True
+        if self.enable_render is True:
+            pygame.display.quit()
+        pygame.quit()

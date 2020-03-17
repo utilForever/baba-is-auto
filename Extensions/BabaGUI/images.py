@@ -3,7 +3,7 @@
 import PIL
 from PIL import Image
 import pygame
-from pygame.locals import *
+from pygame.locals import SRCALPHA
 import time
 
 
@@ -58,7 +58,9 @@ class GIFImage(object):
             while 1:
                 try:
                     duration = image.info["duration"]
-                except:
+                except Exception as e:
+                    print("Error '{0}' occurred. Arguments {1}.",
+                          e.message, e.args)
                     duration = 100
 
                 duration *= .001  # convert to milliseconds!
