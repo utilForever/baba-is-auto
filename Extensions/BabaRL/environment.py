@@ -14,7 +14,8 @@ class BabaEnv(gym.Env):
         super(BabaEnv, self).__init__()
 
         self.path = '../../Resources/Maps/BabaIsYou.txt'
-        self.enable_render = enable_render
+        self.game = pyBaba.Game(self.path)
+        self.renderer = rendering.Renderer(self.game)
 
         self.action_space = [
             pyBaba.Direction.UP,
@@ -34,8 +35,7 @@ class BabaEnv(gym.Env):
         return [seed]
 
     def reset(self):
-        self.game = pyBaba.Game(self.path)
-        self.renderer = rendering.Renderer(self.game)
+        self.game.Reset()
         self.done = False
 
         return self.get_obs()

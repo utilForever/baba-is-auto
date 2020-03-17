@@ -7,18 +7,22 @@ COLOR_BACKGROUND = pygame.Color(0, 0, 0)
 
 
 class Renderer():
-    def __init__(self, game):
+    def __init__(self, game, enable_render=True):
         pygame.init()
         pygame.display.set_caption('OpenAI Gym - baba-babaisyou-v0')
 
         self.game = game
-        self.screen_size = (game.GetMap().GetWidth() * BLOCK_SIZE,
-                            game.GetMap().GetHeight() * BLOCK_SIZE)
-        self.screen = pygame.display.set_mode(
-            (self.screen_size[0], self.screen_size[1]), pygame.DOUBLEBUF)
+        self.game_over = False
+        self.enable_render = enable_render
 
-        self.sprite_loader = sprites.SpriteLoader()
-        self.draw(game.GetMap())
+        if self.enable_render is True:
+            self.screen_size = (game.GetMap().GetWidth() * BLOCK_SIZE,
+                                game.GetMap().GetHeight() * BLOCK_SIZE)
+            self.screen = pygame.display.set_mode(
+                (self.screen_size[0], self.screen_size[1]), pygame.DOUBLEBUF)
+
+            self.sprite_loader = sprites.SpriteLoader()
+            self.draw(game.GetMap())
 
     def draw_obj(self, map, x_pos, y_pos):
         objects = map.At(y_pos, x_pos)
@@ -40,6 +44,34 @@ class Renderer():
                 self.draw_obj(map, x_pos, y_pos)
 
     def render(self, map, mode='human'):
-        if mode == 'human':
-            self.draw(map)
-            pygame.display.flip()
+        try:
+            if not self.game_over:
+                self.draw(map)
+
+                if mode == 'human':
+                    self.draw(map)
+                    pygame.display.flip()
+
+            self.process_event()
+        except Exception as e:
+            self.game_over = True
+            self.quit_game()
+            raise e
+        else:
+            pass
+
+    def process_event(self):
+        if not self.game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game_over = True
+                    self.quit_game()
+
+    def quit_game(self):
+        try:
+            self.game_over = True
+            if self.enable_render is True:
+                pygame.display.quit()
+            pygame.quit()
+        except Exception:
+            pass
