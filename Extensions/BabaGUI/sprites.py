@@ -1,6 +1,5 @@
 import pygame
 import pyBaba
-import config
 from images import GIFImage
 
 

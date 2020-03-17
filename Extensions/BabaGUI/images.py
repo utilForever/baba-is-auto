@@ -1,6 +1,5 @@
 # Original code from https://github.com/nicksandau/GIFImage_ext/blob/master/GIFImage_ext.py
 
-import PIL
 from PIL import Image
 import pygame
 from pygame.locals import SRCALPHA
