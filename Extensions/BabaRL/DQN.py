@@ -70,7 +70,7 @@ GAMMA = 0.99
 EPSILON = 0.9
 EPSILON_DECAY = 0.99
 MIN_EPSILON = 0.01
-TARGET_UPDATE = 10
+TARGET_UPDATE = 1
 
 net = Network().to(device)
 target_net = Network().to(device)
@@ -97,7 +97,7 @@ def train():
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
 
-    actions = tuple((map(lambda a: torch.tensor([[int(a)]]), batch.action)))
+    actions = tuple((map(lambda a: torch.tensor([[int(a) - 1]]), batch.action)))
     rewards = tuple(
         (map(lambda r: torch.tensor([r], dtype=torch.float32), batch.reward)))
 
@@ -161,6 +161,7 @@ if __name__ == '__main__':
             step += 1
 
             train()
+            
             if env.done:
                 break
 
