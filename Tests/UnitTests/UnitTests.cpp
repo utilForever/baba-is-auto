@@ -58,6 +58,13 @@ TEST_CASE("Game - Basic")
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::RIGHT);
     CHECK(game.GetPlayState() == PlayState::WON);
+
+    game.Reset();
+    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(4, 9).HasType(ObjectType::ICON_FLAG));
+    CHECK(game.GetRuleManager().GetNumRules() == 4);
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
 }
 
 TEST_CASE("Game - Lost")
