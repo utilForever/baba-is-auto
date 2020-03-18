@@ -21,34 +21,34 @@ TEST_CASE("Game - Basic")
 {
     Game game(MAPS_DIR "BabaIsYou.txt");
 
-    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_BABA));
-    CHECK(game.GetMap().At(4, 9).HasType(ObjectType::ICON_FLAG));
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(9, 4).HasType(ObjectType::ICON_FLAG));
     CHECK(game.GetRuleManager().GetNumRules() == 4);
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
 
     auto pos = game.GetMap().GetPositions(game.GetPlayerIcon());
     CHECK(pos.size() == 1);
-    CHECK(pos[0].first == 4);
-    CHECK(pos[0].second == 1);
+    CHECK(pos[0].first == 1);
+    CHECK(pos[0].second == 4);
 
     game.MovePlayer(Direction::UP);
-    CHECK(game.GetMap().At(3, 1).HasType(ObjectType::ICON_BABA));
-    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_EMPTY));
 
     game.MovePlayer(Direction::UP);
-    CHECK(game.GetMap().At(3, 1).HasType(ObjectType::ICON_BABA));
-    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 2).HasType(ObjectType::ICON_WALL));
 
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::RIGHT);
-    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(4, 3).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetMap().At(3, 3).HasType(ObjectType::ICON_TILE));
 
     game.MovePlayer(Direction::RIGHT);
-    CHECK(game.GetMap().At(3, 5).HasType(ObjectType::ICON_BABA));
-    CHECK(game.GetMap().At(3, 6).HasType(ObjectType::ICON_ROCK));
-    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_TILE));
+    CHECK(game.GetMap().At(5, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(6, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(4, 3).HasType(ObjectType::ICON_TILE));
 
     game.MovePlayer(Direction::RIGHT);
     game.MovePlayer(Direction::DOWN);
@@ -60,8 +60,8 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetPlayState() == PlayState::WON);
 
     game.Reset();
-    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_BABA));
-    CHECK(game.GetMap().At(4, 9).HasType(ObjectType::ICON_FLAG));
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(9, 4).HasType(ObjectType::ICON_FLAG));
     CHECK(game.GetRuleManager().GetNumRules() == 4);
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
     CHECK(game.GetPlayState() == PlayState::PLAYING);
@@ -71,7 +71,7 @@ TEST_CASE("Game - Lost")
 {
     Game game(MAPS_DIR "SimpleMap.txt");
 
-    CHECK(game.GetMap().At(2, 0).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(0, 2).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetRuleManager().GetNumRules() == 1);
     CHECK(game.GetPlayState() == PlayState::PLAYING);
 
@@ -84,9 +84,9 @@ TEST_CASE("Map - Basic")
 {
     Map map(5, 5);
 
-    map.AddObject(3, 4, ObjectType::BABA);
+    map.AddObject(4, 3, ObjectType::BABA);
     CHECK(map.At(3, 3).HasType(ObjectType::ICON_EMPTY));
-    CHECK(map.At(3, 4).HasType(ObjectType::BABA));
+    CHECK(map.At(4, 3).HasType(ObjectType::BABA));
 }
 
 TEST_CASE("RuleManager - Basic")
@@ -119,7 +119,7 @@ TEST_CASE("Preprocess - Basic")
                                 game.GetMap().GetHeight());
 
     const auto ToIndex = [](std::size_t x, std::size_t y, std::size_t c) {
-        return (c * 9 * 11) + (y * 9) + x;
+        return (c * 11 * 9) + (y * 11) + x;
     };
 
     CHECK_EQ(tensor[ToIndex(0, 0, 0)], 1.0f);
