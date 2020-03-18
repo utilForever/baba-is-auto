@@ -55,11 +55,11 @@ void Game::MovePlayer(Direction dir)
 {
     auto positions = GetMap().GetPositions(m_playerIcon);
 
-    for (auto& [row, col] : positions)
+    for (auto& [x, y] : positions)
     {
-        if (CanMove(row, col, dir))
+        if (CanMove(x, y, dir))
         {
-            ProcessMove(row, col, dir, m_playerIcon);
+            ProcessMove(x, y, dir, m_playerIcon);
         }
     }
 
@@ -78,7 +78,7 @@ void Game::ParseRules()
     {
         for (std::size_t x = 0; x < width; ++x)
         {
-            m_map.At(y, x).isRule = false;
+            m_map.At(x, y).isRule = false;
         }
     }
 
@@ -86,97 +86,95 @@ void Game::ParseRules()
     {
         for (std::size_t x = 0; x < width; ++x)
         {
-            ParseRule(y, x, RuleDirection::HORIZONTAL);
-            ParseRule(y, x, RuleDirection::VERTICAL);
+            ParseRule(x, y, RuleDirection::HORIZONTAL);
+            ParseRule(x, y, RuleDirection::VERTICAL);
         }
     }
 
     m_playerIcon = m_ruleManager.FindPlayer();
 }
 
-void Game::ParseRule(std::size_t row, std::size_t col, RuleDirection direction)
+void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
 {
     const std::size_t width = m_map.GetWidth();
     const std::size_t height = m_map.GetHeight();
 
     if (direction == RuleDirection::HORIZONTAL)
     {
-        if (col + 2 >= width)
+        if (x + 2 >= width)
         {
             return;
         }
 
-        if (m_map.At(row, col).HasNounType() &&
-            m_map.At(row, col + 1).HasVerbType() &&
-            (m_map.At(row, col + 2).HasNounType() ||
-             m_map.At(row, col + 2).HasPropertyType()))
+        if (m_map.At(x, y).HasNounType() && m_map.At(x + 1, y).HasVerbType() &&
+            (m_map.At(x + 2, y).HasNounType() ||
+             m_map.At(x + 2, y).HasPropertyType()))
         {
-            m_ruleManager.AddRule({ m_map.At(row, col), m_map.At(row, col + 1),
-                                    m_map.At(row, col + 2) });
+            m_ruleManager.AddRule(
+                { m_map.At(x, y), m_map.At(x + 1, y), m_map.At(x + 2, y) });
 
-            m_map.At(row, col).isRule = true;
-            m_map.At(row, col + 1).isRule = true;
-            m_map.At(row, col + 2).isRule = true;
+            m_map.At(x, y).isRule = true;
+            m_map.At(x + 1, y).isRule = true;
+            m_map.At(x + 2, y).isRule = true;
         }
     }
     else if (direction == RuleDirection::VERTICAL)
     {
-        if (row + 2 >= height)
+        if (y + 2 >= height)
         {
             return;
         }
 
-        if (m_map.At(row, col).HasNounType() &&
-            m_map.At(row + 1, col).HasVerbType() &&
-            (m_map.At(row + 2, col).HasNounType() ||
-             m_map.At(row + 2, col).HasPropertyType()))
+        if (m_map.At(x, y).HasNounType() && m_map.At(x, y + 1).HasVerbType() &&
+            (m_map.At(x, y + 2).HasNounType() ||
+             m_map.At(x, y + 2).HasPropertyType()))
         {
-            m_ruleManager.AddRule({ m_map.At(row, col), m_map.At(row + 1, col),
-                                    m_map.At(row + 2, col) });
+            m_ruleManager.AddRule(
+                { m_map.At(x, y), m_map.At(x, y + 1), m_map.At(x, y + 2) });
 
-            m_map.At(row, col).isRule = true;
-            m_map.At(row + 1, col).isRule = true;
-            m_map.At(row + 2, col).isRule = true;
+            m_map.At(x, y).isRule = true;
+            m_map.At(x, y + 1).isRule = true;
+            m_map.At(x, y + 2).isRule = true;
         }
     }
 }
 
-bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
+bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
 {
-    int row = static_cast<int>(_row);
-    int col = static_cast<int>(_col);
+    int _x = static_cast<int>(x);
+    int _y = static_cast<int>(y);
 
     const auto width = static_cast<int>(m_map.GetWidth());
     const auto height = static_cast<int>(m_map.GetHeight());
 
-    int dRow = 0, dCol = 0;
+    int dx = 0, dy = 0;
     if (dir == Direction::UP)
     {
-        dRow = -1;
+        dy = -1;
     }
     else if (dir == Direction::DOWN)
     {
-        dRow = 1;
+        dy = 1;
     }
     else if (dir == Direction::LEFT)
     {
-        dCol = -1;
+        dx = -1;
     }
     else if (dir == Direction::RIGHT)
     {
-        dCol = 1;
+        dx = 1;
     }
 
-    row += dRow;
-    col += dCol;
+    _x += dx;
+    _y += dy;
 
     // Check boundary
-    if (row < 0 || row >= height || col < 0 || col >= width)
+    if (_x < 0 || _x >= width || _y < 0 || _y >= height)
     {
         return false;
     }
 
-    const std::vector<ObjectType> types = m_map.At(row, col).GetTypes();
+    const std::vector<ObjectType> types = m_map.At(_x, _y).GetTypes();
 
     // Check the icon has property 'STOP'.
     if (m_ruleManager.HasProperty(types, ObjectType::STOP))
@@ -185,9 +183,9 @@ bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
     }
 
     if (m_ruleManager.HasProperty(types, ObjectType::PUSH) ||
-        m_map.At(row, col).HasTextType())
+        m_map.At(_x, _y).HasTextType())
     {
-        if (!CanMove(row, col, dir))
+        if (!CanMove(_x, _y, dir))
         {
             return false;
         }
@@ -196,34 +194,34 @@ bool Game::CanMove(std::size_t _row, std::size_t _col, Direction dir)
     return true;
 }
 
-void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
+void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
                        ObjectType type)
 {
-    int row = static_cast<int>(_row);
-    int col = static_cast<int>(_col);
+    int _x = static_cast<int>(x);
+    int _y = static_cast<int>(y);
 
-    int dRow = 0, dCol = 0;
+    int dx = 0, dy = 0;
     if (dir == Direction::UP)
     {
-        dRow = -1;
+        dy = -1;
     }
     else if (dir == Direction::DOWN)
     {
-        dRow = 1;
+        dy = 1;
     }
     else if (dir == Direction::LEFT)
     {
-        dCol = -1;
+        dx = -1;
     }
     else if (dir == Direction::RIGHT)
     {
-        dCol = 1;
+        dx = 1;
     }
 
-    row += dRow;
-    col += dCol;
+    _x += dx;
+    _y += dy;
 
-    const std::vector<ObjectType> types = m_map.At(row, col).GetTypes();
+    const std::vector<ObjectType> types = m_map.At(_x, _y).GetTypes();
 
     if (m_ruleManager.HasProperty(types, ObjectType::PUSH))
     {
@@ -232,16 +230,16 @@ void Game::ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
         for (auto& rule : rules)
         {
             const ObjectType nounType = std::get<0>(rule.objects).GetTypes()[0];
-            ProcessMove(row, col, dir, ConvertTextToIcon(nounType));
+            ProcessMove(_x, _y, dir, ConvertTextToIcon(nounType));
         }
     }
-    else if (m_map.At(row, col).HasTextType())
+    else if (m_map.At(_x, _y).HasTextType())
     {
-        ProcessMove(row, col, dir, types[0]);
+        ProcessMove(_x, _y, dir, types[0]);
     }
 
-    m_map.AddObject(row, col, type);
-    m_map.RemoveObject(_row, _col, type);
+    m_map.AddObject(_x, _y, type);
+    m_map.RemoveObject(x, y, type);
 }
 
 void Game::CheckPlayState()
