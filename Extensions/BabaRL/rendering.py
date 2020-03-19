@@ -25,7 +25,7 @@ class Renderer():
             self.draw(game.GetMap())
 
     def draw_obj(self, map, x_pos, y_pos):
-        objects = map.At(y_pos, x_pos)
+        objects = map.At(x_pos, y_pos)
 
         for obj_type in objects.GetTypes():
             if pyBaba.IsTextType(obj_type):

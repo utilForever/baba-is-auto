@@ -58,24 +58,24 @@ void Map::Load(std::string_view filename)
     }
 }
 
-void Map::AddObject(std::size_t row, std::size_t col, ObjectType type)
+void Map::AddObject(std::size_t x, std::size_t y, ObjectType type)
 {
-    m_objects.at(row * m_width + col).Add(type);
+    m_objects.at(y * m_width + x).Add(type);
 }
 
-void Map::RemoveObject(std::size_t row, std::size_t col, ObjectType type)
+void Map::RemoveObject(std::size_t x, std::size_t y, ObjectType type)
 {
-    m_objects.at(row * m_width + col).Remove(type);
+    m_objects.at(y * m_width + x).Remove(type);
 }
 
-Object& Map::At(std::size_t row, std::size_t col)
+Object& Map::At(std::size_t x, std::size_t y)
 {
-    return m_objects.at(row * m_width + col);
+    return m_objects.at(y * m_width + x);
 }
 
-const Object& Map::At(std::size_t row, std::size_t col) const
+const Object& Map::At(std::size_t x, std::size_t y) const
 {
-    return m_objects.at(row * m_width + col);
+    return m_objects.at(y * m_width + x);
 }
 
 std::vector<Position> Map::GetPositions(ObjectType type) const
@@ -86,9 +86,9 @@ std::vector<Position> Map::GetPositions(ObjectType type) const
     {
         for (std::size_t x = 0; x < m_width; ++x)
         {
-            if (At(y, x).HasType(type))
+            if (At(x, y).HasType(type))
             {
-                res.emplace_back(std::make_pair(y, x));
+                res.emplace_back(std::make_pair(x, y));
             }
         }
     }

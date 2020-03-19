@@ -49,28 +49,28 @@ class Map
     void Load(std::string_view filename);
 
     //! Adds an object to the map.
-    //! \param row The number of row.
-    //! \param col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \param type An object type to add to the map.
-    void AddObject(std::size_t row, std::size_t col, ObjectType type);
+    void AddObject(std::size_t x, std::size_t y, ObjectType type);
 
     //! Removes an object from the map.
-    //! \param row The number of row.
-    //! \param col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \param type An object type to remove from the map.
-    void RemoveObject(std::size_t row, std::size_t col, ObjectType type);
+    void RemoveObject(std::size_t x, std::size_t y, ObjectType type);
 
     //! Assigns an object to the map.
-    //! \param row The number of row.
-    //! \param col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \return An object at row and column.
-    Object& At(std::size_t row, std::size_t col);
+    Object& At(std::size_t x, std::size_t y);
 
     //! Assigns an object to the map.
-    //! \param row The number of row.
-    //! \param col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \return An object at row and column.
-    const Object& At(std::size_t row, std::size_t col) const;
+    const Object& At(std::size_t x, std::size_t y) const;
 
     //! Gets a list of icon positions.
     //! \param type An object type to get a list of positions.

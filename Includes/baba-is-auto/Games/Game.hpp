@@ -59,24 +59,24 @@ class Game
     void ParseRules();
 
     //! Parses a rule that satisfies the condition.
-    //! \param row The number of row.
-    //! \param col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \param direction The direction to check the rule.
-    void ParseRule(std::size_t row, std::size_t col, RuleDirection direction);
+    void ParseRule(std::size_t x, std::size_t y, RuleDirection direction);
 
     //! Checks an object can move.
-    //! \param _row The number of row.
-    //! \param _col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \param dir The direction to move.
     //! \return The flag indicates that an object can move.
-    bool CanMove(std::size_t _row, std::size_t _col, Direction dir);
+    bool CanMove(std::size_t x, std::size_t y, Direction dir);
 
     //! Processes the move of the player.
-    //! \param _row The number of row.
-    //! \param _col The number of column.
+    //! \param x The x position.
+    //! \param y The y position.
     //! \param dir The direction to move.
     //! \param type The object type to move.
-    void ProcessMove(std::size_t _row, std::size_t _col, Direction dir,
+    void ProcessMove(std::size_t x, std::size_t y, Direction dir,
                      ObjectType type);
 
     //! Checks the play state of the game.

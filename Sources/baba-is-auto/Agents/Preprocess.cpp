@@ -29,14 +29,14 @@ std::vector<float> Preprocess::StateToTensor(const Game& game)
 
     const auto ToIndex = [width, height](std::size_t x, std::size_t y,
                                          std::size_t c) {
-        return (c * width * height) + (y * height) + x;
+        return (c * width * height) + (y * width) + x;
     };
 
     for (std::size_t y = 0; y < height; ++y)
     {
         for (std::size_t x = 0; x < width; ++x)
         {
-            const auto objs = game.GetMap().At(y, x).GetTypes();
+            const auto objs = game.GetMap().At(x, y).GetTypes();
 
             if (!objs.empty())
             {
@@ -55,7 +55,7 @@ std::vector<float> Preprocess::StateToTensor(const Game& game)
                 tensor[ToIndex(x, y, TENSOR_DIM - 2)] =
                     isTextType ? 1.0f : 0.0f;
                 tensor[ToIndex(x, y, TENSOR_DIM - 1)] =
-                    game.GetMap().At(y, x).isRule ? 1.0f : 0.0f;
+                    game.GetMap().At(x, y).isRule ? 1.0f : 0.0f;
             }
         }
     }
