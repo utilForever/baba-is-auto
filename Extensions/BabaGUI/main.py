@@ -17,7 +17,7 @@ result_image_group.add(result_image)
 
 
 def draw_obj(x_pos, y_pos):
-    objects = game.GetMap().At(y_pos, x_pos)
+    objects = game.GetMap().At(x_pos, y_pos)
 
     for obj_type in objects.GetTypes():
         if pyBaba.IsTextType(obj_type):
