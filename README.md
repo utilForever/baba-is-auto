@@ -21,23 +21,34 @@ baba-is-auto is Baba Is You simulator using C++ with some reinforcement learning
 ## Key Features
 
   * C++17 based Baba Is You library
-  * Console and GUI simulator program
+  * Various RL environments based on OpenAI Gym
+  * GUI simulator using `pygame`
   * C++ and Python API
 
-## Implementation List
+## Environments
 
-  * Words and Objects
-    * Nouns
-    * Operators
-    * Properties
-  * Worlds
-    * Map editor
-    * GUI simulator
-  * Reinforcement learning
-    * Add environment with OpenAI gym
-    * Apply REINFORCE, DQN and so on
-  * API Support
-    * Python
+- Action Space
+  - UP
+  - DOWN
+  - LEFT
+  - RIGHT
+
+- Reward
+  - Failed : -100 points
+  - Solved : +200 points
+  - Each action : -0.5 points
+
+### [baba-babaisyou-v0](./Extensions/BabaRL/environment.py)
+
+<img src="./Medias/Levels/baba-babaisyou-v0.png" />
+
+#### Algorithms
+
+- [REINFORCE](./Extensions/BabaRL/REINFORCE.py)
+
+- [DQN](./Extensions/BabaRL/DQN.py)
+
+  <img src="./Medias/Results/baba-babaisyou-v0-DQN.png" />
 
 ## Quick Start
 
@@ -70,6 +81,14 @@ cmake .. -G"Visual Studio 15 2017 Win64"
 MSBuild baba-is-auto.sln /p:Configuration=Release
 ```
 
+### Python API
+
+Build and install the package by running
+
+```
+pip install -U .
+```
+
 ### Docker
 
 ```
@@ -87,6 +106,10 @@ Contributions are always welcome, either reporting issues/bugs or forking the re
 ## Contact
 
 You can contact me via e-mail (utilForever at gmail.com). I am always happy to answer questions or help with any issues you might have, and please be sure to share any additional work or your creations with me, I love seeing what other people are making.
+
+## Acknowledgement
+
+I would like to thank [Arvi "Hempuli" Teikari](https://hempuli.com/) for allowing me to develop this project.
 
 ## License
 
