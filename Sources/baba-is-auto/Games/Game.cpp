@@ -256,8 +256,14 @@ void Game::CheckPlayState()
         return;
     }
 
-    auto winRules = m_ruleManager.GetRules(ObjectType::WIN);
     auto positions = m_map.GetPositions(m_playerIcon);
+    if (positions.empty())
+    {
+        m_playState = PlayState::LOST;
+        return;
+    }
+
+    auto winRules = m_ruleManager.GetRules(ObjectType::WIN);
     for (auto& pos : positions)
     {
         for (auto& rule : winRules)
