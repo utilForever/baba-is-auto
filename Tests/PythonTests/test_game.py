@@ -9,7 +9,7 @@ property of any third parties.
 import pyBaba
 
 def test_game_basic():
-    game = pyBaba.Game("Resources/Maps/BabaIsYou.txt")
+    game = pyBaba.Game("Resources/Maps/baba_is_you.txt")
     assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_BABA)
     assert game.GetMap().At(9, 4).HasType(pyBaba.ObjectType.ICON_FLAG)
     assert game.GetRuleManager().GetNumRules() == 4
@@ -48,7 +48,7 @@ def test_game_basic():
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING
 
 def test_game_lost():
-    game = pyBaba.Game("Resources/Maps/SimpleMap.txt")
+    game = pyBaba.Game("Resources/Maps/simple_map.txt")
     assert game.GetMap().At(0, 2).HasType(pyBaba.ObjectType.ICON_BABA)
     assert game.GetRuleManager().GetNumRules() == 1
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING

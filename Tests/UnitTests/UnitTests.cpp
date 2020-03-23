@@ -19,7 +19,7 @@ using namespace baba_is_auto;
 
 TEST_CASE("Game - Basic")
 {
-    Game game(MAPS_DIR "BabaIsYou.txt");
+    Game game(MAPS_DIR "baba_is_you.txt");
 
     CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetMap().At(9, 4).HasType(ObjectType::ICON_FLAG));
@@ -69,7 +69,7 @@ TEST_CASE("Game - Basic")
 
 TEST_CASE("Game - Lost")
 {
-    Game game(MAPS_DIR "SimpleMap.txt");
+    Game game(MAPS_DIR "simple_map.txt");
 
     CHECK(game.GetMap().At(0, 2).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetRuleManager().GetNumRules() == 1);
@@ -112,7 +112,7 @@ TEST_CASE("RuleManager - Basic")
 
 TEST_CASE("Preprocess - Basic")
 {
-    Game game(MAPS_DIR "BabaIsYou.txt");
+    Game game(MAPS_DIR "baba_is_you.txt");
 
     const std::vector<float> tensor = Preprocess::StateToTensor(game);
     CHECK_EQ(tensor.size(), Preprocess::TENSOR_DIM * game.GetMap().GetWidth() *
@@ -139,7 +139,7 @@ TEST_CASE("Preprocess - Basic")
 
 TEST_CASE("RandomAgent - Basic")
 {
-    const Game game(MAPS_DIR "BabaIsYou.txt");
+    const Game game(MAPS_DIR "baba_is_you.txt");
 
     RandomAgent agent;
 
