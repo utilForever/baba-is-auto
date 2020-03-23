@@ -233,6 +233,11 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
             ProcessMove(_x, _y, dir, ConvertTextToIcon(nounType));
         }
     }
+    else if (m_ruleManager.HasProperty(types, ObjectType::SINK))
+    {
+        m_map.RemoveObject(x, y, type);
+        return;
+    }
     else if (m_map.At(_x, _y).HasTextType())
     {
         ProcessMove(_x, _y, dir, types[0]);
