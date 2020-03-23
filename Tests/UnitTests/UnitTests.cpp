@@ -80,6 +80,40 @@ TEST_CASE("Game - Lost")
     CHECK(game.GetPlayState() == PlayState::LOST);
 }
 
+TEST_CASE("Game - Sink")
+{
+    Game game(MAPS_DIR "out_of_reach.txt");
+
+    CHECK(game.GetMap().At(9, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetRuleManager().GetNumRules() == 5);
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
+
+    game.MovePlayer(Direction::UP);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::DOWN);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::UP);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::DOWN);
+    game.MovePlayer(Direction::DOWN);
+    game.MovePlayer(Direction::DOWN);
+
+    CHECK(game.GetMap().At(10, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(10, 6).HasType(ObjectType::ICON_ROCK));
+
+    game.MovePlayer(Direction::DOWN);
+
+    CHECK(game.GetMap().At(10, 6).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(10, 7).HasType(ObjectType::ICON_ROCK));
+
+    game.MovePlayer(Direction::DOWN);
+    CHECK(game.GetPlayState() == PlayState::LOST);
+}
+
 TEST_CASE("Map - Basic")
 {
     Map map(5, 5);
