@@ -81,6 +81,6 @@ def test_game_sink():
     assert game.GetMap().At(10, 6).HasType(pyBaba.ObjectType.ICON_ROCK)
     game.MovePlayer(pyBaba.Direction.DOWN)
     assert game.GetMap().At(10, 6).HasType(pyBaba.ObjectType.ICON_BABA)
-    assert game.GetMap().At(10, 7).HasType(pyBaba.ObjectType.ICON_ROCK) == False
+    assert game.GetMap().At(10, 7).HasType(pyBaba.ObjectType.ICON_ROCK) is False
     game.MovePlayer(pyBaba.Direction.DOWN)
     assert game.GetPlayState() == pyBaba.PlayState.LOST
