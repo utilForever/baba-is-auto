@@ -9,7 +9,7 @@ COLOR_BACKGROUND = pygame.Color(0, 0, 0)
 class Renderer():
     def __init__(self, game, enable_render=True):
         pygame.init()
-        pygame.display.set_caption('OpenAI Gym - baba-babaisyou-v0')
+        pygame.display.set_caption('OpenAI Gym - baba-outofreach-v0')
 
         self.game = game
         self.game_over = False
