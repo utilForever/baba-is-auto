@@ -38,17 +38,25 @@ baba-is-auto is Baba Is You simulator using C++ with some reinforcement learning
   - Solved : +200 points
   - Each action : -0.5 points
 
-### [baba-babaisyou-v0](./Extensions/BabaRL/environment.py)
+### [baba-babaisyou-v0](./Extensions/BabaRL/baba-babaisyou-v0/environment.py)
 
 <img src="./Medias/Levels/baba-babaisyou-v0.png" />
 
 #### Algorithms
 
-- [REINFORCE](./Extensions/BabaRL/REINFORCE.py)
+- [REINFORCE](./Extensions/BabaRL/baba-babaisyou-v0/REINFORCE.py)
 
-- [DQN](./Extensions/BabaRL/DQN.py)
+- [DQN](./Extensions/BabaRL/baba-babaisyou-v0/DQN.py)
 
   <img src="./Medias/Results/baba-babaisyou-v0-DQN.png" />
+
+### [baba-outofreach-v0](./Extensions/BabaRL/baba-outofreach-v0/environment.py)
+
+<img src="./Medias/Levels/baba-outofreach-v0.png" />
+
+### [baba-volcano-v0](./Extensions/BabaRL/baba-volcano-v0/environment.py)
+
+<img src="./Medias/Levels/baba-volcano-v0.png" />
 
 ## Quick Start
 

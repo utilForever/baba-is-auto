@@ -19,7 +19,7 @@ using namespace baba_is_auto;
 
 TEST_CASE("Game - Basic")
 {
-    Game game(MAPS_DIR "BabaIsYou.txt");
+    Game game(MAPS_DIR "baba_is_you.txt");
 
     CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetMap().At(9, 4).HasType(ObjectType::ICON_FLAG));
@@ -69,7 +69,7 @@ TEST_CASE("Game - Basic")
 
 TEST_CASE("Game - Lost")
 {
-    Game game(MAPS_DIR "SimpleMap.txt");
+    Game game(MAPS_DIR "simple_map.txt");
 
     CHECK(game.GetMap().At(0, 2).HasType(ObjectType::ICON_BABA));
     CHECK(game.GetRuleManager().GetNumRules() == 1);
@@ -77,6 +77,40 @@ TEST_CASE("Game - Lost")
 
     game.MovePlayer(Direction::UP);
     CHECK(game.GetRuleManager().GetNumRules() == 0);
+    CHECK(game.GetPlayState() == PlayState::LOST);
+}
+
+TEST_CASE("Game - Sink")
+{
+    Game game(MAPS_DIR "out_of_reach.txt");
+
+    CHECK(game.GetMap().At(9, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetRuleManager().GetNumRules() == 5);
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
+
+    game.MovePlayer(Direction::UP);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::DOWN);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::UP);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::DOWN);
+    game.MovePlayer(Direction::DOWN);
+    game.MovePlayer(Direction::DOWN);
+
+    CHECK(game.GetMap().At(10, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(10, 6).HasType(ObjectType::ICON_ROCK));
+
+    game.MovePlayer(Direction::DOWN);
+
+    CHECK(game.GetMap().At(10, 6).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(10, 7).HasType(ObjectType::ICON_ROCK));
+
+    game.MovePlayer(Direction::DOWN);
     CHECK(game.GetPlayState() == PlayState::LOST);
 }
 
@@ -112,7 +146,7 @@ TEST_CASE("RuleManager - Basic")
 
 TEST_CASE("Preprocess - Basic")
 {
-    Game game(MAPS_DIR "BabaIsYou.txt");
+    Game game(MAPS_DIR "baba_is_you.txt");
 
     const std::vector<float> tensor = Preprocess::StateToTensor(game);
     CHECK_EQ(tensor.size(), Preprocess::TENSOR_DIM * game.GetMap().GetWidth() *
@@ -139,7 +173,7 @@ TEST_CASE("Preprocess - Basic")
 
 TEST_CASE("RandomAgent - Basic")
 {
-    const Game game(MAPS_DIR "BabaIsYou.txt");
+    const Game game(MAPS_DIR "baba_is_you.txt");
 
     RandomAgent agent;
 

@@ -4,7 +4,7 @@ import config
 import sys
 import sprites
 
-game = pyBaba.Game("../../Resources/Maps/BabaIsYou.txt")
+game = pyBaba.Game("../../Resources/Maps/out_of_reach.txt")
 screen_size = (game.GetMap().GetWidth() * config.BLOCK_SIZE,
                game.GetMap().GetHeight() * config.BLOCK_SIZE)
 screen = pygame.display.set_mode(

@@ -233,6 +233,11 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
             ProcessMove(_x, _y, dir, ConvertTextToIcon(nounType));
         }
     }
+    else if (m_ruleManager.HasProperty(types, ObjectType::SINK))
+    {
+        m_map.RemoveObject(x, y, type);
+        return;
+    }
     else if (m_map.At(_x, _y).HasTextType())
     {
         ProcessMove(_x, _y, dir, types[0]);
@@ -251,8 +256,14 @@ void Game::CheckPlayState()
         return;
     }
 
-    auto winRules = m_ruleManager.GetRules(ObjectType::WIN);
     auto positions = m_map.GetPositions(m_playerIcon);
+    if (positions.empty())
+    {
+        m_playState = PlayState::LOST;
+        return;
+    }
+
+    auto winRules = m_ruleManager.GetRules(ObjectType::WIN);
     for (auto& pos : positions)
     {
         for (auto& rule : winRules)
