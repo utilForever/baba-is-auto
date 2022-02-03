@@ -2,9 +2,12 @@
 
 <img src="./Medias/Logos/Logo.png" width=256 height=256 />
 
-[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/utilForever/baba-is-auto/blob/master/LICENSE) [![Build Status](https://travis-ci.org/utilForever/baba-is-auto.svg?branch=master)](https://travis-ci.org/utilForever/baba-is-auto/branches) [![Build status](https://ci.appveyor.com/api/projects/status/github/utilForever/baba-is-auto?branch=master&svg=true)](https://ci.appveyor.com/project/utilForever/baba-is-auto/branch/master) [![Build Status](https://utilforever.visualstudio.com/baba-is-auto/_apis/build/status/utilForever.baba-is-auto?branchName=master)](https://utilforever.visualstudio.com/baba-is-auto/_build/latest?definitionId=8&branchName=master)
+[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/utilForever/baba-is-auto/blob/main/LICENSE) 
+![Windows](https://github.com/utilForever/baba-is-auto/workflows/Windows/badge.svg)
+![Ubuntu](https://github.com/utilForever/baba-is-auto/workflows/Ubuntu/badge.svg)
+![macOS](https://github.com/utilForever/baba-is-auto/workflows/macOS/badge.svg)
 
-[![codecov](https://codecov.io/gh/utilForever/baba-is-auto/branch/master/graph/badge.svg)](https://codecov.io/gh/utilForever/baba-is-auto)
+[![codecov](https://codecov.io/gh/utilForever/baba-is-auto/branch/main/graph/badge.svg)](https://codecov.io/gh/utilForever/baba-is-auto)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2b31a40d9ea24ae9949289360298404e)](https://www.codacy.com/manual/utilForever/baba-is-auto?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=utilForever/baba-is-auto&amp;utm_campaign=Badge_Grade)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/utilForever/baba-is-auto.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/baba-is-auto/alerts/)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/utilForever/baba-is-auto.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/baba-is-auto/context:cpp)
