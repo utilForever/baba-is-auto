@@ -10,9 +10,12 @@
 
 namespace baba_is_auto
 {
-Object::Object(std::vector<ObjectType> types) : m_types(std::move(types))
+Object::Object(std::vector<ObjectType> types)
 {
-    // Do nothing
+    for (const auto& type : types)
+    {
+        m_types.emplace(type, 1);
+    }
 }
 
 bool Object::operator==(const Object& rhs) const
@@ -22,56 +25,72 @@ bool Object::operator==(const Object& rhs) const
 
 void Object::Add(ObjectType type)
 {
-    if (m_types.size() == 1 && m_types.at(0) == ObjectType::ICON_EMPTY)
+    if (m_types.find(type) != m_types.end())
     {
-        m_types.clear();
+        m_types[type] += 1;
     }
-
-    if (std::find(m_types.begin(), m_types.end(), type) == m_types.end())
+    else
     {
-        m_types.emplace_back(type);
+        m_types.emplace(type, 1);
     }
 }
 
 void Object::Remove(ObjectType type)
 {
-    m_types.erase(
-        std::remove_if(m_types.begin(), m_types.end(),
-                       [&](ObjectType& _type) { return type == _type; }),
-        m_types.end());
+    if (auto iter = m_types.find(type); iter != m_types.end())
+    {
+        if (m_types[type] == 1)
+        {
+            m_types.erase(iter);
+        }
+        else
+        {
+            m_types[type] -= 1;
+        }
+    }
 
     if (m_types.empty())
     {
-        m_types.emplace_back(ObjectType::ICON_EMPTY);
+        m_types.emplace(ObjectType::ICON_EMPTY, 1);
     }
 }
 
 std::vector<ObjectType> Object::GetTypes() const
 {
-    return m_types;
+    std::vector<ObjectType> ret;
+
+    for (const auto& type : m_types)
+    {
+        ret.emplace_back(type.first);
+    }
+
+    return ret;
 }
 
 bool Object::HasType(ObjectType type) const
 {
-    return std::find(m_types.begin(), m_types.end(), type) != m_types.end();
+    return m_types.find(type) != m_types.end();
 }
 
 bool Object::HasTextType() const
 {
-    if (m_types.size() != 1)
+    for (const auto& type : m_types)
     {
-        return false;
+        if (static_cast<int>(type.first) <=
+            static_cast<int>(ObjectType::ICON_TYPE))
+        {
+            return true;
+        }
     }
 
-    return static_cast<int>(m_types[0]) <=
-           static_cast<int>(ObjectType::ICON_TYPE);
+    return false;
 }
 
 bool Object::HasNounType() const
 {
     for (auto& type : m_types)
     {
-        if (IsNounType(type))
+        if (IsNounType(type.first))
         {
             return true;
         }
@@ -84,7 +103,7 @@ bool Object::HasVerbType() const
 {
     for (auto& type : m_types)
     {
-        if (IsVerbType(type))
+        if (IsVerbType(type.first))
         {
             return true;
         }
@@ -97,7 +116,7 @@ bool Object::HasPropertyType() const
 {
     for (auto& type : m_types)
     {
-        if (IsPropertyType(type))
+        if (IsPropertyType(type.first))
         {
             return true;
         }

@@ -9,6 +9,7 @@
 
 #include <baba-is-auto/Enums/GameEnums.hpp>
 
+#include <map>
 #include <vector>
 
 namespace baba_is_auto
@@ -78,7 +79,7 @@ class Object
     bool isRule = false;
 
  private:
-    std::vector<ObjectType> m_types;
+    std::map<ObjectType, std::size_t> m_types;
 };
 }  // namespace baba_is_auto
 
