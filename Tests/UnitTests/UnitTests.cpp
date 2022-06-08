@@ -144,6 +144,19 @@ TEST_CASE("RuleManager - Basic")
     CHECK(ruleManager.GetNumRules() == 1);
 }
 
+TEST_CASE("Map - Icon Vanishing")
+{
+    Game game(MAPS_DIR "off_limits_bug.txt");
+
+    CHECK(game.GetMap().At(14, 1).HasType(ObjectType::ICON_WALL));
+
+    game.MovePlayer(Direction::RIGHT);
+
+    auto ret = game.GetMap().At(14, 1);
+
+    CHECK(ret.HasType(ObjectType::ICON_WALL));
+}
+
 TEST_CASE("Preprocess - Basic")
 {
     Game game(MAPS_DIR "baba_is_you.txt");
