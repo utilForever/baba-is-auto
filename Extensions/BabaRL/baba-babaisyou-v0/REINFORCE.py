@@ -6,7 +6,7 @@ from torch.distributions import Categorical
 import copy
 
 import gym
-import environment
+import environment  # lgtm[py/unused-import]
 import pyBaba
 
 from tensorboardX import SummaryWriter
