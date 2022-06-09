@@ -67,6 +67,16 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetPlayState() == PlayState::PLAYING);
 }
 
+TEST_CASE("Game - Won")
+{
+    Game game(MAPS_DIR "off_limits_bug.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::DOWN);
+    CHECK(game.GetPlayState() == PlayState::WON);
+}
+
 TEST_CASE("Game - Lost")
 {
     Game game(MAPS_DIR "simple_map.txt");
