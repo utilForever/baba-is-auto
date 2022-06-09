@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 import gym
-import environment
+import environment  # lgtm[py/unused-import]
 import pyBaba
 
 from tensorboardX import SummaryWriter
