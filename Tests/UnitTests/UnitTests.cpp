@@ -114,6 +114,18 @@ TEST_CASE("Game - Sink")
     CHECK(game.GetPlayState() == PlayState::LOST);
 }
 
+TEST_CASE("Game - Defeat")
+{
+    Game game(MAPS_DIR "off_limits_bug.txt");
+
+    CHECK(game.GetMap().At(12, 1).HasType(ObjectType::ICON_SKULL));
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+
+    CHECK(game.GetMap().At(12, 1).HasType(ObjectType::ICON_SKULL));
+}
+
 TEST_CASE("Map - Basic")
 {
     Map map(5, 5);
@@ -152,9 +164,7 @@ TEST_CASE("Map - Icon Vanishing")
 
     game.MovePlayer(Direction::RIGHT);
 
-    auto ret = game.GetMap().At(14, 1);
-
-    CHECK(ret.HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(14, 1).HasType(ObjectType::ICON_WALL));
 }
 
 TEST_CASE("Preprocess - Basic")
