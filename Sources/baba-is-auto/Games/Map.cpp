@@ -60,7 +60,7 @@ void Map::Load(std::string_view filename)
 
 void Map::AddObject(std::size_t x, std::size_t y, ObjectType type)
 {
-    m_objects.at(y * m_width + x).Add(type);
+    m_objects.at(y * m_width + x).Add(type, IsBoundary(x, y));
 }
 
 void Map::RemoveObject(std::size_t x, std::size_t y, ObjectType type)
