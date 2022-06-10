@@ -177,6 +177,32 @@ TEST_CASE("Map - Icon Vanishing")
     CHECK(game.GetMap().At(14, 1).HasType(ObjectType::ICON_WALL));
 }
 
+TEST_CASE("Map - Icon Spread")
+{
+    Game game(MAPS_DIR "off_limits_bug.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::LEFT);
+    game.MovePlayer(Direction::LEFT);
+
+    CHECK(game.GetMap().At(21, 3).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(21, 4).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(21, 5).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(22, 3).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(22, 4).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(22, 5).HasType(ObjectType::ICON_FLOWER));
+    CHECK(game.GetMap().At(23, 3).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(23, 4).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(23, 5).HasType(ObjectType::ICON_EMPTY));
+}
+
 TEST_CASE("Preprocess - Basic")
 {
     Game game(MAPS_DIR "baba_is_you.txt");
