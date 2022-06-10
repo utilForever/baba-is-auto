@@ -78,6 +78,12 @@ class Map
     std::vector<Position> GetPositions(ObjectType type) const;
 
  private:
+    //! Checks position (x, y) is boundary.
+    //! \param x The x position.
+    //! \param y The y position.
+    //! \return true if it is boundary, false otherwise.
+    bool IsBoundary(std::size_t x, std::size_t y) const;
+
     std::size_t m_width = 0;
     std::size_t m_height = 0;
 
