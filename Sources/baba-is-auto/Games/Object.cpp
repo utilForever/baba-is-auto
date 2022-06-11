@@ -23,11 +23,18 @@ bool Object::operator==(const Object& rhs) const
     return m_types == rhs.m_types;
 }
 
-void Object::Add(ObjectType type)
+void Object::Add(ObjectType type, bool isBoundary)
 {
     if (m_types.find(type) != m_types.end())
     {
-        m_types[type] += 1;
+        if (isBoundary)
+        {
+            m_types[type] = 1;
+        }
+        else
+        {
+            m_types[type] += 1;
+        }
     }
     else
     {

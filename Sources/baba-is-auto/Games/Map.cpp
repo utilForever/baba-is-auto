@@ -60,7 +60,7 @@ void Map::Load(std::string_view filename)
 
 void Map::AddObject(std::size_t x, std::size_t y, ObjectType type)
 {
-    m_objects.at(y * m_width + x).Add(type);
+    m_objects.at(y * m_width + x).Add(type, IsBoundary(x, y));
 }
 
 void Map::RemoveObject(std::size_t x, std::size_t y, ObjectType type)
@@ -94,5 +94,10 @@ std::vector<Position> Map::GetPositions(ObjectType type) const
     }
 
     return res;
+}
+
+bool Map::IsBoundary(std::size_t x, std::size_t y) const
+{
+    return x == 0 || x == m_width - 1 || y == 0 || y == m_height - 1;
 }
 }  // namespace baba_is_auto

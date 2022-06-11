@@ -45,7 +45,8 @@ class Object
 
     //! Adds an object type.
     //! \param type An object type to add.
-    void Add(ObjectType type);
+    //! \param isBoundary A flag to indicate it is boundary.
+    void Add(ObjectType type, bool isBoundary);
 
     //! Removes an object type.
     //! \param type An object type to remove.
