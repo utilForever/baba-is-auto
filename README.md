@@ -9,8 +9,6 @@
 
 [![codecov](https://codecov.io/gh/utilForever/baba-is-auto/branch/main/graph/badge.svg)](https://codecov.io/gh/utilForever/baba-is-auto)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2b31a40d9ea24ae9949289360298404e)](https://www.codacy.com/manual/utilForever/baba-is-auto?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=utilForever/baba-is-auto&amp;utm_campaign=Badge_Grade)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/utilForever/baba-is-auto.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/baba-is-auto/alerts/)
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/utilForever/baba-is-auto.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/baba-is-auto/context:cpp)
 [![CodeFactor](https://www.codefactor.io/repository/github/utilforever/baba-is-auto/badge)](https://www.codefactor.io/repository/github/utilforever/baba-is-auto)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=baba-is-auto&metric=alert_status)](https://sonarcloud.io/dashboard?id=baba-is-auto) [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=baba-is-auto&metric=ncloc)](https://sonarcloud.io/dashboard?id=baba-is-auto) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=baba-is-auto&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=baba-is-auto) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=baba-is-auto&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=baba-is-auto) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=baba-is-auto&metric=security_rating)](https://sonarcloud.io/dashboard?id=baba-is-auto)
