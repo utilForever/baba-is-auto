@@ -19,7 +19,7 @@ def main():
     header = os.path.join(dir_name, "../Includes/baba-is-auto/baba-is-auto.hpp")
     header_tmp = header + ".tmp"
     with open(header_tmp, "w") as header_file:
-        header_file.write("""// Copyright (c) 2020 Chris Ohk
+        header_file.write("""// Copyright (c) 2020-2023 Chris Ohk
 
 // I am making my contributions/submissions to this project solely in our
 // personal capacity and am not conveying any rights to any intellectual
