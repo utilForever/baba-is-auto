@@ -77,6 +77,10 @@ class Map
     //! \return A list of icon positions.
     std::vector<Position> GetPositions(ObjectType type) const;
 
+
+   //  std::vector<ObjectType> GetGrid(void) const
+    std::vector<std::vector<ObjectType>> GetGrid(void) const;
+
  private:
     //! Checks position (x, y) is boundary.
     //! \param x The x position.

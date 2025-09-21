@@ -47,6 +47,18 @@ std::vector<Rule> RuleManager::GetRules(ObjectType type) const
     return ret;
 }
 
+std::vector<Rule> RuleManager::GetAllRules() const
+{
+    std::vector<Rule> ret;
+
+    for (auto& rule : m_rules)
+    {
+        ret.emplace_back(rule);
+    }
+
+    return ret;
+}
+
 std::size_t RuleManager::GetNumRules() const
 {
     return m_rules.size();
