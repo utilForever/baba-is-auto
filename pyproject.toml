@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools", "wheel", "cmake"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyBaba"
+version = "0.1"
+authors = [
+    { name = "Chris Ohk", email = "utilforever@gmail.com" }
+]
+description = "Baba Is You simulator with some reinforcement learning"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+]
+
+[dependency-groups]
+dev = [
+  "pytest",
+]
+
+gui = [
+  "babagui",
+]
+
+# rl = [
+#   "babarl",
+# ]
+
+[tool.setuptools]
+packages = ["pyBaba"]
+
+[tool.setuptools.package-dir]
+pyBaba = "Extensions/BabaPython"
+
+[tool.uv.sources]
+"babagui" = { path = "Extensions/BabaGUI", editable = true }
+
+[tool.setuptools.package-data]
+"*" = ["*.so", "*.pyd"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pyBaba.__version__" }

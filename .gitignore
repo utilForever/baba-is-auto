@@ -10,6 +10,7 @@ compile_commands.json
 CTestTestfile.cmake
 build
 
+
 # Visual Studio files
 /.vs
 
@@ -31,6 +32,9 @@ cmake-build-debug
 # Python files
 *.pyc
 /.pytest_cache
+*.so
+*.egg-info/
+*.egg-info
 
 # RL files
 events.out.tfevents.*
