@@ -24,14 +24,6 @@ dev = [
   "pytest",
 ]
 
-gui = [
-  "babagui",
-]
-
-# rl = [
-#   "babarl",
-# ]
-
 [tool.setuptools]
 packages = ["pyBaba"]
 
