@@ -19,6 +19,7 @@ void AddRuleManager(pybind11::module& m)
         .def("RemoveRule", &RuleManager::RemoveRule)
         .def("ClearRules", &RuleManager::ClearRules)
         .def("GetRules", &RuleManager::GetRules)
+        .def("GetAllRules", &RuleManager::GetAllRules)
         .def("GetNumRules", &RuleManager::GetNumRules)
         .def("FindPlayer", &RuleManager::FindPlayer)
         .def("HasProperty", &RuleManager::HasProperty);

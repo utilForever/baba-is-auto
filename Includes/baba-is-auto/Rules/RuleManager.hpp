@@ -36,6 +36,7 @@ class RuleManager
     //! \param type The object type to find a rule.
     //! \return A list of rules that has specific type.
     std::vector<Rule> GetRules(ObjectType type) const;
+    std::vector<Rule> GetAllRules() const;
 
     //! Gets the number of rules.
     //! \return The number of rules.

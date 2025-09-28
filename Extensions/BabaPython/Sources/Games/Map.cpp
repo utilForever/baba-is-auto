@@ -29,5 +29,6 @@ void AddMap(pybind11::module& m)
             "At",
             static_cast<const Object& (Map::*)(std::size_t, std::size_t) const>(
                 &Map::At))
-        .def("GetPositions", &Map::GetPositions);
+        .def("GetPositions", &Map::GetPositions)
+        .def("GetGrid", &Map::GetGrid);
 }
