@@ -71,30 +71,38 @@ You will need CMake 3.31.6 or later and vcpkg to build the code. If you're using
 
 First, clone the code:
 
-```
+```bash
 git clone https://github.com/utilForever/baba-is-auto.git
 cd baba-is-auto
 ```
 
-Set `VCPKG_ROOT` to your vcpkg checkout, or pass the vcpkg toolchain file to CMake with `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake`.
+Install vcpkg, then set `VCPKG_ROOT` to your vcpkg checkout or pass the vcpkg toolchain file to CMake with `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake`.
+
+```bash
+git clone https://github.com/microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh
+export VCPKG_ROOT="$PWD/vcpkg"
+```
+
+On Windows, run `.\vcpkg\bootstrap-vcpkg.bat` and set `VCPKG_ROOT` to the vcpkg checkout path.
 
 ### C++ API
 
 For macOS or Linux or Windows Subsystem for Linux (WSL):
 
-```
+```bash
 mkdir build
 cd build
-cmake ..
+cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 make
 ```
 
 For Windows:
 
-```
+```bat
 mkdir build
 cd build
-cmake .. -G"Visual Studio 15 2017 Win64"
+cmake .. -G"Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 MSBuild baba-is-auto.sln /p:Configuration=Release
 ```
 
@@ -102,13 +110,13 @@ MSBuild baba-is-auto.sln /p:Configuration=Release
 
 Build and install the package by running
 
-```
+```bash
 pip install -U .
 ```
 
 ### Docker
 
-```
+```bash
 docker pull utilforever/baba-is-auto:latest
 ```
 
