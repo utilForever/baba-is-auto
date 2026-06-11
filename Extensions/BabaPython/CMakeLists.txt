@@ -21,6 +21,11 @@ if (BUILD_FROM_PIP)
 		target_link_libraries(${target}
 				PRIVATE
 				${BABA_PYTHON_LIBRARY})
+	elseif (APPLE)
+		target_link_options(${target}
+				PRIVATE
+				"-undefined"
+				"dynamic_lookup")
 	endif()
 	set_target_properties(${target}
 			PROPERTIES
