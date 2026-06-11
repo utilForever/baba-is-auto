@@ -43,15 +43,16 @@ class CMakeBuild(build_ext):
             'python{}{}.lib'.format(sys.version_info.major, sys.version_info.minor)
         python_library_dir = sysconfig.get_config_var('LIBDIR') or \
             os.path.join(sys.base_prefix, 'libs')
-        python_library = os.path.join(python_library_dir, python_library_name)
         python_extension_suffix = sysconfig.get_config_var('EXT_SUFFIX')
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DBABA_PYTHON_EXECUTABLE=' + sys.executable,
                       '-DBABA_PYTHON_INCLUDE_DIR=' + python_include_dir,
-                      '-DBABA_PYTHON_LIBRARY=' + python_library,
                       '-DBABA_PYTHON_EXTENSION_SUFFIX=' + python_extension_suffix,
                       '-DBABA_PYTHON_OUTPUT_DIRECTORY=' + extdir,
                       '-DBUILD_FROM_PIP=ON']
+        python_library = os.path.join(python_library_dir, python_library_name)
+        if os.path.exists(python_library):
+            cmake_args += ['-DBABA_PYTHON_LIBRARY=' + python_library]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]

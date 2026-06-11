@@ -16,8 +16,12 @@ if (BUILD_FROM_PIP)
 			${BABA_PYTHON_INCLUDE_DIR})
 	target_link_libraries(${target}
 			PRIVATE
-			pybind11::headers
-			${BABA_PYTHON_LIBRARY})
+			pybind11::headers)
+	if (BABA_PYTHON_LIBRARY)
+		target_link_libraries(${target}
+				PRIVATE
+				${BABA_PYTHON_LIBRARY})
+	endif()
 	set_target_properties(${target}
 			PROPERTIES
 			PREFIX ""
