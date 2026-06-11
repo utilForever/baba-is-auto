@@ -1,2 +1,2 @@
-pytest
-wheel
+pytest==9.0.3
+wheel==0.47.0
