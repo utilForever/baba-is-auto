@@ -67,14 +67,16 @@ baba-is-auto is Baba Is You simulator using C++ with some reinforcement learning
 
 ## Quick Start
 
-You will need CMake to build the code. If you're using Windows, you need Visual Studio 2017 in addition to CMake.
+You will need CMake 3.31.6 or later and vcpkg to build the code. If you're using Windows, you need Visual Studio 2017 in addition to CMake.
 
 First, clone the code:
 
 ```
-git clone https://github.com/utilForever/baba-is-auto.git --recursive
+git clone https://github.com/utilForever/baba-is-auto.git
 cd baba-is-auto
 ```
+
+Set `VCPKG_ROOT` to your vcpkg checkout, or pass the vcpkg toolchain file to CMake with `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake`.
 
 ### C++ API
 
