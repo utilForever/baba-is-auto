@@ -8,6 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.12'
+  CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 jobs:
   build-ubuntu:
@@ -50,12 +51,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: true
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
     - name: Install packages
       run: sudo apt-get update && sudo apt-get install -yq python3-setuptools
     - name: Configure Compiler
