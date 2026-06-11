@@ -53,7 +53,7 @@ class CMakeBuild(build_ext):
                     sys.version_info.major, sys.version_info.minor)
         python_library_dir = sysconfig.get_config_var('LIBDIR') or \
             os.path.join(sys.base_prefix, 'libs')
-        python_extension_suffix = sysconfig.get_config_var('EXT_SUFFIX')
+        python_extension_suffix = sysconfig.get_config_var('EXT_SUFFIX') or ''
         if not python_extension_suffix:
             raise RuntimeError("Python EXT_SUFFIX is required to build pyBaba")
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
