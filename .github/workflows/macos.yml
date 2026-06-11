@@ -52,6 +52,8 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
+    - name: Install packages
+      run: brew install autoconf autoconf-archive automake libtool
     - name: Configure Compiler
       run: |
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
