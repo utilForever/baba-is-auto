@@ -40,10 +40,22 @@ class CMakeBuild(build_ext):
             self.get_ext_fullpath(ext.name)))
         python_include_dir = sysconfig.get_path('include')
         python_library_name = sysconfig.get_config_var('LIBRARY') or \
-            'python{}{}.lib'.format(sys.version_info.major, sys.version_info.minor)
+            sysconfig.get_config_var('LDLIBRARY')
+        if not python_library_name:
+            if platform.system() == "Windows":
+                python_library_name = 'python{}{}.lib'.format(
+                    sys.version_info.major, sys.version_info.minor)
+            elif platform.system() == "Darwin":
+                python_library_name = 'libpython{}.{}.dylib'.format(
+                    sys.version_info.major, sys.version_info.minor)
+            else:
+                python_library_name = 'libpython{}.{}.so'.format(
+                    sys.version_info.major, sys.version_info.minor)
         python_library_dir = sysconfig.get_config_var('LIBDIR') or \
             os.path.join(sys.base_prefix, 'libs')
         python_extension_suffix = sysconfig.get_config_var('EXT_SUFFIX')
+        if not python_extension_suffix:
+            raise RuntimeError("Python EXT_SUFFIX is required to build pyBaba")
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DBABA_PYTHON_EXECUTABLE=' + sys.executable,
                       '-DBABA_PYTHON_INCLUDE_DIR=' + python_include_dir,
