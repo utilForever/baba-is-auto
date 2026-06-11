@@ -40,4 +40,4 @@ target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
     baba-is-auto
-    doctest) 
+    doctest::doctest)

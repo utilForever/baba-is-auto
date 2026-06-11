@@ -1,0 +1,9 @@
+{
+  "name": "baba-is-auto",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "doctest",
+    "pybind11",
+    "effolkronium-random"
+  ]
+}

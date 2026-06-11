@@ -7,7 +7,6 @@ set(root_dir ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 # Includes
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Libraries
 )
 
 # Sources
@@ -21,10 +20,18 @@ file(GLOB_RECURSE sources
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Custom-build event
+if (BUILD_FROM_PIP AND BABA_PYTHON_EXECUTABLE)
+    set(baba_is_auto_python ${BABA_PYTHON_EXECUTABLE})
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(baba_is_auto_python python)
+else ()
+    set(baba_is_auto_python python3)
+endif ()
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
     add_custom_command(
-        COMMAND python ${baba_is_auto_header_gen_py}
+        COMMAND ${baba_is_auto_python} ${baba_is_auto_header_gen_py}
         DEPENDS ${headers}
         OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
     )
@@ -33,7 +40,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 else ()
     set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
     add_custom_command(
-        COMMAND python3 ${baba_is_auto_header_gen_py}
+        COMMAND ${baba_is_auto_python} ${baba_is_auto_header_gen_py}
         DEPENDS ${headers}
         OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
     )
@@ -68,10 +75,11 @@ target_link_libraries(${target}
     PUBLIC
     ${DEFAULT_LINKER_OPTIONS}
 	${DEFAULT_LIBRARIES}
+    effolkronium_random
 
     INTERFACE
 )
 
 # Install
 install(TARGETS ${target} DESTINATION lib)
-install(DIRECTORY ${header_dir} DESTINATION include) 
+install(DIRECTORY ${header_dir} DESTINATION include)
