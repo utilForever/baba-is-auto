@@ -20,7 +20,10 @@ file(GLOB_RECURSE sources
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Custom-build event
-if (BUILD_FROM_PIP AND BABA_PYTHON_EXECUTABLE)
+if (BUILD_FROM_PIP)
+    if (NOT DEFINED BABA_PYTHON_EXECUTABLE OR "${BABA_PYTHON_EXECUTABLE}" STREQUAL "")
+        message(FATAL_ERROR "BUILD_FROM_PIP requires BABA_PYTHON_EXECUTABLE to be set")
+    endif ()
     set(baba_is_auto_python ${BABA_PYTHON_EXECUTABLE})
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(baba_is_auto_python python)

@@ -10,6 +10,14 @@ file(GLOB_RECURSE sources
 
 # Add Pybind11 module
 if (BUILD_FROM_PIP)
+	foreach (required_var IN ITEMS
+			BABA_PYTHON_INCLUDE_DIR
+			BABA_PYTHON_EXTENSION_SUFFIX
+			BABA_PYTHON_OUTPUT_DIRECTORY)
+		if (NOT DEFINED ${required_var} OR "${${required_var}}" STREQUAL "")
+			message(FATAL_ERROR "BUILD_FROM_PIP requires ${required_var} to be set")
+		endif()
+	endforeach()
 	add_library(${target} MODULE ${sources})
 	target_include_directories(${target}
 			PRIVATE
@@ -42,7 +50,6 @@ if (BUILD_FROM_PIP)
 			LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${BABA_PYTHON_OUTPUT_DIRECTORY}"
 			RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${BABA_PYTHON_OUTPUT_DIRECTORY}")
 else()
-	find_package(pybind11 CONFIG REQUIRED)
 	pybind11_add_module(${target} ${sources})
 endif()
 
