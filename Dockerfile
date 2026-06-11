@@ -17,7 +17,10 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --break-system-packages "cmake>=3.31.6"
+ENV CMAKE_VENV=/opt/cmake-venv
+RUN python3 -m venv ${CMAKE_VENV} && \
+    ${CMAKE_VENV}/bin/pip install "cmake>=3.31.6"
+ENV PATH="${CMAKE_VENV}/bin:${PATH}"
 
 ENV VCPKG_ROOT=/opt/vcpkg
 RUN git clone https://github.com/microsoft/vcpkg.git ${VCPKG_ROOT} && \
