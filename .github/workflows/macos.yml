@@ -8,6 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.12'
+  CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 jobs:
   build-macos:
@@ -45,12 +46,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: true
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+    - name: Install packages
+      run: brew install autoconf autoconf-archive automake libtool
     - name: Configure Compiler
       run: |
         if [ "${{ matrix.compiler }}" = "gcc" ]; then
@@ -70,7 +73,6 @@ jobs:
       run: /Users/runner/work/baba-is-auto/baba-is-auto/build/bin/UnitTests
     - name: Run Python Test
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
-        python -m pip install .
+        python -m pip install --require-hashes -r requirements.txt
+        python setup.py build_ext --inplace
         python -m pytest Tests/PythonTests/

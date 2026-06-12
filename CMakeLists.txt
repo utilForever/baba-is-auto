@@ -4,6 +4,13 @@ cmake_minimum_required(VERSION 3.31.6 FATAL_ERROR)
 # Include cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
+# Use vcpkg automatically when the environment exposes it.
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{CMAKE_TOOLCHAIN_FILE})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{CMAKE_TOOLCHAIN_FILE}" CACHE STRING "CMake toolchain file")
+elseif(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{VCPKG_ROOT})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+endif()
+
 # Declare project
 project(baba-is-auto)
 
@@ -19,10 +26,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Includes
 include_directories(Includes)
 include_directories(Extensions/BabaPython/Includes)
-include_directories(Libraries)
-include_directories(Libraries/doctest/doctest)
-include_directories(Libraries/pybind11/include)
-include_directories(Libraries/random/include)
+
+# Find packages
+find_package(doctest CONFIG REQUIRED)
+if (BUILD_FROM_PIP)
+    set(PYBIND11_NOPYTHON ON)
+else()
+    set(PYBIND11_FINDPYTHON ON)
+endif()
+find_package(pybind11 CONFIG REQUIRED)
+find_package(effolkronium_random CONFIG REQUIRED)
 
 # Compile options
 include(CMake/CompileOptions.cmake)
@@ -39,7 +52,6 @@ set(CMAKE_MACOSX_RPATH ON)
 set(MAPS_DIR ${PROJECT_SOURCE_DIR}/Resources/Maps)
 
 # Project modules
-add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/baba-is-auto)
 add_subdirectory(Tests/UnitTests)
 
@@ -51,7 +63,6 @@ if (CMAKE_BUILD_TYPE MATCHES Debug AND CMAKE_COMPILER_IS_GNUCXX AND BUILD_COVERA
     setup_target_for_coverage(${PROJECT_NAME}_coverage UnitTests coverage)
 endif()
 
-add_subdirectory(Libraries/pybind11)
 if (BUILD_FROM_PIP)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 endif()
