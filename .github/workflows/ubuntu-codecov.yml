@@ -60,7 +60,7 @@ jobs:
         lcov --ignore-errors unused --gcov-tool "${GCOV_TOOL}" --remove build/coverage.info '/usr/*' '*/Tests/*' --output-file build/coverage.info.cleaned
     - name: Upload coverage to Codecov
       if: ${{ github.actor != 'dependabot[bot]' }}
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         fail_ci_if_error: true
         files: ./build/coverage.info.cleaned
