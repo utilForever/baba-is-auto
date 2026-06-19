@@ -1,7 +1,7 @@
 {
   "name": "baba-is-auto",
   "version-string": "0.1.0",
-  "builtin-baseline": "9432c416e5c543eded0b4df35a4d347b2e669208",
+  "builtin-baseline": "f3e10653cc27d62a37a3763cd84b38bca07c6075",
   "dependencies": [
     "doctest",
     "pybind11",
