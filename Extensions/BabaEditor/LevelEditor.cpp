@@ -1323,7 +1323,8 @@ void LevelEditor::HandleTileInteraction(std::size_t x, std::size_t y)
             ApplyBrush(x, y);
         }
     }
-    else if (m_mode == PlacementMode::Freeform &&
+    else if ((m_mode == PlacementMode::Freeform ||
+              m_mode == PlacementMode::Eraser) &&
              ImGui::IsMouseDown(ImGuiMouseButton_Left) &&
              ImGui::IsItemHovered())
     {
