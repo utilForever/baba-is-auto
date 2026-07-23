@@ -48,7 +48,7 @@ struct LevelFile
 //! Returns true when the object type can be stored in the numeric map format.
 inline bool IsValidLevelTile(ObjectType type)
 {
-    const int value = static_cast<int>(type);
+    const auto value = static_cast<int>(type);
     return value > static_cast<int>(ObjectType::NOUN_TYPE) &&
            value <= static_cast<int>(ObjectType::ICON_WATER) &&
            type != ObjectType::OP_TYPE && type != ObjectType::PROPERTY_TYPE &&
