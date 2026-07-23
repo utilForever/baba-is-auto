@@ -4,6 +4,8 @@
 //! personal capacity and am not conveying any rights to any intellectual
 //! property of any third parties.
 
+// Members are used by the out-of-line LevelEditor implementation.
+// cppcheck-suppress-file unusedStructMember
 #ifndef BABA_EDITOR_LEVEL_EDITOR_HPP
 #define BABA_EDITOR_LEVEL_EDITOR_HPP
 
