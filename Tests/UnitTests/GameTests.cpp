@@ -7,7 +7,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
+#ifdef NEAR
 #undef NEAR
+#endif
 
 #include <baba-is-auto/Agents/Preprocess.hpp>
 #include <baba-is-auto/Agents/RandomAgent.hpp>

@@ -6,8 +6,6 @@
 
 #include <doctest/doctest.h>
 
-#undef NEAR
-
 #include <LevelFile.hpp>
 
 #include <baba-is-auto/Games/Game.hpp>
