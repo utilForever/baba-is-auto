@@ -67,6 +67,23 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetPlayState() == PlayState::PLAYING);
 }
 
+TEST_CASE("Game - Editor Smoke Map")
+{
+    Game game(MAPS_DIR "editor_smoke.txt");
+
+    CHECK(game.GetMap().GetWidth() == 9);
+    CHECK(game.GetMap().GetHeight() == 7);
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(7, 3).HasType(ObjectType::ICON_FLAG));
+
+    for (int i = 0; i < 6; ++i)
+    {
+        game.MovePlayer(Direction::RIGHT);
+    }
+
+    CHECK(game.GetPlayState() == PlayState::WON);
+}
+
 TEST_CASE("Game - Won")
 {
     Game game(MAPS_DIR "off_limits_bug.txt");
