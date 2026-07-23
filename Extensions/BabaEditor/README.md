@@ -4,8 +4,11 @@ Experimental C++17 + ImGui level editor for `baba-is-auto`.
 
 ## Build
 
+Set `VCPKG_ROOT` to a vcpkg checkout, or provide the toolchain path directly.
+
 ```sh
-cmake -S . -B build -DBABA_BUILD_EDITOR=ON
+cmake -S . -B build -DBABA_BUILD_EDITOR=ON \
+  -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 cmake --build build --target BabaEditor --config Release
 ```
 
