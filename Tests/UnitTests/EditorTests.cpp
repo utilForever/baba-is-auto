@@ -24,12 +24,28 @@ TEST_CASE("Editor - Level File Round Trip")
 
     const fs::path path =
         fs::temp_directory_path() / "baba-is-auto-editor-round-trip.txt";
+    fs::path predictableTemporary = path;
+    predictableTemporary += ".tmp";
     std::error_code error;
     fs::remove(path, error);
+    fs::remove(predictableTemporary, error);
 
     LevelFile source;
     REQUIRE(LoadLevelFile(MAPS_DIR "editor_smoke.txt", source));
+
+    {
+        std::ofstream reserved(predictableTemporary);
+        reserved << "reserved";
+    }
+
     REQUIRE(SaveLevelFile(path, source));
+
+    {
+        std::ifstream reserved(predictableTemporary);
+        std::string contents;
+        reserved >> contents;
+        CHECK(contents == "reserved");
+    }
 
     source.tiles[0] = ObjectType::ICON_BABA;
     REQUIRE(SaveLevelFile(path, source));
@@ -58,4 +74,5 @@ TEST_CASE("Editor - Level File Round Trip")
 
     CHECK_FALSE(LoadLevelFile(path, loaded));
     fs::remove(path, error);
+    fs::remove(predictableTemporary, error);
 }

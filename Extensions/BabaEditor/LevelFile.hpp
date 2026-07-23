@@ -7,6 +7,9 @@
 
 #include <filesystem>
 #include <fstream>
+#include <random>
+#include <sstream>
+#include <string>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -19,6 +22,10 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+#include <cerrno>
+#include <cstdlib>
+#include <unistd.h>
 #endif
 
 namespace baba_is_auto::editor
@@ -100,6 +107,121 @@ inline bool ReplaceLevelFile(const fs::path& temporary,
 #endif
 }
 
+//! Creates a unique temporary file beside the destination and writes its
+//! contents through the exclusively created native file handle.
+inline bool WriteTemporaryLevelFile(const fs::path& destination,
+                                    const std::string& contents,
+                                    fs::path& temporary)
+{
+#ifdef _WIN32
+    std::random_device random;
+
+    for (unsigned int attempt = 0; attempt < 64; ++attempt)
+    {
+        temporary = destination;
+        temporary += L".tmp.";
+        temporary += std::to_wstring(GetCurrentProcessId());
+        temporary += L".";
+        temporary += std::to_wstring(random());
+        temporary += L".";
+        temporary += std::to_wstring(attempt);
+
+        HANDLE file = CreateFileW(temporary.c_str(), GENERIC_WRITE, 0, nullptr,
+                                  CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY, nullptr);
+
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            const DWORD error = GetLastError();
+
+            if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS)
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        bool success = true;
+        std::size_t offset = 0;
+
+        while (offset < contents.size())
+        {
+            DWORD written = 0;
+            const DWORD remaining =
+                static_cast<DWORD>(contents.size() - offset);
+
+            if (!WriteFile(file, contents.data() + offset, remaining, &written,
+                           nullptr) ||
+                written == 0)
+            {
+                success = false;
+                break;
+            }
+
+            offset += written;
+        }
+
+        success = success && FlushFileBuffers(file) != 0;
+        success = CloseHandle(file) != 0 && success;
+
+        if (!success)
+        {
+            std::error_code error;
+            fs::remove(temporary, error);
+        }
+
+        return success;
+    }
+
+    return false;
+#else
+    std::string pattern = destination.native() + ".tmp.XXXXXX";
+    std::vector<char> path(pattern.begin(), pattern.end());
+    path.push_back('\0');
+
+    const int file = ::mkstemp(path.data());
+
+    if (file == -1)
+    {
+        return false;
+    }
+
+    temporary = fs::path(path.data());
+    bool success = true;
+    std::size_t offset = 0;
+
+    while (offset < contents.size())
+    {
+        const ssize_t written =
+            ::write(file, contents.data() + offset, contents.size() - offset);
+
+        if (written == -1 && errno == EINTR)
+        {
+            continue;
+        }
+
+        if (written <= 0)
+        {
+            success = false;
+            break;
+        }
+
+        offset += static_cast<std::size_t>(written);
+    }
+
+    success = success && ::fsync(file) == 0;
+    success = ::close(file) == 0 && success;
+
+    if (!success)
+    {
+        std::error_code error;
+        fs::remove(temporary, error);
+    }
+
+    return success;
+#endif
+}
+
 //! Saves the provided LevelFile object to the given path, ensuring atomicity.
 inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
 {
@@ -118,16 +240,7 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
         }
     }
 
-    fs::path temporary = filename;
-    temporary += ".tmp";
-
-    std::ofstream file(temporary, std::ios::trunc);
-
-    if (!file)
-    {
-        return false;
-    }
-
+    std::ostringstream file;
     file << level.width << ' ' << level.height << '\n';
 
     for (std::size_t y = 0; y < level.height; ++y)
@@ -145,9 +258,10 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
         file << '\n';
     }
 
-    file.close();
+    fs::path temporary;
 
-    if (!file || !ReplaceLevelFile(temporary, filename))
+    if (!file || !WriteTemporaryLevelFile(filename, file.str(), temporary) ||
+        !ReplaceLevelFile(temporary, filename))
     {
         std::error_code error;
         fs::remove(temporary, error);
