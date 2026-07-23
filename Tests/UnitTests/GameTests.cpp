@@ -7,7 +7,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
+#ifdef NEAR
 #undef NEAR
+#endif
 
 #include <baba-is-auto/Agents/Preprocess.hpp>
 #include <baba-is-auto/Agents/RandomAgent.hpp>
@@ -65,6 +67,23 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetRuleManager().GetNumRules() == 4);
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
     CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - Editor Smoke Map")
+{
+    Game game(MAPS_DIR "editor_smoke.txt");
+
+    CHECK(game.GetMap().GetWidth() == 9);
+    CHECK(game.GetMap().GetHeight() == 7);
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(7, 3).HasType(ObjectType::ICON_FLAG));
+
+    for (int i = 0; i < 6; ++i)
+    {
+        game.MovePlayer(Direction::RIGHT);
+    }
+
+    CHECK(game.GetPlayState() == PlayState::WON);
 }
 
 TEST_CASE("Game - Won")

@@ -153,15 +153,17 @@ There are three main Python consumers:
 - `Extensions/BabaRL` defines Gym-style environments, renderers, and DQN / REINFORCE examples for bundled levels.
 - `Tests/PythonTests` validates Python-visible game, map, and rule behavior.
 
-There is one main C++ consumer in the repository:
+There are two main C++ consumers in the repository:
 
 - `Tests/UnitTests` uses doctest against the `baba-is-auto` target and small map fixtures from `Resources/Maps`.
+- `Extensions/BabaEditor` is an optional ImGui application that edits the repository's text map format and links to the `baba-is-auto` target.
 
 ## Build Targets
 
 The project is built through CMake and vcpkg.
 
 - `Sources/baba-is-auto/CMakeLists.txt` builds the `baba-is-auto` library and runs the generated-header target.
+- `Extensions/BabaEditor/CMakeLists.txt` builds `BabaEditor` when `BABA_BUILD_EDITOR=ON`.
 - `Extensions/BabaPython/CMakeLists.txt` builds the `pyBaba` extension and links it to the core library.
 - `Tests/UnitTests/CMakeLists.txt` builds the `UnitTests` executable and passes the `Resources/Maps` path as `MAPS_DIR`.
 - `setup.py` drives extension builds for Python packaging.
@@ -212,6 +214,7 @@ Use the narrowest validation that covers the changed behavior:
 | Documentation-only          | Markdown review; no build required.                                      |
 | Core C++ behavior           | Configure/build with CMake, then run `UnitTests`.                        |
 | Python-visible behavior     | Build `pyBaba` in place, then run `Tests/PythonTests`.                   |
+| Level editor                | Configure with `BABA_BUILD_EDITOR=ON`, then build `BabaEditor`.          |
 | Enum or object-type changes | Run C++ tests, Python tests, and manually check GUI/RL mappings.         |
 | Map fixture changes         | Run the tests or examples that load the changed fixture.                 |
 | CMake or packaging changes  | Reconfigure from a clean build directory and build the affected targets. |
@@ -224,6 +227,8 @@ The core project depends on:
 2. doctest for C++ unit tests.
 3. pybind11 for the Python extension.
 4. effolkronium_random for random-agent behavior.
+
+The optional editor feature adds GLFW, OpenGL, ImGui, and stb.
 
 The Python-facing examples and tests depend on the pinned packages in
 `requirements.txt`, including pygame, Gym, NumPy, and pytest.

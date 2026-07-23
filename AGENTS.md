@@ -4,13 +4,14 @@ Guidance for AI coding agents (Codex, Claude Code, etc.) working in this reposit
 
 ## What this repository is
 
-This is **baba-is-auto**, a C++17 Baba Is You simulator with reinforcement learning examples, a pygame GUI, and a Python API exposed through pybind11.
+This is **baba-is-auto**, a C++17 Baba Is You simulator with reinforcement learning examples, a pygame GUI, an optional C++ ImGui level editor, and a Python API exposed through pybind11.
 
 It is not just a single C++ library:
 
 - The core simulator is in `Includes/baba-is-auto/` and `Sources/baba-is-auto/`.
 - The Python extension under `Extensions/BabaPython/` mirrors parts of the core API and implementation.
 - Python GUI/RL examples consume the Python-facing behavior from `Extensions/BabaGUI/` and `Extensions/BabaRL/`.
+- The optional C++ level editor lives in `Extensions/BabaEditor/`.
 - Test fixtures and sample levels live in `Resources/Maps/`.
 
 Upstream lives at <https://github.com/utilForever/baba-is-auto.git>.
@@ -43,6 +44,7 @@ Use this map to jump to the right part of the tree before editing:
 | Core C++ implementation | `Sources/baba-is-auto/`                                                                                                           | Game, map, object, rule, and agent behavior                                    |
 | Python binding          | `Extensions/BabaPython/Includes/`, `Extensions/BabaPython/Sources/`, `Extensions/BabaPython/main.cpp`                             | pybind11-facing API and mirrored C++ code that may need core updates           |
 | GUI simulator           | `Extensions/BabaGUI/`                                                                                                             | pygame consumer of the Python API                                              |
+| Level editor            | `Extensions/BabaEditor/`                                                                                                          | Optional ImGui editor, map file handling, and editor-specific build target     |
 | RL examples             | `Extensions/BabaRL/`                                                                                                              | gym-style environments, rendering helpers, and training scripts                |
 | C++ tests               | `Tests/UnitTests/`                                                                                                                | doctest coverage for simulator behavior                                        |
 | Python tests            | `Tests/PythonTests/`                                                                                                              | pytest coverage for Python-visible behavior                                    |
@@ -62,6 +64,13 @@ mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release
+```
+
+For editor changes, enable its optional vcpkg feature and build the editor target:
+
+```sh
+cmake -S . -B build -DBABA_BUILD_EDITOR=ON
+cmake --build build --target BabaEditor --config Release
 ```
 
 Run C++ unit tests after building:

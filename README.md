@@ -30,6 +30,7 @@ baba-is-auto is Baba Is You simulator using C++ with some reinforcement learning
   * C++17 based Baba Is You library
   * Various RL environments based on OpenAI Gym
   * GUI simulator using `pygame`
+  * Optional C++17 + ImGui [level editor](./Extensions/BabaEditor/README.md)
   * C++ and Python API
 
 ## Environments
