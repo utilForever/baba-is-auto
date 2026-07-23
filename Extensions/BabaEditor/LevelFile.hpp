@@ -10,6 +10,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -110,7 +111,7 @@ inline bool ReplaceLevelFile(const fs::path& temporary,
 //! Creates a unique temporary file beside the destination and writes its
 //! contents through the exclusively created native file handle.
 inline bool WriteTemporaryLevelFile(const fs::path& destination,
-                                    const std::string& contents,
+                                    std::string_view contents,
                                     fs::path& temporary)
 {
 #ifdef _WIN32
