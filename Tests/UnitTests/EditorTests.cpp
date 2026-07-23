@@ -40,6 +40,10 @@ TEST_CASE("Editor - Level File Round Trip")
     CHECK(loaded.height == source.height);
     CHECK(loaded.tiles == source.tiles);
 
+    LevelFile invalidSave = source;
+    invalidSave.tiles[0] = ObjectType::OP_TYPE;
+    CHECK_FALSE(SaveLevelFile(path, invalidSave));
+
     {
         std::ofstream truncated(path, std::ios::trunc);
         truncated << "3 2\n1 2\n";

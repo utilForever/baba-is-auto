@@ -38,6 +38,16 @@ struct LevelFile
     std::vector<ObjectType> tiles;
 };
 
+//! Returns true when the object type can be stored in the numeric map format.
+inline bool IsValidLevelTile(ObjectType type)
+{
+    const int value = static_cast<int>(type);
+    return value > static_cast<int>(ObjectType::NOUN_TYPE) &&
+           value <= static_cast<int>(ObjectType::ICON_WATER) &&
+           type != ObjectType::OP_TYPE && type != ObjectType::PROPERTY_TYPE &&
+           type != ObjectType::ICON_TYPE;
+}
+
 //! Loads a level file from the given path into the provided LevelFile object.
 inline bool LoadLevelFile(const fs::path& filename, LevelFile& level)
 {
@@ -62,12 +72,9 @@ inline bool LoadLevelFile(const fs::path& filename, LevelFile& level)
             return false;
         }
 
-        const ObjectType type = static_cast<ObjectType>(value);
+        const auto type = static_cast<ObjectType>(value);
 
-        if (value <= static_cast<int>(ObjectType::NOUN_TYPE) ||
-            value > static_cast<int>(ObjectType::ICON_WATER) ||
-            type == ObjectType::OP_TYPE || type == ObjectType::PROPERTY_TYPE ||
-            type == ObjectType::ICON_TYPE)
+        if (!IsValidLevelTile(type))
         {
             return false;
         }
@@ -101,6 +108,14 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
         level.tiles.size() != level.width * level.height)
     {
         return false;
+    }
+
+    for (const ObjectType tile : level.tiles)
+    {
+        if (!IsValidLevelTile(tile))
+        {
+            return false;
+        }
     }
 
     fs::path temporary = filename;
