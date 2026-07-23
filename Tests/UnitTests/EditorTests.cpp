@@ -21,7 +21,7 @@ TEST_CASE("Editor - Level File Round Trip")
     namespace fs = std::filesystem;
 
     const fs::path path =
-        fs::temp_directory_path() / "baba-is-auto-editor-round-trip.txt";
+        fs::current_path() / "baba-is-auto-editor-round-trip.txt";
     fs::path predictableTemporary = path;
     predictableTemporary += ".tmp";
     std::error_code error;
