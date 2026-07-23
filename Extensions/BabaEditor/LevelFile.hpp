@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <fstream>
 #include <random>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -241,27 +240,30 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
         }
     }
 
-    std::ostringstream file;
-    file << level.width << ' ' << level.height << '\n';
+    std::string contents = std::to_string(level.width);
+    contents += ' ';
+    contents += std::to_string(level.height);
+    contents += '\n';
 
     for (std::size_t y = 0; y < level.height; ++y)
     {
         for (std::size_t x = 0; x < level.width; ++x)
         {
-            file << static_cast<int>(level.tiles[y * level.width + x]);
+            const auto tile = level.tiles[y * level.width + x];
+            contents += std::to_string(static_cast<int>(tile));
 
             if (x + 1 < level.width)
             {
-                file << ' ';
+                contents += ' ';
             }
         }
 
-        file << '\n';
+        contents += '\n';
     }
 
     fs::path temporary;
 
-    if (!file || !WriteTemporaryLevelFile(filename, file.str(), temporary) ||
+    if (!WriteTemporaryLevelFile(filename, contents, temporary) ||
         !ReplaceLevelFile(temporary, filename))
     {
         std::error_code error;
