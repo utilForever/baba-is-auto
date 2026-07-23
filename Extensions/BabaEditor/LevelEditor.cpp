@@ -1165,20 +1165,16 @@ void LevelEditor::DrawSpriteInRect(ObjectType type, const ImVec2& min,
         return;
     }
 
-    if (texture->id != 0)
-    {
-        const float width = max.x - min.x;
-        const float height = max.y - min.y;
-        const float size = std::min(width, height) * 0.86f;
-        const float x = min.x + (width - size) * 0.5f;
-        const float y = min.y + (height - size) * 0.5f;
-        const ImVec2 imageMin{ x, y };
-        const ImVec2 imageMax{ x + size, y + size };
+    const float width = max.x - min.x;
+    const float height = max.y - min.y;
+    const float size = std::min(width, height) * 0.86f;
+    const float x = min.x + (width - size) * 0.5f;
+    const float y = min.y + (height - size) * 0.5f;
+    const ImVec2 imageMin{ x, y };
+    const ImVec2 imageMax{ x + size, y + size };
 
-        ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)texture->id,
-                                             imageMin, imageMax);
-        return;
-    }
+    ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)texture->id,
+                                         imageMin, imageMax);
 }
 
 //! Draw a button for the given object type, using its sprite as the button
