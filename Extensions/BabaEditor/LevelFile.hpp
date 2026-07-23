@@ -261,9 +261,8 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
         contents += '\n';
     }
 
-    fs::path temporary;
-
-    if (!WriteTemporaryLevelFile(filename, contents, temporary) ||
+    if (fs::path temporary;
+        !WriteTemporaryLevelFile(filename, contents, temporary) ||
         !ReplaceLevelFile(temporary, filename))
     {
         std::error_code error;
