@@ -6,5 +6,21 @@
     "doctest",
     "pybind11",
     "effolkronium-random"
-  ]
+  ],
+  "features": {
+    "editor": {
+      "description": "Build the C++ ImGui level editor.",
+      "dependencies": [
+        "glfw3",
+        {
+          "name": "imgui",
+          "features": [
+            "glfw-binding",
+            "opengl3-binding"
+          ]
+        },
+        "stb"
+      ]
+    }
+  }
 }

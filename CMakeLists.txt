@@ -11,6 +11,12 @@ elseif(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{VCPKG_ROOT})
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
 endif()
 
+# Build options for level editor
+option(BABA_BUILD_EDITOR "Build the C++ ImGui level editor" OFF)
+if (BABA_BUILD_EDITOR)
+    list(APPEND VCPKG_MANIFEST_FEATURES editor)
+endif()
+
 # Declare project
 project(baba-is-auto)
 
@@ -28,6 +34,7 @@ include_directories(Includes)
 include_directories(Extensions/BabaPython/Includes)
 
 # Find packages
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 if (BUILD_FROM_PIP)
     set(PYBIND11_NOPYTHON ON)
@@ -54,6 +61,9 @@ set(MAPS_DIR ${PROJECT_SOURCE_DIR}/Resources/Maps)
 # Project modules
 add_subdirectory(Sources/baba-is-auto)
 add_subdirectory(Tests/UnitTests)
+if (BABA_BUILD_EDITOR)
+    add_subdirectory(Extensions/BabaEditor)
+endif()
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading
