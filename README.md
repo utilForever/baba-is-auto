@@ -126,7 +126,7 @@ Each bundled environment uses the actions `UP`, `DOWN`, `LEFT`, and `RIGHT`.
 | C++ and Python tests    | `Tests/UnitTests/`, `Tests/PythonTests/` |
 | Map fixtures            | `Resources/Maps/`                        |
 
-The C++ core is the source of simulator behavior, and `Extensions/BabaPython/` mirrors its public surface. Changes to games, maps, rules, enums, objects, or agents should keep both layers in sync. The aggregate header `Includes/baba-is-auto.hpp` is generated during the CMake build; edit the individual headers or generator instead.
+The C++ core is the source of simulator behavior, and `Extensions/BabaPython/` mirrors its public surface. Changes to games, maps, rules, enums, objects, or agents should keep both layers in sync. The aggregate header `Includes/baba-is-auto/baba-is-auto.hpp` is generated during the CMake build; edit the individual headers or generator instead.
 
 ## Development
 
