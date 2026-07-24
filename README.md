@@ -1,154 +1,155 @@
-# baba-is-auto
+<p align="center">
+  <picture>
+    <img src="Medias/Logos/Logo.svg" width="400" alt="baba-is-auto logo" />
+  </picture>
+</p>
+<p align="center">
+  <b>A C++17 Baba Is You simulator with Python bindings, GUI, and reinforcement-learning examples</b>
+</p>
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/utilForever/baba-is-auto/actions/workflows/windows.yml"><img src="https://github.com/utilForever/baba-is-auto/actions/workflows/windows.yml/badge.svg?branch=main" alt="Windows" /></a>
+  <a href="https://github.com/utilForever/baba-is-auto/actions/workflows/ubuntu.yml"><img src="https://github.com/utilForever/baba-is-auto/actions/workflows/ubuntu.yml/badge.svg?branch=main" alt="Ubuntu" /></a>
+  <a href="https://github.com/utilForever/baba-is-auto/actions/workflows/macos.yml"><img src="https://github.com/utilForever/baba-is-auto/actions/workflows/macos.yml/badge.svg?branch=main" alt="macOS" /></a>
+  <br />
+  <a href="https://github.com/utilForever/baba-is-auto/actions/workflows/ubuntu-codecov.yml"><img src="https://github.com/utilForever/baba-is-auto/actions/workflows/ubuntu-codecov.yml/badge.svg?branch=main" alt="Code Coverage" /></a>
+  <a href="https://codecov.io/gh/utilForever/baba-is-auto"><img src="https://codecov.io/gh/utilForever/baba-is-auto/branch/main/graph/badge.svg" alt="Codecov" /></a>
+  <a href="https://github.com/utilForever/baba-is-auto/actions/workflows/ubuntu-sonarcloud.yml"><img src="https://github.com/utilForever/baba-is-auto/actions/workflows/ubuntu-sonarcloud.yml/badge.svg?branch=main" alt="Static Analysis" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=alert_status" alt="Quality Gate Status" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=ncloc" alt="Lines of Code" /></a>
+  <br />
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=sqale_rating" alt="Maintainability Rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=reliability_rating" alt="Reliability Rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=security_rating" alt="Security Rating" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=bugs" alt="Bugs" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=vulnerabilities" alt="Vulnerabilities" /></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto"><img src="https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=sqale_index" alt="Technical Debt" /></a>
+</p>
 
-<img src="./Medias/Logos/Logo.png" width=256 height=256 />
+## What This Project Does
 
-[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/utilForever/baba-is-auto/blob/main/LICENSE) 
-![Windows](https://github.com/utilForever/baba-is-auto/workflows/Windows/badge.svg)
-![Ubuntu](https://github.com/utilForever/baba-is-auto/workflows/Ubuntu/badge.svg)
-![macOS](https://github.com/utilForever/baba-is-auto/workflows/macOS/badge.svg)
+baba-is-auto simulates a subset of [Baba Is You](https://hempuli.com/baba/): it loads a text map, parses rules formed by word tiles, applies movement and object interactions, and exposes the resulting state to C++ and Python callers.
 
-[![codecov](https://codecov.io/gh/utilForever/baba-is-auto/branch/main/graph/badge.svg)](https://codecov.io/gh/utilForever/baba-is-auto)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2b31a40d9ea24ae9949289360298404e)](https://www.codacy.com/manual/utilForever/baba-is-auto?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=utilForever/baba-is-auto&amp;utm_campaign=Badge_Grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/utilforever/baba-is-auto/badge)](https://www.codefactor.io/repository/github/utilforever/baba-is-auto)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
+The repository provides:
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
-[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=utilForever_baba-is-auto&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=utilForever_baba-is-auto)
+- A reusable C++17 simulator library.
+- A `pyBaba` Python extension built with pybind11.
+- A pygame GUI that consumes the Python API.
+- Gym-style reinforcement-learning environments with DQN and REINFORCE examples.
+- An optional C++ ImGui [level editor](Extensions/BabaEditor/README.md).
 
-baba-is-auto is Baba Is You simulator using C++ with some reinforcement learning. The code is built on C++17 and can be compiled with commonly available compilers such as g++, clang++, or Microsoft Visual Studio. baba-is-auto currently supports macOS (10.14 or later), Ubuntu (18.04 or later), Windows (Visual Studio 2017 or later), and Windows Subsystem for Linux (WSL). Other untested platforms that support C++17 also should be able to build baba-is-auto.
+For the simulator design and behavior contract, see [ARCHITECTURE.md](ARCHITECTURE.md). Contributors and coding agents should also read [AGENTS.md](AGENTS.md).
 
-## What is "Baba Is You"?
+## What Is Baba Is You?
 
-[Baba Is You](https://hempuli.com/baba/) is an award-winning puzzle game where you can change the rules by which you play. In every level, the rules themselves are present as blocks you can interact with; by manipulating them, you can change how the level works and cause surprising, unexpected interactions! With some simple block-pushing you can turn yourself into a rock, turn patches of grass into dangerously hot obstacles, and even change the goal you need to reach to something entirely different.
-
-## Key Features
-
-  * C++17 based Baba Is You library
-  * Various RL environments based on OpenAI Gym
-  * GUI simulator using `pygame`
-  * Optional C++17 + ImGui [level editor](./Extensions/BabaEditor/README.md)
-  * C++ and Python API
-
-## Environments
-
-- Action Space
-  - UP
-  - DOWN
-  - LEFT
-  - RIGHT
-
-- Reward
-  - Failed : -100 points
-  - Solved : +200 points
-  - Each action : -0.5 points
-
-### [baba-babaisyou-v0](./Extensions/BabaRL/baba-babaisyou-v0/environment.py)
-
-<img src="./Medias/Levels/baba-babaisyou-v0.png" />
-
-#### Algorithms
-
-- [REINFORCE](./Extensions/BabaRL/baba-babaisyou-v0/REINFORCE.py)
-
-- [DQN](./Extensions/BabaRL/baba-babaisyou-v0/DQN.py)
-
-  <img src="./Medias/Results/baba-babaisyou-v0-DQN.png" />
-
-### [baba-outofreach-v0](./Extensions/BabaRL/baba-outofreach-v0/environment.py)
-
-<img src="./Medias/Levels/baba-outofreach-v0.png" />
-
-### [baba-volcano-v0](./Extensions/BabaRL/baba-volcano-v0/environment.py)
-
-<img src="./Medias/Levels/baba-volcano-v0.png" />
+[Baba Is You](https://hempuli.com/baba/) is an award-winning puzzle game in which the rules are physical blocks. Moving those blocks can change the player, obstacles, and win condition while a level is in progress.
 
 ## Quick Start
 
-You will need CMake 3.31.6 or later and vcpkg to build the code. If you're using Windows, you need Visual Studio 2017 in addition to CMake.
+### Prerequisites
 
-First, clone the code:
+- CMake 3.31.6 or later
+- vcpkg
+- A C++17 compiler
+- Python 3 with development headers
+- Git
+
+Set `VCPKG_ROOT` to your vcpkg checkout, or pass its toolchain file through `CMAKE_TOOLCHAIN_FILE`.
+
+### 1. Clone
 
 ```bash
 git clone https://github.com/utilForever/baba-is-auto.git
 cd baba-is-auto
 ```
 
-Install vcpkg, then set `VCPKG_ROOT` to your vcpkg checkout or pass the vcpkg toolchain file to CMake with `-DCMAKE_TOOLCHAIN_FILE=<vcpkg-root>/scripts/buildsystems/vcpkg.cmake`.
+### 2. Build
 
 ```bash
-git clone https://github.com/microsoft/vcpkg.git
-./vcpkg/bootstrap-vcpkg.sh
-export VCPKG_ROOT="$PWD/vcpkg"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
-On Windows, run `.\vcpkg\bootstrap-vcpkg.bat` and set `VCPKG_ROOT` to the vcpkg checkout path.
+The root CMake project builds the `baba-is-auto` library, `pyBaba` extension, and `UnitTests` executable.
 
-### C++ API
+### 3. Run the C++ Tests
 
-For macOS or Linux or Windows Subsystem for Linux (WSL):
+macOS and Linux:
 
 ```bash
-mkdir build
-cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-make
+./build/bin/UnitTests
 ```
 
-For Windows:
+Windows release builds:
 
-```bat
-mkdir build
-cd build
-cmake .. -G"Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
-MSBuild baba-is-auto.sln /p:Configuration=Release
+```powershell
+.\build\bin\Release\UnitTests.exe
 ```
 
 ### Python API
 
-Build and install the package by running
+Build and install `pyBaba` with:
 
 ```bash
-pip install -U .
+python -m pip install .
 ```
 
-### Docker
+### Level Editor
+
+Enable the optional editor feature and build its target:
 
 ```bash
-docker pull utilforever/baba-is-auto:latest
+cmake -S . -B build-editor -DBABA_BUILD_EDITOR=ON
+cmake --build build-editor --target BabaEditor --config Release
 ```
 
-## Documentation
+## Reinforcement-Learning Examples
 
-TBA
+Each bundled environment uses the actions `UP`, `DOWN`, `LEFT`, and `RIGHT`.
 
-## How To Contribute
+| Environment          | Level                                                              | Algorithms                                                                                                         |
+| -------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `baba-babaisyou-v0`  | [Environment](Extensions/BabaRL/baba-babaisyou-v0/environment.py)  | [DQN](Extensions/BabaRL/baba-babaisyou-v0/DQN.py), [REINFORCE](Extensions/BabaRL/baba-babaisyou-v0/REINFORCE.py)   |
+| `baba-outofreach-v0` | [Environment](Extensions/BabaRL/baba-outofreach-v0/environment.py) | [DQN](Extensions/BabaRL/baba-outofreach-v0/DQN.py), [REINFORCE](Extensions/BabaRL/baba-outofreach-v0/REINFORCE.py) |
+| `baba-volcano-v0`    | [Environment](Extensions/BabaRL/baba-volcano-v0/environment.py)    | [DQN](Extensions/BabaRL/baba-volcano-v0/DQN.py), [REINFORCE](Extensions/BabaRL/baba-volcano-v0/REINFORCE.py)       |
 
-Contributions are always welcome, either reporting issues/bugs or forking the repository and then issuing pull requests when you have completed some additional coding that you feel will be beneficial to the main project. If you are interested in contributing in a more dedicated capacity, then please contact me.
+## Architecture at a Glance
 
-## Contact
+| Area                    | Paths                                    |
+| ----------------------- | ---------------------------------------- |
+| Core C++ API            | `Includes/baba-is-auto/`                 |
+| Core C++ implementation | `Sources/baba-is-auto/`                  |
+| Python binding          | `Extensions/BabaPython/`                 |
+| GUI simulator           | `Extensions/BabaGUI/`                    |
+| Level editor            | `Extensions/BabaEditor/`                 |
+| RL examples             | `Extensions/BabaRL/`                     |
+| C++ and Python tests    | `Tests/UnitTests/`, `Tests/PythonTests/` |
+| Map fixtures            | `Resources/Maps/`                        |
 
-You can contact me via e-mail (utilForever at gmail.com). I am always happy to answer questions or help with any issues you might have, and please be sure to share any additional work or your creations with me, I love seeing what other people are making.
+The C++ core is the source of simulator behavior, and `Extensions/BabaPython/` mirrors its public surface. Changes to games, maps, rules, enums, objects, or agents should keep both layers in sync. The aggregate header `Includes/baba-is-auto/baba-is-auto.hpp` is generated during the CMake build; edit the individual headers or generator instead.
+
+## Development
+
+Run the Python checks used by CI after building the extension in place:
+
+```bash
+python -m pip install --require-hashes -r requirements.txt
+python setup.py build_ext --inplace
+python -m pytest Tests/PythonTests/
+```
+
+GitHub Actions builds and tests the project on Ubuntu, macOS, and Windows. See [AGENTS.md](AGENTS.md) for the complete validation matrix and repository rules.
+
+## Contributing
+
+Issues and pull requests are welcome. Keep changes focused, add the narrowest test that covers behavior changes, and follow [AGENTS.md](AGENTS.md).
 
 ## Acknowledgement
 
-I would like to thank [Arvi "Hempuli" Teikari](https://hempuli.com/) for allowing me to develop this project.
+Thank you to [Arvi "Hempuli" Teikari](https://hempuli.com/) for allowing this project to be developed. Baba Is You and its original game concepts belong to Hempuli.
 
 ## License
 
-<img align="right" src="https://149753425.v2.pressablecdn.com/wp-content/uploads/2009/06/OSIApproved_100X125.png">
+This project is licensed under the [MIT License](LICENSE).
 
-The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
-
-Copyright &copy; 2020-2026 [Chris Ohk](http://www.github.com/utilForever).
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Baba Is You was created by Arvi "Hempuli" Teikari, a Finnish game developer known for other titles such as *Environmental Station Alpha* and *Stumblehill*.
+Copyright &copy; 2020-2026 [Chris Ohk](https://github.com/utilForever).
