@@ -85,9 +85,9 @@ memory = ReplayMemory(10000)
 def get_action(state):
     if random.random() > EPSILON:
         with torch.no_grad():
-            return env.action_space[net(state).max(1)[1].view(1)]
+            return net(state).max(1)[1].item()
     else:
-        return random.choice(env.action_space)
+        return env.action_space.sample()
 
 
 def train():
@@ -97,7 +97,7 @@ def train():
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
 
-    actions = tuple((map(lambda a: torch.tensor([[int(a) - 1]]), batch.action)))
+    actions = tuple((map(lambda a: torch.tensor([[a]]), batch.action)))
     rewards = tuple(
         (map(lambda r: torch.tensor([r], dtype=torch.float32), batch.reward)))
 

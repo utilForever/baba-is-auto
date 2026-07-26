@@ -1,4 +1,5 @@
 import gym
+from gym import spaces
 from gym.utils import seeding
 from gym.envs.registration import register
 import numpy as np
@@ -17,14 +18,20 @@ class BabaEnv(gym.Env):
         self.game = pyBaba.Game(self.path)
         self.renderer = rendering.Renderer(self.game)
 
-        self.action_space = [
+        self.actions = [
             pyBaba.Direction.UP,
             pyBaba.Direction.DOWN,
             pyBaba.Direction.LEFT,
             pyBaba.Direction.RIGHT
         ]
-
-        self.action_size = len(self.action_space)
+        self.action_space = spaces.Discrete(len(self.actions))
+        self.observation_space = spaces.Box(
+            low=0, high=1,
+            shape=(pyBaba.Preprocess.TENSOR_DIM,
+                   self.game.GetMap().GetHeight(),
+                   self.game.GetMap().GetWidth()),
+            dtype=np.float32)
+        self.action_size = self.action_space.n
 
         self.seed()
         self.reset()
@@ -41,7 +48,7 @@ class BabaEnv(gym.Env):
         return self.get_obs()
 
     def step(self, action):
-        self.game.MovePlayer(action)
+        self.game.MovePlayer(self.actions[action])
 
         result = self.game.GetPlayState()
 

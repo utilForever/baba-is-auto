@@ -56,7 +56,7 @@ def get_action(state):
     action = m.sample()
 
     net.log_probs.append(m.log_prob(action))
-    return env.action_space[action.item()]
+    return action.item()
 
 
 def train():
