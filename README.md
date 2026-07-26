@@ -95,7 +95,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-The root CMake project builds the `baba-is-auto` library, `pyBaba` extension, and `UnitTests` executable.
+vcpkg installs the dependencies declared in `vcpkg.json` during configuration. The root CMake project then builds the `baba-is-auto` library, `pyBaba` extension, and `UnitTests` executable.
 
 ### 4. Run the C++ Tests
 
