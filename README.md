@@ -49,7 +49,6 @@ For the simulator design and behavior contract, see [ARCHITECTURE.md](ARCHITECTU
 ### Prerequisites
 
 - CMake 3.31.6 or later
-- vcpkg
 - A C++17 compiler
 - Python 3 with development headers
 - Git
@@ -60,16 +59,36 @@ Platform-specific tools:
 - macOS: Xcode Command Line Tools, plus `autoconf`, `autoconf-archive`, `automake`, `curl`, `libtool`, `pkg-config`, `tar`, `unzip`, and `zip`.
 - Ubuntu: `build-essential`, `autoconf`, `autoconf-archive`, `automake`, `curl`, `libtool`, `pkg-config`, `python3-dev`, `python3-setuptools`, `tar`, `unzip`, and `zip`.
 
-Set `VCPKG_ROOT` to your vcpkg checkout, or pass its toolchain file through `CMAKE_TOOLCHAIN_FILE`.
+### 1. Install vcpkg
 
-### 1. Clone
+Clone and bootstrap [vcpkg](https://github.com/microsoft/vcpkg), then expose its location to CMake.
+
+macOS and Linux:
+
+```bash
+git clone https://github.com/microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh
+export VCPKG_ROOT="$PWD/vcpkg"
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/microsoft/vcpkg.git
+.\vcpkg\bootstrap-vcpkg.bat
+$env:VCPKG_ROOT = (Resolve-Path .\vcpkg)
+```
+
+The environment variable only needs to be set in the shell used to build the project. Alternatively, set `CMAKE_TOOLCHAIN_FILE` to the absolute path of `scripts/buildsystems/vcpkg.cmake` inside the vcpkg checkout.
+
+### 2. Clone
 
 ```bash
 git clone https://github.com/utilForever/baba-is-auto.git
 cd baba-is-auto
 ```
 
-### 2. Build
+### 3. Build
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -78,7 +97,7 @@ cmake --build build --config Release
 
 The root CMake project builds the `baba-is-auto` library, `pyBaba` extension, and `UnitTests` executable.
 
-### 3. Run the C++ Tests
+### 4. Run the C++ Tests
 
 macOS and Linux:
 
