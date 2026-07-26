@@ -54,6 +54,12 @@ For the simulator design and behavior contract, see [ARCHITECTURE.md](ARCHITECTU
 - Python 3 with development headers
 - Git
 
+Platform-specific tools:
+
+- Windows: Visual Studio 2022 with the **Desktop development with C++** workload.
+- macOS: Xcode Command Line Tools, plus `autoconf`, `autoconf-archive`, `automake`, `curl`, `libtool`, `pkg-config`, `tar`, `unzip`, and `zip`.
+- Ubuntu: `build-essential`, `autoconf`, `autoconf-archive`, `automake`, `curl`, `libtool`, `pkg-config`, `python3-dev`, `python3-setuptools`, `tar`, `unzip`, and `zip`.
+
 Set `VCPKG_ROOT` to your vcpkg checkout, or pass its toolchain file through `CMAKE_TOOLCHAIN_FILE`.
 
 ### 1. Clone
