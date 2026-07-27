@@ -388,11 +388,10 @@ void Game::CheckPlayState()
         const auto positions = m_map.GetPositions(playerIcon);
         hasPlayer = hasPlayer || !positions.empty();
 
-        for (const auto& pos : positions)
+        for (const auto& [x, y] : positions)
         {
-            if (m_ruleManager.HasProperty(
-                    m_map.At(pos.first, pos.second).GetTypes(),
-                    ObjectType::WIN))
+            if (m_ruleManager.HasProperty(m_map.At(x, y).GetTypes(),
+                                          ObjectType::WIN))
             {
                 m_playState = PlayState::WON;
                 return;
