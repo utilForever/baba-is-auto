@@ -77,6 +77,29 @@ TEST_CASE("Editor - Level File Round Trip")
     }
 
     CHECK_FALSE(LoadLevelFile(path, loaded));
+
+    Map map;
+
+    {
+        std::ofstream invalid(path, std::ios::trunc);
+        invalid << "0 1\n";
+    }
+
+    CHECK_THROWS_AS(map.Load(path.string()), std::runtime_error);
+
+    {
+        std::ofstream invalid(path, std::ios::trunc);
+        invalid << "3 1\n132 132\n";
+    }
+
+    CHECK_THROWS_AS(map.Load(path.string()), std::runtime_error);
+
+    {
+        std::ofstream invalid(path, std::ios::trunc);
+        invalid << "3 1\n0 132 132\n";
+    }
+
+    CHECK_THROWS_AS(map.Load(path.string()), std::runtime_error);
     fs::remove(path, error);
     fs::remove(predictableTemporary, error);
 }

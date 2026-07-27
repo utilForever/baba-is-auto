@@ -120,6 +120,25 @@ TEST_CASE("Game - Layered Movement")
     CHECK(game.GetMap().At(2, 5).HasType(ObjectType::FLAG));
 }
 
+TEST_CASE("Game - Stacked Push Edges")
+{
+    Game game(MAPS_DIR "stacked_push.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 3).HasType(ObjectType::ICON_BABA));
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(3, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_BABA));
+
+    Game upward(MAPS_DIR "stacked_push.txt");
+    upward.MovePlayer(Direction::UP);
+    CHECK(upward.GetMap().At(0, 2).HasType(ObjectType::ICON_BABA));
+    CHECK(upward.GetMap().At(3, 3).HasType(ObjectType::ICON_BABA));
+}
+
 TEST_CASE("Game - Won")
 {
     Game game(MAPS_DIR "off_limits_bug.txt");
@@ -211,10 +230,12 @@ TEST_CASE("Map - Boundary Duplicate Stack")
 
 TEST_CASE("Object - Duplicate Stack")
 {
+    const Object empty(std::vector<ObjectType>{});
     Object object;
     object.Add(ObjectType::ICON_BABA);
     object.Add(ObjectType::ICON_BABA);
 
+    CHECK(empty.HasType(ObjectType::ICON_EMPTY));
     CHECK(object.GetTypes().size() == 2);
     object.Remove(ObjectType::ICON_BABA);
     CHECK(object.HasType(ObjectType::ICON_BABA));
@@ -233,8 +254,11 @@ TEST_CASE("RuleManager - Basic")
                       Object(std::vector<ObjectType>{ ObjectType::IS }),
                       Object(std::vector<ObjectType>{ ObjectType::STOP }) };
 
+    CHECK(ruleManager.FindPlayer() == ObjectType::ICON_EMPTY);
+
     ruleManager.AddRule(rule1);
     CHECK(ruleManager.GetNumRules() == 1);
+    CHECK(ruleManager.FindPlayer() == ObjectType::ICON_BABA);
 
     ruleManager.AddRule(rule2);
     CHECK(ruleManager.GetNumRules() == 2);
