@@ -139,12 +139,9 @@ std::vector<Position> Map::GetPositions(ObjectType type) const
     {
         for (std::size_t x = 0; x < m_width; ++x)
         {
-            for (const ObjectType tileType : At(x, y).GetTypes())
+            if (At(x, y).HasType(type))
             {
-                if (tileType == type)
-                {
-                    res.emplace_back(std::make_pair(x, y));
-                }
+                res.emplace_back(std::make_pair(x, y));
             }
         }
     }

@@ -206,6 +206,7 @@ TEST_CASE("Map - Boundary Duplicate Stack")
     map.AddObject(0, 1, ObjectType::ICON_BABA);
 
     CHECK(map.At(0, 1).GetTypes().size() == 2);
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).size() == 1);
 }
 
 TEST_CASE("Object - Duplicate Stack")
