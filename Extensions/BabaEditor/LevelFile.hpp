@@ -259,7 +259,7 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
                 return false;
             }
 
-            if (layer > 0 && tile[layer] != ObjectType::ICON_EMPTY)
+            if (tile[layer] != ObjectType::ICON_EMPTY)
             {
                 layerCount = std::max(layerCount, layer + 1);
             }
