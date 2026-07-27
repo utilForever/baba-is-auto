@@ -279,14 +279,8 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
             {
                 const auto tile = level.tiles[y * level.width + x][layer];
                 contents += std::to_string(static_cast<int>(tile));
-
-                if (x + 1 < level.width)
-                {
-                    contents += ' ';
-                }
+                contents += x + 1 < level.width ? ' ' : '\n';
             }
-
-            contents += '\n';
         }
 
         if (layer + 1 < layerCount)
