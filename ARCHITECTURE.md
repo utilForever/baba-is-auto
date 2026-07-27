@@ -59,7 +59,7 @@ Each map starts with two integers:
 1. Board width.
 2. Board height.
 
-The remaining values are read in row-major order and converted directly to `ObjectType` values. A map must provide exactly `width * height` object values after the dimensions.
+The remaining values form one to three complete row-major `ObjectType` grids, from L1 through L3. Legacy files contain only the L1 grid. The simulator merges loaded layers into each cell's `Object`; layer order is retained by the editor for persistence and rendering.
 
 Map files are intentionally small and mechanical. Prefer adding a minimal fixture that demonstrates one behavior over reusing a large scenario with unrelated rules.
 
@@ -81,6 +81,8 @@ The simulator currently relies on these behavior contracts:
 - `Game` is the canonical owner of turn progression.
 - `Game::MovePlayer()` moves every object matching the active `YOU` rule.
 - Text tiles are movable blockers during movement checks, even when they do not have an explicit `PUSH` rule.
+- All text objects in a stack are pushed together, and stacked noun/property text participates in the same rule.
+- Every object selected by a stacked `YOU` rule moves once per turn; selected objects in the same cell move together, while non-`YOU` objects stay behind.
 - `STOP` prevents movement into a cell.
 - `PUSH` recursively moves the object being pushed before the player moves.
 - `SINK` and `DEFEAT` remove the moving object and can lead to `LOST`.
