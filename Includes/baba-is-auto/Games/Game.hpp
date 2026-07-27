@@ -12,6 +12,7 @@
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
 #include <string>
+#include <vector>
 
 namespace baba_is_auto
 {
@@ -75,9 +76,12 @@ class Game
     //! \param x The x position.
     //! \param y The y position.
     //! \param dir The direction to move.
-    //! \param type The object type to move.
+    //! \param types The object types to move together.
     void ProcessMove(std::size_t x, std::size_t y, Direction dir,
-                     ObjectType type);
+                     const std::vector<ObjectType>& types);
+
+    //! Pushes every movable object stacked at a position as one group.
+    void ProcessPush(std::size_t x, std::size_t y, Direction dir);
 
     //! Checks the play state of the game.
     void CheckPlayState();
@@ -87,6 +91,7 @@ class Game
 
     PlayState m_playState = PlayState::INVALID;
     ObjectType m_playerIcon = ObjectType::ICON_EMPTY;
+    std::vector<ObjectType> m_playerIcons;
 };
 }  // namespace baba_is_auto
 

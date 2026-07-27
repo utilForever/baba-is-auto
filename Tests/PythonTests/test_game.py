@@ -59,6 +59,21 @@ def test_game_lost():
     assert game.GetPlayState() == pyBaba.PlayState.LOST
 
 
+def test_game_layered_map():
+    game = pyBaba.Game("Resources/Maps/layered_map.txt")
+    assert game.GetMap().At(0, 0).HasType(pyBaba.ObjectType.BABA)
+    assert game.GetMap().At(0, 0).HasType(pyBaba.ObjectType.WALL)
+    assert game.GetMap().At(0, 1).HasType(pyBaba.ObjectType.ICON_ROCK)
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+
+    assert game.GetMap().At(0, 1).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert game.GetMap().At(1, 1).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(1, 1).HasType(pyBaba.ObjectType.ICON_WALL)
+    assert game.GetMap().At(2, 1).HasType(pyBaba.ObjectType.FLAG)
+    assert game.GetMap().At(2, 1).HasType(pyBaba.ObjectType.ROCK)
+
+
 def test_game_sink():
     game = pyBaba.Game("Resources/Maps/out_of_reach.txt")
     assert game.GetMap().At(9, 3).HasType(pyBaba.ObjectType.ICON_BABA)

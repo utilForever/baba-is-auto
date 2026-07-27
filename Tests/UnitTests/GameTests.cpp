@@ -86,6 +86,40 @@ TEST_CASE("Game - Editor Smoke Map")
     CHECK(game.GetPlayState() == PlayState::WON);
 }
 
+TEST_CASE("Game - Layered Map")
+{
+    Game game(MAPS_DIR "layered_map.txt");
+
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::BABA));
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::WALL));
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_ROCK));
+
+    game.MovePlayer(Direction::RIGHT);
+
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::FLAG));
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::ROCK));
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - Layered Movement")
+{
+    Game game(MAPS_DIR "layered_movement.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(game.GetMap().At(3, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(game.GetMap().At(1, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 5).HasType(ObjectType::ICON_WATER));
+    CHECK(game.GetMap().At(2, 5).HasType(ObjectType::FLAG));
+}
+
 TEST_CASE("Game - Won")
 {
     Game game(MAPS_DIR "off_limits_bug.txt");
