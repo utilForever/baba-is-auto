@@ -30,6 +30,9 @@ TEST_CASE("Editor - Level File Round Trip")
 
     LevelFile source;
     REQUIRE(LoadLevelFile(MAPS_DIR "editor_smoke.txt", source));
+    CHECK(source.tiles[0][0] == ObjectType::BABA);
+    CHECK(source.tiles[0][1] == ObjectType::ICON_EMPTY);
+    CHECK(source.tiles[0][2] == ObjectType::ICON_EMPTY);
 
     {
         std::ofstream reserved(predictableTemporary);
@@ -45,7 +48,10 @@ TEST_CASE("Editor - Level File Round Trip")
         CHECK(contents == "reserved");
     }
 
-    source.tiles[0] = ObjectType::ICON_BABA;
+    source.tiles[0] = { ObjectType::ICON_BABA, ObjectType::ICON_EMPTY,
+                        ObjectType::ROCK };
+    source.tiles[1] = { ObjectType::ICON_EMPTY, ObjectType::ICON_WALL,
+                        ObjectType::ICON_EMPTY };
     REQUIRE(SaveLevelFile(path, source));
 
     LevelFile loaded;
@@ -55,7 +61,7 @@ TEST_CASE("Editor - Level File Round Trip")
     CHECK(loaded.tiles == source.tiles);
 
     LevelFile invalidSave = source;
-    invalidSave.tiles[0] = ObjectType::OP_TYPE;
+    invalidSave.tiles[0][1] = ObjectType::OP_TYPE;
     CHECK_FALSE(SaveLevelFile(path, invalidSave));
 
     {

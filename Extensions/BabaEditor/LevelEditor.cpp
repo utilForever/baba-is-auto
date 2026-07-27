@@ -377,19 +377,11 @@ bool LevelEditor::ImportLevel(const fs::path& filename)
         return false;
     }
 
-    // Legacy maps store one numeric ObjectType per cell, so load into L1.
-    LevelTiles imported(level.tiles.size(), { EMPTY, EMPTY, EMPTY });
-
-    for (std::size_t i = 0; i < level.tiles.size(); ++i)
-    {
-        imported[i][0] = level.tiles[i];
-    }
-
     m_width = level.width;
     m_height = level.height;
     m_nextWidth = static_cast<int>(m_width);
     m_nextHeight = static_cast<int>(m_height);
-    m_tiles = std::move(imported);
+    m_tiles = std::move(level.tiles);
     m_undoStack.clear();
     m_dirty = false;
     m_status = "Opened " + displayName;
@@ -403,15 +395,7 @@ bool LevelEditor::ExportLevel(const fs::path& filename) const
     LevelFile level;
     level.width = m_width;
     level.height = m_height;
-    level.tiles.reserve(m_width * m_height);
-
-    for (std::size_t y = 0; y < m_height; ++y)
-    {
-        for (std::size_t x = 0; x < m_width; ++x)
-        {
-            level.tiles.push_back(VisibleTile(x, y));
-        }
-    }
+    level.tiles = m_tiles;
 
     return SaveLevelFile(filename, level);
 }
@@ -575,9 +559,7 @@ void LevelEditor::DrawTopBar()
         {
             ImGui::PushID(static_cast<int>(layer));
 
-            const bool enabled = layer == 0;
             const bool active = m_currentLayer == layer;
-            ImGui::BeginDisabled(!enabled);
 
             if (active)
             {
@@ -586,15 +568,9 @@ void LevelEditor::DrawTopBar()
 
             std::string label = "L" + std::to_string(layer + 1);
 
-            if (ImGui::Button(label.c_str(), { 42.0f, 0.0f }) && enabled)
+            if (ImGui::Button(label.c_str(), { 42.0f, 0.0f }))
             {
                 m_currentLayer = layer;
-            }
-
-            if (!enabled &&
-                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-            {
-                ImGui::SetTooltip("Layered maps are not supported yet");
             }
 
             if (active)
@@ -602,7 +578,6 @@ void LevelEditor::DrawTopBar()
                 ImGui::PopStyleColor();
             }
 
-            ImGui::EndDisabled();
             ImGui::PopID();
         }
 
@@ -793,8 +768,8 @@ void LevelEditor::DrawSettings()
     ImGui::Separator();
     ImGui::TextUnformatted("Compatibility");
     ImGui::TextWrapped(
-        "Files use the baba-is-auto numeric map format. "
-        "Only L1 is editable and saved.");
+        "Files use the baba-is-auto numeric map format. L1, L2, and L3 are "
+        "saved as consecutive grids.");
 
     ImGui::End();
 }

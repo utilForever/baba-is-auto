@@ -72,7 +72,6 @@ class LevelEditor
         Close
     };
 
-    // L2/L3 remain reserved for layered-map support; current files use L1 only.
     static constexpr std::size_t LAYER_COUNT = 3;
     static constexpr ObjectType EMPTY = ObjectType::ICON_EMPTY;
 
