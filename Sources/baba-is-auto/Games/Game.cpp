@@ -343,11 +343,10 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
 
     const std::vector<ObjectType> targetTypes =
         m_map.At(targetX, targetY).GetTypes();
-    const bool pushesNext =
-        m_ruleManager.HasProperty(targetTypes, ObjectType::PUSH) ||
-        m_map.At(targetX, targetY).HasTextType();
-
-    if (pushesNext)
+    if (const bool pushesNext =
+            m_ruleManager.HasProperty(targetTypes, ObjectType::PUSH) ||
+            m_map.At(targetX, targetY).HasTextType();
+        pushesNext)
     {
         ProcessPush(targetX, targetY, dir);
     }
