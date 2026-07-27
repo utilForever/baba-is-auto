@@ -164,6 +164,29 @@ TEST_CASE("Map - Basic")
     CHECK(map.At(4, 3).HasType(ObjectType::BABA));
 }
 
+TEST_CASE("Map - Boundary Duplicate Stack")
+{
+    Map map(3, 3);
+
+    map.AddObject(0, 1, ObjectType::ICON_BABA);
+    map.AddObject(0, 1, ObjectType::ICON_BABA);
+
+    CHECK(map.At(0, 1).GetTypes().size() == 2);
+}
+
+TEST_CASE("Object - Duplicate Stack")
+{
+    Object object;
+    object.Add(ObjectType::ICON_BABA);
+    object.Add(ObjectType::ICON_BABA);
+
+    CHECK(object.GetTypes().size() == 2);
+    object.Remove(ObjectType::ICON_BABA);
+    CHECK(object.HasType(ObjectType::ICON_BABA));
+    object.Remove(ObjectType::ICON_BABA);
+    CHECK(object.HasType(ObjectType::ICON_EMPTY));
+}
+
 TEST_CASE("RuleManager - Basic")
 {
     RuleManager ruleManager;

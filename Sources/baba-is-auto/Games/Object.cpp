@@ -6,15 +6,18 @@
 
 #include <baba-is-auto/Games/Object.hpp>
 
-#include <algorithm>
-
 namespace baba_is_auto
 {
 Object::Object(std::vector<ObjectType> types)
 {
     for (const auto& type : types)
     {
-        m_types.emplace(type, 1);
+        Add(type);
+    }
+
+    if (m_types.empty())
+    {
+        m_types.emplace(ObjectType::ICON_EMPTY, 1);
     }
 }
 
@@ -23,18 +26,23 @@ bool Object::operator==(const Object& rhs) const
     return m_types == rhs.m_types;
 }
 
-void Object::Add(ObjectType type, bool isBoundary)
+void Object::Add(ObjectType type)
 {
+    if (type == ObjectType::ICON_EMPTY)
+    {
+        if (m_types.empty())
+        {
+            m_types.emplace(type, 1);
+        }
+
+        return;
+    }
+
+    m_types.erase(ObjectType::ICON_EMPTY);
+
     if (m_types.find(type) != m_types.end())
     {
-        if (isBoundary)
-        {
-            m_types[type] = 1;
-        }
-        else
-        {
-            m_types[type] += 1;
-        }
+        m_types[type] += 1;
     }
     else
     {
@@ -66,9 +74,12 @@ std::vector<ObjectType> Object::GetTypes() const
 {
     std::vector<ObjectType> ret;
 
-    for (const auto& type : m_types)
+    for (const auto& [type, count] : m_types)
     {
-        ret.emplace_back(type.first);
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            ret.emplace_back(type);
+        }
     }
 
     return ret;
