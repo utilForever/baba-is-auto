@@ -18,6 +18,12 @@ namespace
 {
 constexpr std::size_t MAX_MAP_LAYERS = 3;
 
+class MapLoadError : public std::runtime_error
+{
+ public:
+    using std::runtime_error::runtime_error;
+};
+
 bool IsValidMapTile(int value)
 {
     const auto type = static_cast<ObjectType>(value);
@@ -67,7 +73,7 @@ void Map::Load(std::string_view filename)
     if (!(mapFile >> width >> height) || width == 0 || height == 0 ||
         width > std::numeric_limits<std::size_t>::max() / height)
     {
-        throw std::runtime_error("Invalid map dimensions");
+        throw MapLoadError("Invalid map dimensions");
     }
 
     const std::size_t tileCount = width * height;
@@ -81,7 +87,7 @@ void Map::Load(std::string_view filename)
     if (!mapFile.eof() || values.empty() || values.size() % tileCount != 0 ||
         values.size() / tileCount > MAX_MAP_LAYERS)
     {
-        throw std::runtime_error("Invalid map tile data");
+        throw MapLoadError("Invalid map tile data");
     }
 
     std::vector<std::vector<ObjectType>> tileTypes(tileCount);
@@ -90,7 +96,7 @@ void Map::Load(std::string_view filename)
     {
         if (!IsValidMapTile(values[i]))
         {
-            throw std::runtime_error("Invalid map object type");
+            throw MapLoadError("Invalid map object type");
         }
 
         tileTypes[i % tileCount].emplace_back(
