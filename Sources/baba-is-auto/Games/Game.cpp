@@ -321,8 +321,8 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
 
 void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
 {
-    int targetX = static_cast<int>(x);
-    int targetY = static_cast<int>(y);
+    auto targetX = static_cast<int>(x);
+    auto targetY = static_cast<int>(y);
 
     if (dir == Direction::UP)
     {
