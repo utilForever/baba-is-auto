@@ -5,6 +5,8 @@
 
 #include <baba-is-auto/Enums/GameEnums.hpp>
 
+#include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -23,9 +25,9 @@
 #endif
 #include <windows.h>
 #else
+#include <unistd.h>
 #include <cerrno>
 #include <cstdlib>
-#include <unistd.h>
 #endif
 
 namespace baba_is_auto::editor
@@ -36,13 +38,16 @@ constexpr std::size_t MIN_LEVEL_WIDTH = 3;
 constexpr std::size_t MAX_LEVEL_WIDTH = 33;
 constexpr std::size_t MIN_LEVEL_HEIGHT = 1;
 constexpr std::size_t MAX_LEVEL_HEIGHT = 18;
+constexpr std::size_t LEVEL_LAYER_COUNT = 3;
 
-//! The single-layer numeric map format consumed by baba-is-auto.
+//! A level stores one object per layer and up to three layers per tile.
 struct LevelFile
 {
+    using LayerTile = std::array<ObjectType, LEVEL_LAYER_COUNT>;
+
     std::size_t width = 0;
     std::size_t height = 0;
-    std::vector<ObjectType> tiles;
+    std::vector<LayerTile> tiles;
 };
 
 //! Returns true when the object type can be stored in the numeric map format.
@@ -68,17 +73,27 @@ inline bool LoadLevelFile(const fs::path& filename, LevelFile& level)
         return false;
     }
 
-    loaded.tiles.resize(loaded.width * loaded.height);
+    const std::size_t tileCount = loaded.width * loaded.height;
+    std::vector<int> values;
 
-    for (ObjectType& tile : loaded.tiles)
+    for (int value = 0; file >> value;)
     {
-        int value = 0;
+        values.emplace_back(value);
+    }
 
-        if (!(file >> value))
-        {
-            return false;
-        }
+    if (!file.eof() || values.empty() || values.size() % tileCount != 0 ||
+        values.size() / tileCount > LEVEL_LAYER_COUNT)
+    {
+        return false;
+    }
 
+    loaded.tiles.assign(tileCount,
+                        { ObjectType::ICON_EMPTY, ObjectType::ICON_EMPTY,
+                          ObjectType::ICON_EMPTY });
+
+    for (std::size_t i = 0; i < values.size(); ++i)
+    {
+        const int value = values[i];
         const auto type = static_cast<ObjectType>(value);
 
         if (!IsValidLevelTile(type))
@@ -86,7 +101,7 @@ inline bool LoadLevelFile(const fs::path& filename, LevelFile& level)
             return false;
         }
 
-        tile = type;
+        loaded.tiles[i % tileCount][i / tileCount] = type;
     }
 
     level = std::move(loaded);
@@ -126,8 +141,9 @@ inline bool WriteTemporaryLevelFile(const fs::path& destination,
         temporary += L".";
         temporary += std::to_wstring(attempt);
 
-        HANDLE file = CreateFileW(temporary.c_str(), GENERIC_WRITE, 0, nullptr,
-                                  CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY, nullptr);
+        HANDLE file =
+            CreateFileW(temporary.c_str(), GENERIC_WRITE, 0, nullptr,
+                        CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY, nullptr);
 
         if (file == INVALID_HANDLE_VALUE)
         {
@@ -232,11 +248,21 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
         return false;
     }
 
-    for (const ObjectType tile : level.tiles)
+    std::size_t layerCount = 1;
+
+    for (const LevelFile::LayerTile& tile : level.tiles)
     {
-        if (!IsValidLevelTile(tile))
+        for (std::size_t layer = 0; layer < LEVEL_LAYER_COUNT; ++layer)
         {
-            return false;
+            if (!IsValidLevelTile(tile[layer]))
+            {
+                return false;
+            }
+
+            if (tile[layer] != ObjectType::ICON_EMPTY)
+            {
+                layerCount = std::max(layerCount, layer + 1);
+            }
         }
     }
 
@@ -245,20 +271,22 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
     contents += std::to_string(level.height);
     contents += '\n';
 
-    for (std::size_t y = 0; y < level.height; ++y)
+    for (std::size_t layer = 0; layer < layerCount; ++layer)
     {
-        for (std::size_t x = 0; x < level.width; ++x)
+        for (std::size_t y = 0; y < level.height; ++y)
         {
-            const auto tile = level.tiles[y * level.width + x];
-            contents += std::to_string(static_cast<int>(tile));
-
-            if (x + 1 < level.width)
+            for (std::size_t x = 0; x < level.width; ++x)
             {
-                contents += ' ';
+                const auto tile = level.tiles[y * level.width + x][layer];
+                contents += std::to_string(static_cast<int>(tile));
+                contents += x + 1 < level.width ? ' ' : '\n';
             }
         }
 
-        contents += '\n';
+        if (layer + 1 < layerCount)
+        {
+            contents += '\n';
+        }
     }
 
     if (fs::path temporary;

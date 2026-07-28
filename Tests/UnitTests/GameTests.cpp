@@ -86,6 +86,59 @@ TEST_CASE("Game - Editor Smoke Map")
     CHECK(game.GetPlayState() == PlayState::WON);
 }
 
+TEST_CASE("Game - Layered Map")
+{
+    Game game(MAPS_DIR "layered_map.txt");
+
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::BABA));
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::WALL));
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_ROCK));
+
+    game.MovePlayer(Direction::RIGHT);
+
+    CHECK(game.GetMap().At(0, 1).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::FLAG));
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::ROCK));
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - Layered Movement")
+{
+    Game game(MAPS_DIR "layered_movement.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(game.GetMap().At(3, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(game.GetMap().At(1, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 5).HasType(ObjectType::ICON_WATER));
+    CHECK(game.GetMap().At(2, 5).HasType(ObjectType::FLAG));
+}
+
+TEST_CASE("Game - Stacked Push Edges")
+{
+    Game game(MAPS_DIR "stacked_push.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 3).HasType(ObjectType::ICON_BABA));
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(3, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_BABA));
+
+    Game upward(MAPS_DIR "stacked_push.txt");
+    upward.MovePlayer(Direction::UP);
+    CHECK(upward.GetMap().At(0, 2).HasType(ObjectType::ICON_BABA));
+    CHECK(upward.GetMap().At(3, 3).HasType(ObjectType::ICON_BABA));
+}
+
 TEST_CASE("Game - Won")
 {
     Game game(MAPS_DIR "off_limits_bug.txt");
@@ -164,6 +217,32 @@ TEST_CASE("Map - Basic")
     CHECK(map.At(4, 3).HasType(ObjectType::BABA));
 }
 
+TEST_CASE("Map - Boundary Duplicate Stack")
+{
+    Map map(3, 3);
+
+    map.AddObject(0, 1, ObjectType::ICON_BABA);
+    map.AddObject(0, 1, ObjectType::ICON_BABA);
+
+    CHECK(map.At(0, 1).GetTypes().size() == 2);
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).size() == 1);
+}
+
+TEST_CASE("Object - Duplicate Stack")
+{
+    const Object empty(std::vector<ObjectType>{});
+    Object object;
+    object.Add(ObjectType::ICON_BABA);
+    object.Add(ObjectType::ICON_BABA);
+
+    CHECK(empty.HasType(ObjectType::ICON_EMPTY));
+    CHECK(object.GetTypes().size() == 2);
+    object.Remove(ObjectType::ICON_BABA);
+    CHECK(object.HasType(ObjectType::ICON_BABA));
+    object.Remove(ObjectType::ICON_BABA);
+    CHECK(object.HasType(ObjectType::ICON_EMPTY));
+}
+
 TEST_CASE("RuleManager - Basic")
 {
     RuleManager ruleManager;
@@ -175,8 +254,11 @@ TEST_CASE("RuleManager - Basic")
                       Object(std::vector<ObjectType>{ ObjectType::IS }),
                       Object(std::vector<ObjectType>{ ObjectType::STOP }) };
 
+    CHECK(ruleManager.FindPlayer() == ObjectType::ICON_EMPTY);
+
     ruleManager.AddRule(rule1);
     CHECK(ruleManager.GetNumRules() == 1);
+    CHECK(ruleManager.FindPlayer() == ObjectType::ICON_BABA);
 
     ruleManager.AddRule(rule2);
     CHECK(ruleManager.GetNumRules() == 2);

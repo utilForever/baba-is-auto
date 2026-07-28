@@ -16,12 +16,12 @@ The editor target uses GLFW, OpenGL, and ImGui from vcpkg. The main project keep
 
 ## Scope
 
-- `L1` editing, with disabled `L2`/`L3` placeholders for future layered-map support.
+- `L1`, `L2`, and `L3` editing with exact layer persistence.
 - Object palette filtered to the text and object sprites currently supported by the repository's GUI assets and sample maps.
 - Palette and canvas tiles render the matching GIF sprites instead of plain text labels when the asset exists.
 - Missing or failed sprite loads are shown as a small red X instead of falling back to text, and the status bar reports the sprite load count.
 - Freeform, line, rectangle, filled rectangle, flood fill, and eraser placement.
 - Right-click tile picker, grid toggle, undo, and cross-platform in-app Open/Save/Save As dialogs or a manually typed path.
-- Open/save compatibility with the existing `baba-is-auto` map format: first line is `width height`, followed by one numeric `ObjectType` per tile.
+- Open/save compatibility with the existing `baba-is-auto` map format.
 
-Because the current simulator map format stores one object per saved tile, the editor opens and saves maps on `L1` only.
+The first line is `width height`. It is followed by one complete numeric `ObjectType` grid per layer, from L1 through L3. Trailing empty layers are omitted, so existing single-grid maps remain valid and are loaded into L1.

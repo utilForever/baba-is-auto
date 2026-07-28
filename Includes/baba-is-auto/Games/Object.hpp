@@ -45,14 +45,13 @@ class Object
 
     //! Adds an object type.
     //! \param type An object type to add.
-    //! \param isBoundary A flag to indicate it is boundary.
-    void Add(ObjectType type, bool isBoundary);
+    void Add(ObjectType type);
 
     //! Removes an object type.
     //! \param type An object type to remove.
     void Remove(ObjectType type);
 
-    //! Gets a list of object types.
+    //! Gets a list of object types, including duplicate stacked objects.
     //! \return A list of object types.
     std::vector<ObjectType> GetTypes() const;
 
