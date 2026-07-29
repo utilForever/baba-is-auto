@@ -44,6 +44,14 @@ For the simulator design and behavior contract, see [ARCHITECTURE.md](ARCHITECTU
 
 [Baba Is You](https://hempuli.com/baba/) is an award-winning puzzle game in which the rules are physical blocks. Moving those blocks can change the player, obstacles, and win condition while a level is in progress.
 
+## Demo
+
+<p align="center">
+  <picture>
+    <img src="Medias/Demos/baba-babaisyou-v0.gif" width="400" alt="Baba completing the bundled Baba Is You level" />
+  </picture>
+</p>
+
 ## Quick Start
 
 ### Prerequisites
