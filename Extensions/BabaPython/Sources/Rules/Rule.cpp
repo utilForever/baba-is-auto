@@ -13,8 +13,10 @@ using namespace baba_is_auto;
 
 void AddRule(pybind11::module& m)
 {
-    pybind11::class_<Rule>(m, "Rule")
-        .def(pybind11::init<Object, Object, Object>())
+    pybind11::class_<Rule>(m, "Rule", "Represents a three-tile rule.")
+        .def(pybind11::init<Object, Object, Object>(),
+             "Creates a three-tile rule.")
         .def("__eq__",
-             [](const Rule& left, const Rule& right) { return left == right; });
+             [](const Rule& left, const Rule& right) { return left == right; },
+             "Returns whether two rules contain the same three objects.");
 }

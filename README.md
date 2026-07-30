@@ -30,6 +30,8 @@
 
 baba-is-auto simulates a subset of [Baba Is You](https://hempuli.com/baba/): it loads a text map, parses rules formed by word tiles, applies movement and object interactions, and exposes the resulting state to C++ and Python callers.
 
+API references for both languages are published in the [baba-is-auto documentation](https://utilforever.github.io/baba-is-auto/).
+
 The repository provides:
 
 - A reusable C++17 simulator library.

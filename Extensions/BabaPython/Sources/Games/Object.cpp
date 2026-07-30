@@ -14,19 +14,29 @@ using namespace baba_is_auto;
 
 void AddObject(pybind11::module& m)
 {
-    pybind11::class_<Object>(m, "Object")
-        .def(pybind11::init<>())
-        .def(pybind11::init<std::vector<ObjectType>>())
+    pybind11::class_<Object>(
+        m, "Object", "Stores the object types stacked in one map cell.")
+        .def(pybind11::init<>(), "Creates an empty cell object.")
+        .def(pybind11::init<std::vector<ObjectType>>(),
+             "Creates a cell object containing the supplied object types.")
         .def("__eq__",
              [](const Object& left, const Object& right) {
                  return left.GetTypes() == right.GetTypes();
-             })
-        .def("Add", &Object::Add)
-        .def("Remove", &Object::Remove)
-        .def("GetTypes", &Object::GetTypes)
-        .def("HasType", &Object::HasType)
-        .def("HasTextType", &Object::HasTextType)
-        .def("HasNounType", &Object::HasNounType)
-        .def("HasVerbType", &Object::HasVerbType)
-        .def("HasPropertyType", &Object::HasPropertyType);
+             },
+             "Returns whether two cell objects contain the same types.")
+        .def("Add", &Object::Add, "Adds one object type to the cell.")
+        .def("Remove", &Object::Remove,
+             "Removes one matching object type from the cell.")
+        .def("GetTypes", &Object::GetTypes,
+             "Returns all object types, including duplicate stacked values.")
+        .def("HasType", &Object::HasType,
+             "Returns whether the cell contains the object type.")
+        .def("HasTextType", &Object::HasTextType,
+             "Returns whether the cell contains any text tile.")
+        .def("HasNounType", &Object::HasNounType,
+             "Returns whether the cell contains any noun text tile.")
+        .def("HasVerbType", &Object::HasVerbType,
+             "Returns whether the cell contains any verb text tile.")
+        .def("HasPropertyType", &Object::HasPropertyType,
+             "Returns whether the cell contains any property text tile.");
 }
