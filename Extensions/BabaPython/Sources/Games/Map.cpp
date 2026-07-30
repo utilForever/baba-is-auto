@@ -31,12 +31,12 @@ void AddMap(pybind11::module& m)
              "Removes one object type from the cell at zero-based (x, y).")
         .def("At",
              static_cast<Object& (Map::*)(std::size_t, std::size_t)>(&Map::At),
-             "Returns the live Object stored at zero-based (x, y).")
+             "Returns a copy of the Object stored at zero-based (x, y).")
         .def(
             "At",
             static_cast<const Object& (Map::*)(std::size_t, std::size_t) const>(
                 &Map::At),
-            "Returns the live Object stored at zero-based (x, y).")
+            "Returns a copy of the Object stored at zero-based (x, y).")
         .def("GetPositions", &Map::GetPositions,
              "Returns all zero-based (x, y) positions containing the object "
              "type.");

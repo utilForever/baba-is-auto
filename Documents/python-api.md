@@ -24,8 +24,8 @@ Map coordinates are zero-based `(x, y)` pairs.
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `Game(filename)`                      | Loads `filename`, parses its rules, and starts a game. Raises `RuntimeError` when the map data is invalid. |
 | `Game.Reset()`                        | Restores the loaded map and recalculates its initial rules and play state.                                 |
-| `Game.GetMap()`                       | Returns the live map owned by the game.                                                                    |
-| `Game.GetRuleManager()`               | Returns the live rule manager owned by the game.                                                           |
+| `Game.GetMap()`                       | Returns a copy of the map owned by the game.                                                               |
+| `Game.GetRuleManager()`               | Returns a copy of the rule manager owned by the game.                                                      |
 | `Game.GetPlayState()`                 | Returns the current `PlayState`.                                                                           |
 | `Game.GetPlayerIcon()`                | Returns the icon type selected by the active `YOU` rule.                                                   |
 | `Game.MovePlayer(direction)`          | Moves every object controlled by the active `YOU` rule in `direction`, then rebuilds rules and play state. |
@@ -37,7 +37,7 @@ Map coordinates are zero-based `(x, y)` pairs.
 | `Map.Load(filename)`                  | Loads a one-to-three-layer text map. Raises `RuntimeError` when the map data is invalid.                   |
 | `Map.AddObject(x, y, object_type)`    | Adds one `object_type` to the cell at zero-based `(x, y)`.                                                 |
 | `Map.RemoveObject(x, y, object_type)` | Removes one `object_type` from the cell at zero-based `(x, y)`.                                            |
-| `Map.At(x, y)`                        | Returns the live `Object` stored at zero-based `(x, y)`.                                                   |
+| `Map.At(x, y)`                        | Returns a copy of the `Object` stored at zero-based `(x, y)`.                                              |
 | `Map.GetPositions(object_type)`       | Returns all zero-based `(x, y)` positions containing `object_type`.                                        |
 | `Object()`                            | Creates an empty cell object.                                                                              |
 | `Object(object_types)`                | Creates a cell object containing the supplied object types.                                                |
@@ -81,7 +81,7 @@ Map coordinates are zero-based `(x, y)` pairs.
 
 | API             | Description                                                                                                                                                                    |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ObjectType`    | Identifies text tiles and in-game icons. Values use the exact names in `NounType.def`, `OpType.def`, `PropertyType.def`, and `IconType.def`, plus the four category sentinels. |
+| `ObjectType`    | Identifies text tiles and in-game icons. Values use the exact names in [NounType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/NounType.def), [OpType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/OpType.def), [PropertyType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/PropertyType.def), and [IconType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/IconType.def), plus the four category sentinels. |
 | `PlayState`     | Identifies the current game outcome: `INVALID`, `PLAYING`, `WON`, or `LOST`.                                                                                                   |
 | `Direction`     | Identifies a movement direction: `NONE`, `UP`, `DOWN`, `LEFT`, or `RIGHT`.                                                                                                     |
 | `RuleDirection` | Identifies a rule orientation: `HORIZONTAL` or `VERTICAL`.                                                                                                                     |

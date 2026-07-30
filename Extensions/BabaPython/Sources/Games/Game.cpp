@@ -21,12 +21,12 @@ void AddGame(pybind11::module& m)
              "Restores the loaded map and recalculates its initial rules and "
              "play state.")
         .def("GetMap", static_cast<Map& (Game::*)()>(&Game::GetMap),
-             "Returns the live map owned by the game.")
+             "Returns a copy of the map owned by the game.")
         .def("GetMap",
              static_cast<const Map& (Game::*)() const>(&Game::GetMap),
-             "Returns the live map owned by the game.")
+             "Returns a copy of the map owned by the game.")
         .def("GetRuleManager", &Game::GetRuleManager,
-             "Returns the live rule manager owned by the game.")
+             "Returns a copy of the rule manager owned by the game.")
         .def("GetPlayState", &Game::GetPlayState,
              "Returns the current PlayState.")
         .def("GetPlayerIcon", &Game::GetPlayerIcon,
