@@ -21,7 +21,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -yq doxygen
     - name: Build documentation
-      run: doxygen Documents/Doxyfile
+      run: |
+        mkdir -p build
+        doxygen Documents/Doxyfile
     - name: Configure Pages
       if: github.event_name == 'push'
       uses: actions/configure-pages@v5
