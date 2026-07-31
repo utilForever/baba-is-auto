@@ -20,6 +20,7 @@ USE_MDFILE_AS_MAINPAGE = Documents/index.md
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 GENERATE_TREEVIEW      = YES
+HAVE_DOT               = NO
 GENERATE_LATEX         = NO
 
 QUIET                  = YES
