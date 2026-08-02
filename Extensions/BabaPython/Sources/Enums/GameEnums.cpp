@@ -28,7 +28,7 @@ void AddGameEnums(pybind11::module& m)
 #undef X
 
     pybind11::enum_<PlayState>(m, "PlayState",
-                               "Identifies the current game outcome.")
+                               "Identifies the current game state.")
         .value("INVALID", PlayState::INVALID)
         .value("PLAYING", PlayState::PLAYING)
         .value("WON", PlayState::WON)
