@@ -62,10 +62,10 @@ class Map
     //! \param type An object type to remove from the map.
     void RemoveObject(std::size_t x, std::size_t y, ObjectType type);
 
-    //! Gets an object from the map.
+    //! Gets a writable object reference from the map.
     //! \param x The x position.
     //! \param y The y position.
-    //! \return An object at row and column.
+    //! \return A writable object reference at the zero-based (x, y) position.
     Object& At(std::size_t x, std::size_t y);
 
     //! Gets an object from the map.
