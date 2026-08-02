@@ -6,13 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 jobs:
   build-docs:
+    permissions:
+      contents: read
+      pages: read
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
@@ -36,6 +34,9 @@ jobs:
   deploy-docs:
     if: github.event_name == 'push'
     needs: build-docs
+    permissions:
+      pages: write
+      id-token: write
     runs-on: ubuntu-24.04
     concurrency:
       group: pages
