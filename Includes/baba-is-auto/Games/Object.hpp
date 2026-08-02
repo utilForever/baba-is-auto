@@ -17,7 +17,7 @@ namespace baba_is_auto
 //!
 //! \brief Object class.
 //!
-//! This class represents object such as noun, operator and property.
+//! This class represents objects such as nouns, operators, and properties.
 //! A noun is a word that corresponds to any possible in-game sprite. A few
 //! nouns like STAR have multiple corresponding sprites, while VIOLET and
 //! FLOWER words have the same corresponding sprites. A noun can be used as a
