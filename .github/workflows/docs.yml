@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-docs:
+    name: 📚 Build Documentation
     permissions:
       contents: read
       pages: read
@@ -34,6 +35,7 @@ jobs:
         path: build/Documents/html
 
   deploy-docs:
+    name: 🚀 Deploy Documentation
     if: github.event_name == 'push'
     needs: build-docs
     permissions:
