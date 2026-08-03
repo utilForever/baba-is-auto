@@ -14,7 +14,12 @@ using namespace baba_is_auto;
 
 void AddPreprocess(pybind11::module& m)
 {
-    pybind11::class_<Preprocess>(m, "Preprocess")
-        .def_static("StateToTensor", &Preprocess::StateToTensor)
-        .def_readonly_static("TENSOR_DIM", &Preprocess::TENSOR_DIM);
+    pybind11::class_<Preprocess>(
+        m, "Preprocess",
+        "Utilities that convert game states for reinforcement learning.")
+        .def_static("StateToTensor", &Preprocess::StateToTensor,
+                    "Flattens the game into a feature tensor.")
+        .def_readonly_static(
+            "TENSOR_DIM", &Preprocess::TENSOR_DIM,
+            "Number of feature values used for each map cell.");
 }

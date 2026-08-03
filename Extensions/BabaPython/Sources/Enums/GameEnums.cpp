@@ -14,7 +14,8 @@ using namespace baba_is_auto;
 void AddGameEnums(pybind11::module& m)
 {
 #define X(val) .value(#val, ObjectType::val)
-    pybind11::enum_<ObjectType>(m, "ObjectType")
+    pybind11::enum_<ObjectType>(
+        m, "ObjectType", "Identifies text tiles and in-game icons.")
         .value("NOUN_TYPE", ObjectType::NOUN_TYPE)
 #include <baba-is-auto/Enums/NounType.def>
         .value("OP_TYPE", ObjectType::OP_TYPE)
@@ -26,14 +27,16 @@ void AddGameEnums(pybind11::module& m)
         .export_values();
 #undef X
 
-    pybind11::enum_<PlayState>(m, "PlayState")
+    pybind11::enum_<PlayState>(m, "PlayState",
+                               "Identifies the current game state.")
         .value("INVALID", PlayState::INVALID)
         .value("PLAYING", PlayState::PLAYING)
         .value("WON", PlayState::WON)
         .value("LOST", PlayState::LOST)
         .export_values();
 
-    pybind11::enum_<Direction>(m, "Direction")
+    pybind11::enum_<Direction>(m, "Direction",
+                               "Identifies a movement direction.")
         .value("NONE", Direction::NONE)
         .value("UP", Direction::UP)
         .value("DOWN", Direction::DOWN)
@@ -44,12 +47,21 @@ void AddGameEnums(pybind11::module& m)
 
 void AddGameEnumUtils(pybind11::module& m)
 {
-    m.def("IsTextType", IsTextType);
-    m.def("IsNounType", IsNounType);
-    m.def("IsOpType", IsOpType);
-    m.def("IsVerbType", IsVerbType);
-    m.def("IsPropertyType", IsPropertyType);
+    m.def("IsTextType", IsTextType,
+          "Returns whether an object type represents a text tile.");
+    m.def("IsNounType", IsNounType,
+          "Returns whether an object type represents noun text.");
+    m.def("IsOpType", IsOpType,
+          "Returns whether an object type represents operator text.");
+    m.def("IsVerbType", IsVerbType,
+          "Returns whether an object type represents a supported verb.");
+    m.def("IsPropertyType", IsPropertyType,
+          "Returns whether an object type represents property text.");
 
-    m.def("ConvertIconToText", ConvertIconToText);
-    m.def("ConvertTextToIcon", ConvertTextToIcon);
+    m.def("ConvertIconToText", ConvertIconToText,
+          "Converts an icon type to its matching text type; other values are "
+          "returned unchanged.");
+    m.def("ConvertTextToIcon", ConvertTextToIcon,
+          "Converts a text type to its matching icon type; icon values are "
+          "returned unchanged.");
 }

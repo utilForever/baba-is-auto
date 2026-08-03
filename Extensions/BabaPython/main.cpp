@@ -20,7 +20,7 @@
 PYBIND11_MODULE(pyBaba, m)
 {
     m.doc() =
-        R"pbdoc(Baba Is You simulator with some reinforcement learning)pbdoc";
+        "C++17 Baba Is You simulator with reinforcement-learning helpers.";
 
     AddIAgent(m);
     AddPreprocess(m);

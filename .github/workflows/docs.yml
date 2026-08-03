@@ -1,0 +1,54 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-docs:
+    name: 📚 Build Documentation
+    permissions:
+      contents: read
+      pages: read
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: Install Doxygen
+      run: |
+        sudo apt-get update
+        sudo apt-get install -yq doxygen
+    - name: Build documentation
+      run: |
+        mkdir -p build
+        doxygen Documents/Doxyfile
+    - name: Configure Pages
+      if: github.event_name == 'push'
+      uses: actions/configure-pages@v5
+    - name: Upload Pages artifact
+      if: github.event_name == 'push'
+      uses: actions/upload-pages-artifact@v4
+      with:
+        path: build/Documents/html
+
+  deploy-docs:
+    name: 🚀 Deploy Documentation
+    if: github.event_name == 'push'
+    needs: build-docs
+    permissions:
+      pages: write
+      id-token: write
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

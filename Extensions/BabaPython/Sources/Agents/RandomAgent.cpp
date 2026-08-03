@@ -13,7 +13,10 @@ using namespace baba_is_auto;
 
 void AddRandomAgent(pybind11::module& m)
 {
-    pybind11::class_<RandomAgent>(m, "RandomAgent")
-        .def(pybind11::init<>())
-        .def("GetAction", &RandomAgent::GetAction);
+    pybind11::class_<RandomAgent>(
+        m, "RandomAgent", "Agent that chooses a random movement direction.")
+        .def(pybind11::init<>(),
+             "Creates an agent that chooses random Direction values.")
+        .def("GetAction", &RandomAgent::GetAction,
+             "Returns a random Direction value for the game.");
 }

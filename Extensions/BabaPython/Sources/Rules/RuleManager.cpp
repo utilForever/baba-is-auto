@@ -13,13 +13,23 @@ using namespace baba_is_auto;
 
 void AddRuleManager(pybind11::module& m)
 {
-    pybind11::class_<RuleManager>(m, "RuleManager")
-        .def(pybind11::init<>())
-        .def("AddRule", &RuleManager::AddRule)
-        .def("RemoveRule", &RuleManager::RemoveRule)
-        .def("ClearRules", &RuleManager::ClearRules)
-        .def("GetRules", &RuleManager::GetRules)
-        .def("GetNumRules", &RuleManager::GetNumRules)
-        .def("FindPlayer", &RuleManager::FindPlayer)
-        .def("HasProperty", &RuleManager::HasProperty);
+    pybind11::class_<RuleManager>(
+        m, "RuleManager", "Stores and queries active rules.")
+        .def(pybind11::init<>(), "Creates an empty rule manager.")
+        .def("AddRule", &RuleManager::AddRule,
+             "Adds the rule to the active rule list.")
+        .def("RemoveRule", &RuleManager::RemoveRule,
+             "Removes the rule when it is present.")
+        .def("ClearRules", &RuleManager::ClearRules,
+             "Removes every active rule.")
+        .def("GetRules", &RuleManager::GetRules,
+             "Returns rules containing the object type in any of their three "
+             "objects.")
+        .def("GetNumRules", &RuleManager::GetNumRules,
+             "Returns the number of active rules.")
+        .def("FindPlayer", &RuleManager::FindPlayer,
+             "Returns the icon type selected by the first active YOU rule.")
+        .def("HasProperty", &RuleManager::HasProperty,
+             "Returns whether any supplied object type has the active "
+             "property.");
 }

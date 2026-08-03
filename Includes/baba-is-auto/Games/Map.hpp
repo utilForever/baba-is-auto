@@ -15,6 +15,7 @@
 
 namespace baba_is_auto
 {
+//! A zero-based (x, y) map position.
 using Position = std::pair<std::size_t, std::size_t>;
 
 //!
@@ -61,13 +62,13 @@ class Map
     //! \param type An object type to remove from the map.
     void RemoveObject(std::size_t x, std::size_t y, ObjectType type);
 
-    //! Assigns an object to the map.
+    //! Gets a writable object reference from the map.
     //! \param x The x position.
     //! \param y The y position.
-    //! \return An object at row and column.
+    //! \return A writable object reference at the zero-based (x, y) position.
     Object& At(std::size_t x, std::size_t y);
 
-    //! Assigns an object to the map.
+    //! Gets an object from the map.
     //! \param x The x position.
     //! \param y The y position.
     //! \return An object at row and column.

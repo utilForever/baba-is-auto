@@ -13,5 +13,6 @@ using namespace baba_is_auto;
 
 void AddIAgent(pybind11::module& m)
 {
-    pybind11::class_<IAgent>(m, "IAgent");
+    pybind11::class_<IAgent>(
+        m, "IAgent", "Interface for agents that choose moves from game states.");
 }

@@ -1,0 +1,30 @@
+PROJECT_NAME           = "baba-is-auto"
+PROJECT_BRIEF          = "C++17 Baba Is You simulator"
+OUTPUT_DIRECTORY       = build/Documents
+OUTPUT_LANGUAGE        = English
+
+INPUT                  = Documents/index.md \
+                         Documents/python-api.md \
+                         Includes/baba-is-auto
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp
+EXCLUDE                = Includes/baba-is-auto/baba-is-auto.hpp
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+
+MARKDOWN_SUPPORT       = YES
+USE_MDFILE_AS_MAINPAGE = Documents/index.md
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_TREEVIEW      = YES
+HAVE_DOT               = NO
+GENERATE_LATEX         = NO
+
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_AS_ERROR          = YES

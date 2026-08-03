@@ -15,11 +15,11 @@
 namespace baba_is_auto
 {
 //!
-//! \brief Noun class.
+//! \brief Object class.
 //!
-//! This class represents object such as noun, operator and property.
+//! This class represents objects such as nouns, operators, and properties.
 //! A noun is a word that corresponds to any possible in-game sprite. A few
-//! nouns like STAR) have multiple corresponding sprites, while VIOLET and
+//! nouns like STAR have multiple corresponding sprites, while VIOLET and
 //! FLOWER words have the same corresponding sprites. A noun can be used as a
 //! NOUN IS VERB statement e.g. BABA IS YOU to give it a property or as a NOUN
 //! IS NOUN statement e.g. WALL IS WATER to turn an object into another object.
@@ -76,6 +76,7 @@ class Object
     //! \return The flag indicates that the object has property type.
     bool HasPropertyType() const;
 
+    //! Whether this object is part of an active rule.
     bool isRule = false;
 
  private:

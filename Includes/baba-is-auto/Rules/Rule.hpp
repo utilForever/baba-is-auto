@@ -31,9 +31,10 @@ class Rule
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.
-    //! \return The value that indicates two objects are equal.
+    //! \return The value that indicates two rules are equal.
     bool operator==(const Rule& rhs) const;
 
+    //! The subject, operator, and predicate objects.
     std::tuple<Object, Object, Object> objects;
 };
 }  // namespace baba_is_auto
