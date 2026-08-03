@@ -30,7 +30,7 @@ jobs:
       uses: actions/configure-pages@v5
     - name: Upload Pages artifact
       if: github.event_name == 'push'
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v5
       with:
         path: build/Documents/html
 
