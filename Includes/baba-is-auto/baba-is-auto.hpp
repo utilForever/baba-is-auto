@@ -17,6 +17,5 @@
 #include <baba-is-auto/Games/Object.hpp>
 #include <baba-is-auto/Rules/Rule.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
-#include <baba-is-auto/baba-is-auto.hpp>
 
 #endif  // BABA_IS_AUTO_HPP
