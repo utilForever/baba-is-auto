@@ -17,6 +17,8 @@ namespace baba_is_auto
 namespace
 {
 constexpr std::size_t MAX_MAP_LAYERS = 3;
+constexpr std::size_t MAX_MAP_DIMENSION =
+    static_cast<std::size_t>(std::numeric_limits<int>::max());
 
 bool IsValidMapTile(int value)
 {
@@ -65,6 +67,7 @@ void Map::Load(std::string_view filename)
     std::size_t height = 0;
 
     if (!(mapFile >> width >> height) || width == 0 || height == 0 ||
+        width > MAX_MAP_DIMENSION || height > MAX_MAP_DIMENSION ||
         width > std::numeric_limits<std::size_t>::max() / height)
     {
         throw std::runtime_error("Invalid map dimensions");

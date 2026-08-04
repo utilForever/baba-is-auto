@@ -12,6 +12,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <limits>
 
 using namespace baba_is_auto;
 using namespace baba_is_auto::editor;
@@ -102,4 +103,31 @@ TEST_CASE("Editor - Level File Round Trip")
     CHECK_THROWS_AS(map.Load(path.string()), std::runtime_error);
     fs::remove(path, error);
     fs::remove(predictableTemporary, error);
+}
+
+TEST_CASE("Map - Load Dimension Limits")
+{
+    namespace fs = std::filesystem;
+
+    const fs::path path =
+        fs::current_path() / "baba-is-auto-map-dimension-limits.txt";
+    const auto maxCoordinate =
+        static_cast<std::size_t>(std::numeric_limits<int>::max());
+    std::error_code error;
+    Map map;
+
+    {
+        std::ofstream boundary(path);
+        boundary << maxCoordinate << " 1\n";
+    }
+
+    CHECK_THROWS_WITH(map.Load(path.string()), "Invalid map tile data");
+
+    {
+        std::ofstream oversized(path, std::ios::trunc);
+        oversized << maxCoordinate + 1 << " 1\n";
+    }
+
+    CHECK_THROWS_WITH(map.Load(path.string()), "Invalid map dimensions");
+    fs::remove(path, error);
 }
