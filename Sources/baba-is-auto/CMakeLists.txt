@@ -15,6 +15,8 @@ file(GLOB header_dir
 
 file(GLOB_RECURSE headers
     ${header_dir}/*.hpp)
+set(baba_is_auto_header ${header_dir}/baba-is-auto/baba-is-auto.hpp)
+list(REMOVE_ITEM headers ${baba_is_auto_header})
 
 file(GLOB_RECURSE sources
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
@@ -31,25 +33,11 @@ else ()
     set(baba_is_auto_python python3)
 endif ()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
-    add_custom_command(
-        COMMAND ${baba_is_auto_python} ${baba_is_auto_header_gen_py}
-        DEPENDS ${headers}
-        OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
-    )
-    add_custom_target(baba_is_auto_header_gen_py ALL
-        DEPENDS ${root_dir}/Includes/baba-is-auto.hpp)
-else ()
-    set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
-    add_custom_command(
-        COMMAND ${baba_is_auto_python} ${baba_is_auto_header_gen_py}
-        DEPENDS ${headers}
-        OUTPUT ${root_dir}/Includes/baba-is-auto.hpp
-    )
-    add_custom_target(baba_is_auto_header_gen_py ALL
-        DEPENDS ${root_dir}/Includes/baba-is-auto.hpp)
-endif ()
+set(baba_is_auto_header_gen_py ${root_dir}/Scripts/header_gen.py)
+add_custom_target(baba_is_auto_header_gen_py ALL
+    COMMAND ${baba_is_auto_python} ${baba_is_auto_header_gen_py}
+    DEPENDS ${headers} ${baba_is_auto_header_gen_py}
+)
 
 # Build library
 add_library(${target}
@@ -78,7 +66,6 @@ target_link_libraries(${target}
     PUBLIC
     ${DEFAULT_LINKER_OPTIONS}
 	${DEFAULT_LIBRARIES}
-    effolkronium_random
 
     INTERFACE
 )

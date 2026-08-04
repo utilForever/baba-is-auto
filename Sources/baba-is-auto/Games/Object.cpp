@@ -6,6 +6,8 @@
 
 #include <baba-is-auto/Games/Object.hpp>
 
+#include <algorithm>
+
 namespace baba_is_auto
 {
 Object::Object(std::vector<ObjectType> types)
@@ -39,15 +41,7 @@ void Object::Add(ObjectType type)
     }
 
     m_types.erase(ObjectType::ICON_EMPTY);
-
-    if (m_types.find(type) != m_types.end())
-    {
-        m_types[type] += 1;
-    }
-    else
-    {
-        m_types.emplace(type, 1);
-    }
+    ++m_types[type];
 }
 
 void Object::Remove(ObjectType type)
@@ -92,54 +86,29 @@ bool Object::HasType(ObjectType type) const
 
 bool Object::HasTextType() const
 {
-    for (const auto& type : m_types)
-    {
-        if (static_cast<int>(type.first) <=
-            static_cast<int>(ObjectType::ICON_TYPE))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
+        return entry.first <= ObjectType::ICON_TYPE;
+    });
 }
 
 bool Object::HasNounType() const
 {
-    for (auto& type : m_types)
-    {
-        if (IsNounType(type.first))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
+        return IsNounType(entry.first);
+    });
 }
 
 bool Object::HasVerbType() const
 {
-    for (auto& type : m_types)
-    {
-        if (IsVerbType(type.first))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
+        return IsVerbType(entry.first);
+    });
 }
 
 bool Object::HasPropertyType() const
 {
-    for (auto& type : m_types)
-    {
-        if (IsPropertyType(type.first))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
+        return IsPropertyType(entry.first);
+    });
 }
 }  // namespace baba_is_auto

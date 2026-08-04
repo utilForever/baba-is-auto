@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 
 import filecmp
-import inspect
 import shutil
-import os
-
-import utils
-
-dir_name = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+from pathlib import Path
 
 
-def main():
-    include_dir = os.path.join(dir_name, "../Includes/baba-is-auto")
+script_dir = Path(__file__).resolve().parent
 
-    file_names = utils.get_all_files(include_dir, ["*.hpp"])
-    file_names.sort()
 
-    header = os.path.join(dir_name, "../Includes/baba-is-auto/baba-is-auto.hpp")
-    header_tmp = header + ".tmp"
-    with open(header_tmp, "w") as header_file:
+def generate(include_dir):
+    include_dir = Path(include_dir)
+    header = include_dir / "baba-is-auto.hpp"
+    file_names = sorted(
+        path.relative_to(include_dir).as_posix()
+        for path in include_dir.rglob("*.hpp")
+        if path != header
+    )
+
+    header_tmp = header.with_name(header.name + ".tmp")
+    with header_tmp.open("w") as header_file:
         header_file.write("""// Copyright (c) 2020-2026 Chris Ohk
 
 // I am making my contributions/submissions to this project solely in our
@@ -32,10 +32,14 @@ def main():
             header_file.write(line)
         header_file.write("\n#endif  // BABA_IS_AUTO_HPP\n")
 
-    if not filecmp.cmp(header, header_tmp):
+    if not header.exists() or not filecmp.cmp(header, header_tmp, shallow=False):
         shutil.move(header_tmp, header)
     else:
-        os.remove(header_tmp)
+        header_tmp.unlink()
+
+
+def main():
+    generate(script_dir.parent / "Includes" / "baba-is-auto")
 
 
 if __name__ == "__main__":

@@ -7,9 +7,39 @@
 #include <baba-is-auto/Games/Game.hpp>
 
 #include <algorithm>
+#include <utility>
 
 namespace baba_is_auto
 {
+namespace
+{
+std::pair<int, int> MovedPosition(std::size_t x, std::size_t y, Direction dir)
+{
+    auto movedX = static_cast<int>(x);
+    auto movedY = static_cast<int>(y);
+
+    switch (dir)
+    {
+        case Direction::UP:
+            --movedY;
+            break;
+        case Direction::DOWN:
+            ++movedY;
+            break;
+        case Direction::LEFT:
+            --movedX;
+            break;
+        case Direction::RIGHT:
+            ++movedX;
+            break;
+        case Direction::NONE:
+            break;
+    }
+
+    return { movedX, movedY };
+}
+}  // namespace
+
 Game::Game(std::string_view filename)
 {
     m_map.Load(filename);
@@ -212,32 +242,10 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
 
 bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
 {
-    int _x = static_cast<int>(x);
-    int _y = static_cast<int>(y);
+    const auto [_x, _y] = MovedPosition(x, y, dir);
 
     const auto width = static_cast<int>(m_map.GetWidth());
     const auto height = static_cast<int>(m_map.GetHeight());
-
-    int dx = 0, dy = 0;
-    if (dir == Direction::UP)
-    {
-        dy = -1;
-    }
-    else if (dir == Direction::DOWN)
-    {
-        dy = 1;
-    }
-    else if (dir == Direction::LEFT)
-    {
-        dx = -1;
-    }
-    else if (dir == Direction::RIGHT)
-    {
-        dx = 1;
-    }
-
-    _x += dx;
-    _y += dy;
 
     // Check boundary
     if (_x < 0 || _x >= width || _y < 0 || _y >= height)
@@ -268,29 +276,7 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
 void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
                        const std::vector<ObjectType>& movingTypes)
 {
-    int _x = static_cast<int>(x);
-    int _y = static_cast<int>(y);
-
-    int dx = 0, dy = 0;
-    if (dir == Direction::UP)
-    {
-        dy = -1;
-    }
-    else if (dir == Direction::DOWN)
-    {
-        dy = 1;
-    }
-    else if (dir == Direction::LEFT)
-    {
-        dx = -1;
-    }
-    else if (dir == Direction::RIGHT)
-    {
-        dx = 1;
-    }
-
-    _x += dx;
-    _y += dy;
+    const auto [_x, _y] = MovedPosition(x, y, dir);
 
     std::vector<ObjectType> destinationTypes = m_map.At(_x, _y).GetTypes();
 
@@ -321,25 +307,7 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
 
 void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
 {
-    auto targetX = static_cast<int>(x);
-    auto targetY = static_cast<int>(y);
-
-    if (dir == Direction::UP)
-    {
-        --targetY;
-    }
-    else if (dir == Direction::DOWN)
-    {
-        ++targetY;
-    }
-    else if (dir == Direction::LEFT)
-    {
-        --targetX;
-    }
-    else if (dir == Direction::RIGHT)
-    {
-        ++targetX;
-    }
+    const auto [targetX, targetY] = MovedPosition(x, y, dir);
 
     const std::vector<ObjectType> targetTypes =
         m_map.At(targetX, targetY).GetTypes();

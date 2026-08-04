@@ -13,6 +13,7 @@ endif()
 
 # Build options for level editor
 option(BABA_BUILD_EDITOR "Build the C++ ImGui level editor" OFF)
+option(BUILD_COVERAGE "Build code coverage" OFF)
 if (BABA_BUILD_EDITOR)
     list(APPEND VCPKG_MANIFEST_FEATURES editor)
 endif()
@@ -42,7 +43,6 @@ else()
     set(PYBIND11_FINDPYTHON ON)
 endif()
 find_package(pybind11 CONFIG REQUIRED)
-find_package(effolkronium_random CONFIG REQUIRED)
 
 # Compile options
 include(CMake/CompileOptions.cmake)
@@ -63,14 +63,6 @@ add_subdirectory(Sources/baba-is-auto)
 add_subdirectory(Tests/UnitTests)
 if (BABA_BUILD_EDITOR)
     add_subdirectory(Extensions/BabaEditor)
-endif()
-
-# Code coverage - Debug only
-# NOTE: Code coverage results with an optimized (non-Debug) build may be misleading
-option(BUILD_COVERAGE "Build code coverage" OFF)
-if (CMAKE_BUILD_TYPE MATCHES Debug AND CMAKE_COMPILER_IS_GNUCXX AND BUILD_COVERAGE)
-    include(CodeCoverage)
-    setup_target_for_coverage(${PROJECT_NAME}_coverage UnitTests coverage)
 endif()
 
 if (BUILD_FROM_PIP)
