@@ -22,7 +22,7 @@ Direction RandomAgent::GetAction([[maybe_unused]] const Game& state)
         };
         return std::mt19937{ seed };
     }();
-    static std::uniform_int_distribution<int> action{
+    static std::uniform_int_distribution action{
         0, static_cast<int>(Direction::RIGHT)
     };
 
