@@ -43,7 +43,6 @@ else()
     set(PYBIND11_FINDPYTHON ON)
 endif()
 find_package(pybind11 CONFIG REQUIRED)
-find_package(effolkronium_random CONFIG REQUIRED)
 
 # Compile options
 include(CMake/CompileOptions.cmake)

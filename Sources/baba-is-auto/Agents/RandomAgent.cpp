@@ -6,15 +6,26 @@
 
 #include <baba-is-auto/Agents/RandomAgent.hpp>
 
-#include <effolkronium/random.hpp>
+#include <chrono>
+#include <cstdint>
+#include <random>
 
 namespace baba_is_auto
 {
 Direction RandomAgent::GetAction([[maybe_unused]] const Game& state)
 {
-    using Random = effolkronium::random_static;
+    static std::mt19937 engine = [] {
+        std::seed_seq seed{
+            static_cast<std::uintmax_t>(std::random_device{}()),
+            static_cast<std::uintmax_t>(
+                std::chrono::steady_clock::now().time_since_epoch().count())
+        };
+        return std::mt19937{ seed };
+    }();
+    static std::uniform_int_distribution<int> action{
+        0, static_cast<int>(Direction::RIGHT)
+    };
 
-    return static_cast<Direction>(
-        Random::get(0, static_cast<int>(Direction::RIGHT)));
+    return static_cast<Direction>(action(engine));
 }
 }  // namespace baba_is_auto
