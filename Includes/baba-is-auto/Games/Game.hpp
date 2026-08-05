@@ -83,6 +83,9 @@ class Game
     //! Pushes every movable object stacked at a position as one group.
     void ProcessPush(std::size_t x, std::size_t y, Direction dir);
 
+    //! Removes MELT objects overlapping HOT objects.
+    void ProcessHotMelt();
+
     //! Checks the play state of the game.
     void CheckPlayState();
 
