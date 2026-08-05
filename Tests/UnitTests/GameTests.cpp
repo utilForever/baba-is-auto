@@ -17,6 +17,9 @@
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
+#include <array>
+#include <string_view>
+
 using namespace baba_is_auto;
 
 TEST_CASE("Game - Basic")
@@ -67,6 +70,44 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetRuleManager().GetNumRules() == 4);
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
     CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - Grass Yard")
+{
+    Game game(MAPS_DIR "grass_yard.txt");
+
+    CHECK(game.GetMap().GetWidth() == 24);
+    CHECK(game.GetMap().GetHeight() == 14);
+    CHECK(game.GetRuleManager().GetNumRules() == 2);
+    CHECK(game.GetMap().At(9, 7).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(12, 7).HasType(ObjectType::ICON_GRASS));
+
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(11, 7).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(12, 7).HasType(ObjectType::ICON_GRASS));
+
+    game.Reset();
+    CHECK(game.GetMap().At(9, 7).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetRuleManager().GetNumRules() == 2);
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+
+    constexpr std::string_view solution =
+        "URRRRDRDRRRDRUUUURULLLLLLLULDRDLDRRDDRDDRDLLLDLUUUUUUULLRR"
+        "UURULLLULDRRRDDRRRRR";
+    constexpr std::string_view actions = "UDLR";
+    constexpr std::array directions = { Direction::UP, Direction::DOWN,
+                                        Direction::LEFT, Direction::RIGHT };
+
+    for (const char action : solution)
+    {
+        const auto index = actions.find(action);
+        REQUIRE(index != std::string_view::npos);
+        game.MovePlayer(directions[index]);
+    }
+
+    CHECK(game.GetPlayState() == PlayState::WON);
 }
 
 TEST_CASE("Game - Editor Smoke Map")

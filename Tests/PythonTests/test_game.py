@@ -51,6 +51,41 @@ def test_game_basic():
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING
 
 
+def test_game_grass_yard():
+    game = pyBaba.Game("Resources/Maps/grass_yard.txt")
+    assert game.GetMap().GetWidth() == 24
+    assert game.GetMap().GetHeight() == 14
+    assert game.GetRuleManager().GetNumRules() == 2
+    assert game.GetMap().At(9, 7).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(12, 7).HasType(pyBaba.ObjectType.ICON_GRASS)
+
+    for _ in range(3):
+        game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().At(11, 7).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(12, 7).HasType(pyBaba.ObjectType.ICON_GRASS)
+
+    game.Reset()
+    assert game.GetMap().At(9, 7).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetRuleManager().GetNumRules() == 2
+    assert game.GetPlayState() == pyBaba.PlayState.PLAYING
+
+    directions = {
+        "U": pyBaba.Direction.UP,
+        "D": pyBaba.Direction.DOWN,
+        "L": pyBaba.Direction.LEFT,
+        "R": pyBaba.Direction.RIGHT,
+    }
+    solution = (
+        "URRRRDRDRRRDRUUUURULLLLLLLULDRDLDRRDDRDDRDLLLDLUUUUUUULLRR"
+        "UURULLLULDRRRDDRRRRR"
+    )
+
+    for action in solution:
+        game.MovePlayer(directions[action])
+
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
 def test_game_lost():
     game = pyBaba.Game("Resources/Maps/simple_map.txt")
     assert game.GetMap().At(0, 2).HasType(pyBaba.ObjectType.ICON_BABA)
