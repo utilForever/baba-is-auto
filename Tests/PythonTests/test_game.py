@@ -6,6 +6,8 @@ personal capacity and am not conveying any rights to any intellectual
 property of any third parties.
 """
 
+from pathlib import Path
+
 import pyBaba
 
 
@@ -98,4 +100,38 @@ def test_game_sink():
     assert game.GetMap().At(10, 6).HasType(pyBaba.ObjectType.ICON_BABA)
     assert game.GetMap().At(10, 7).HasType(pyBaba.ObjectType.ICON_ROCK) is False
     game.MovePlayer(pyBaba.Direction.DOWN)
+    assert game.GetPlayState() == pyBaba.PlayState.LOST
+
+
+def test_game_hot_melt(tmp_path):
+    values = Path("Resources/Maps/volcano.txt").read_text().split()
+    width, height = map(int, values[:2])
+    tiles = values[2:]
+
+    for x, y, object_type in (
+        (12, 1, pyBaba.ObjectType.ICON_LAVA),
+        (13, 1, pyBaba.ObjectType.ICON_ROCK),
+        (25, 14, pyBaba.ObjectType.ROCK),
+        (26, 14, pyBaba.ObjectType.IS),
+        (27, 14, pyBaba.ObjectType.MELT),
+    ):
+        tiles[y * width + x] = str(object_type.value)
+
+    level = tmp_path / "volcano.txt"
+    rows = (
+        " ".join(tiles[y * width : (y + 1) * width]) for y in range(height)
+    )
+    level.write_text(f"{width} {height}\n" + "\n".join(rows))
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.LEFT)
+
+    assert game.GetMap().At(13, 1).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(12, 1).HasType(pyBaba.ObjectType.ICON_ROCK) is False
+    assert game.GetMap().At(12, 1).HasType(pyBaba.ObjectType.ICON_LAVA)
+
+    game.MovePlayer(pyBaba.Direction.LEFT)
+
+    assert game.GetMap().At(12, 1).HasType(pyBaba.ObjectType.ICON_BABA) is False
+    assert game.GetMap().At(12, 1).HasType(pyBaba.ObjectType.ICON_LAVA)
     assert game.GetPlayState() == pyBaba.PlayState.LOST
