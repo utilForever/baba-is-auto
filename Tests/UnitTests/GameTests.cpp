@@ -95,26 +95,15 @@ TEST_CASE("Game - Grass Yard")
     constexpr std::string_view solution =
         "URRRRDRDRRRDRUUUURULLLLLLLULDRDLDRRDDRDDRDLLLDLUUUUUUULLRR"
         "UURULLLULDRRRDDRRRRR";
+    constexpr std::string_view actions = "UDLR";
+    constexpr Direction directions[] = { Direction::UP, Direction::DOWN,
+                                         Direction::LEFT, Direction::RIGHT };
 
     for (const char action : solution)
     {
-        switch (action)
-        {
-            case 'U':
-                game.MovePlayer(Direction::UP);
-                break;
-            case 'D':
-                game.MovePlayer(Direction::DOWN);
-                break;
-            case 'L':
-                game.MovePlayer(Direction::LEFT);
-                break;
-            case 'R':
-                game.MovePlayer(Direction::RIGHT);
-                break;
-            default:
-                FAIL("Unexpected Grass Yard solution action");
-        }
+        const auto index = actions.find(action);
+        REQUIRE(index != std::string_view::npos);
+        game.MovePlayer(directions[index]);
     }
 
     CHECK(game.GetPlayState() == PlayState::WON);
