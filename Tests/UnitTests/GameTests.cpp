@@ -112,6 +112,8 @@ TEST_CASE("Game - Grass Yard")
             case 'R':
                 game.MovePlayer(Direction::RIGHT);
                 break;
+            default:
+                FAIL("Unexpected Grass Yard solution action");
         }
     }
 
