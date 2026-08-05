@@ -17,6 +17,7 @@
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
+#include <array>
 #include <string_view>
 
 using namespace baba_is_auto;
@@ -96,8 +97,8 @@ TEST_CASE("Game - Grass Yard")
         "URRRRDRDRRRDRUUUURULLLLLLLULDRDLDRRDDRDDRDLLLDLUUUUUUULLRR"
         "UURULLLULDRRRDDRRRRR";
     constexpr std::string_view actions = "UDLR";
-    constexpr Direction directions[] = { Direction::UP, Direction::DOWN,
-                                         Direction::LEFT, Direction::RIGHT };
+    constexpr std::array directions = { Direction::UP, Direction::DOWN,
+                                        Direction::LEFT, Direction::RIGHT };
 
     for (const char action : solution)
     {
