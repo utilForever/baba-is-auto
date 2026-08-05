@@ -135,6 +135,7 @@ const std::vector<ObjectEntry>& ObjectCatalog()
         { ObjectType::ICON_EMPTY, "EMPTY", "Special", ColorU8(18, 22, 32) },
         { ObjectType::BABA, "BABA", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::FLAG, "FLAG", "Text: Nouns", ColorU8(238, 238, 238) },
+        { ObjectType::GRASS, "GRASS", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::LAVA, "LAVA", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::ROCK, "ROCK", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::SKULL, "SKULL", "Text: Nouns", ColorU8(238, 238, 238) },
