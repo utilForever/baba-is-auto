@@ -147,6 +147,7 @@ void Game::MovePlayer(Direction dir)
     }
 
     ParseRules();
+    ProcessHotMelt();
     CheckPlayState();
 }
 
@@ -337,6 +338,39 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
             }
 
             m_map.RemoveObject(x, y, pushedType);
+        }
+    }
+}
+
+void Game::ProcessHotMelt()
+{
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
+    {
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+        {
+            std::vector<ObjectType> iconTypes;
+
+            for (const ObjectType type : m_map.At(x, y).GetTypes())
+            {
+                if (!IsTextType(type))
+                {
+                    iconTypes.emplace_back(type);
+                }
+            }
+
+            if (!m_ruleManager.HasProperty(iconTypes, ObjectType::HOT) ||
+                !m_ruleManager.HasProperty(iconTypes, ObjectType::MELT))
+            {
+                continue;
+            }
+
+            for (const ObjectType type : iconTypes)
+            {
+                if (m_ruleManager.HasProperty({ type }, ObjectType::MELT))
+                {
+                    m_map.RemoveObject(x, y, type);
+                }
+            }
         }
     }
 }

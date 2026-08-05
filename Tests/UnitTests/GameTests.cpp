@@ -196,6 +196,51 @@ TEST_CASE("Game - Sink")
     CHECK(game.GetPlayState() == PlayState::LOST);
 }
 
+TEST_CASE("Game - Hot Melt")
+{
+    SUBCASE("Blocked overlap")
+    {
+        Game game(MAPS_DIR "volcano.txt");
+        game.GetMap().AddObject(14, 1, ObjectType::ICON_LAVA);
+        game.GetMap().AddObject(13, 1, ObjectType::ICON_WALL);
+
+        game.MovePlayer(Direction::LEFT);
+
+        CHECK_FALSE(game.GetMap().At(14, 1).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(14, 1).HasType(ObjectType::ICON_LAVA));
+        CHECK(game.GetPlayState() == PlayState::LOST);
+    }
+
+    SUBCASE("Player")
+    {
+        Game game(MAPS_DIR "volcano.txt");
+        game.GetMap().AddObject(15, 1, ObjectType::ICON_LAVA);
+
+        game.MovePlayer(Direction::RIGHT);
+
+        CHECK_FALSE(game.GetMap().At(15, 1).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(15, 1).HasType(ObjectType::ICON_LAVA));
+        CHECK(game.GetPlayState() == PlayState::LOST);
+    }
+
+    SUBCASE("Pushed object")
+    {
+        Game game(MAPS_DIR "volcano.txt");
+        game.GetMap().AddObject(13, 1, ObjectType::ICON_ROCK);
+        game.GetMap().AddObject(12, 1, ObjectType::ICON_LAVA);
+        game.GetMap().RemoveObject(25, 14, ObjectType::FLAG);
+        game.GetMap().AddObject(25, 14, ObjectType::ROCK);
+        game.GetMap().RemoveObject(27, 14, ObjectType::WIN);
+        game.GetMap().AddObject(27, 14, ObjectType::MELT);
+
+        game.MovePlayer(Direction::LEFT);
+
+        CHECK(game.GetMap().At(13, 1).HasType(ObjectType::ICON_BABA));
+        CHECK_FALSE(game.GetMap().At(12, 1).HasType(ObjectType::ICON_ROCK));
+        CHECK(game.GetMap().At(12, 1).HasType(ObjectType::ICON_LAVA));
+    }
+}
+
 TEST_CASE("Game - Defeat")
 {
     Game game(MAPS_DIR "off_limits_bug.txt");
