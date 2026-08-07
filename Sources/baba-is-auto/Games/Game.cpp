@@ -436,26 +436,29 @@ void Game::ProcessHotMelt()
 
 void Game::ProcessDefeat()
 {
+    const auto RemoveDefeatedPlayers = [this](std::size_t x, std::size_t y) {
+        const std::vector<ObjectType> types = m_map.At(x, y).GetTypes();
+
+        if (!HasIconProperty(m_ruleManager, types, ObjectType::DEFEAT))
+        {
+            return;
+        }
+
+        for (const ObjectType type : types)
+        {
+            if (std::find(m_playerIcons.begin(), m_playerIcons.end(), type) !=
+                m_playerIcons.end())
+            {
+                m_map.RemoveObject(x, y, type);
+            }
+        }
+    };
+
     for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
         for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            const std::vector<ObjectType> types =
-                m_map.At(x, y).GetTypes();
-
-            if (!HasIconProperty(m_ruleManager, types, ObjectType::DEFEAT))
-            {
-                continue;
-            }
-
-            for (const ObjectType type : types)
-            {
-                if (std::find(m_playerIcons.begin(), m_playerIcons.end(),
-                              type) != m_playerIcons.end())
-                {
-                    m_map.RemoveObject(x, y, type);
-                }
-            }
+            RemoveDefeatedPlayers(x, y);
         }
     }
 }
