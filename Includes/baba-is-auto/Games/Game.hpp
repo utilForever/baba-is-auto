@@ -83,8 +83,14 @@ class Game
     //! Pushes every movable object stacked at a position as one group.
     void ProcessPush(std::size_t x, std::size_t y, Direction dir);
 
+    //! Removes objects overlapping a SINK object.
+    void ProcessSink();
+
     //! Removes MELT objects overlapping HOT objects.
     void ProcessHotMelt();
+
+    //! Removes YOU objects overlapping DEFEAT objects.
+    void ProcessDefeat();
 
     //! Checks the play state of the game.
     void CheckPlayState();
