@@ -38,6 +38,47 @@ std::pair<int, int> MovedPosition(std::size_t x, std::size_t y, Direction dir)
 
     return { movedX, movedY };
 }
+
+bool HasIconProperty(RuleManager& rules, const std::vector<ObjectType>& types,
+                     ObjectType property)
+{
+    return std::any_of(
+        types.begin(), types.end(), [&rules, &property](ObjectType type) {
+            return !IsTextType(type) && rules.HasProperty({ type }, property);
+        });
+}
+
+constexpr bool IsRulePredicate(ObjectType type)
+{
+    return IsNounType(type) || IsPropertyType(type);
+}
+
+template <typename Predicate>
+void RetainTypes(std::vector<ObjectType>& types, Predicate predicate)
+{
+    types.erase(std::remove_if(
+                    types.begin(), types.end(),
+                    [predicate](ObjectType type) { return !predicate(type); }),
+                types.end());
+}
+
+void AddRuleCombinations(RuleManager& rules,
+                         const std::vector<ObjectType>& subjects,
+                         const std::vector<ObjectType>& verbs,
+                         const std::vector<ObjectType>& predicates)
+{
+    for (const ObjectType subject : subjects)
+    {
+        for (const ObjectType verb : verbs)
+        {
+            for (const ObjectType predicate : predicates)
+            {
+                rules.AddRule({ Object({ subject }), Object({ verb }),
+                                Object({ predicate }) });
+            }
+        }
+    }
+}
 }  // namespace
 
 Game::Game(std::string_view filename)
@@ -147,8 +188,13 @@ void Game::MovePlayer(Direction dir)
     }
 
     ParseRules();
+
+    ProcessSink();
     ProcessHotMelt();
+    ProcessDefeat();
+
     CheckPlayState();
+    ParseRules();
 }
 
 void Game::ParseRules()
@@ -201,43 +247,69 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
     const std::size_t width = m_map.GetWidth();
     const std::size_t height = m_map.GetHeight();
 
-    if (direction == RuleDirection::HORIZONTAL)
+    const bool horizontal = direction == RuleDirection::HORIZONTAL;
+    const std::size_t remaining = horizontal ? width - x : height - y;
+
+    const auto At = [this, &x, &y, &horizontal](std::size_t offset) -> Object& {
+        return horizontal ? m_map.At(x + offset, y) : m_map.At(x, y + offset);
+    };
+    const auto Before = [this, &x, &y,
+                         &horizontal](std::size_t offset) -> Object& {
+        return horizontal ? m_map.At(x - offset, y) : m_map.At(x, y - offset);
+    };
+
+    const bool continuesPrevious =
+        (horizontal ? x : y) > 1 && Before(1).HasType(ObjectType::AND) &&
+        !Before(1).HasVerbType() && Before(2).HasNounType();
+
+    if (remaining < 3 || !At(0).HasNounType() || continuesPrevious)
     {
-        if (x + 2 >= width)
-        {
-            return;
-        }
-
-        if (m_map.At(x, y).HasNounType() && m_map.At(x + 1, y).HasVerbType() &&
-            (m_map.At(x + 2, y).HasNounType() ||
-             m_map.At(x + 2, y).HasPropertyType()))
-        {
-            m_ruleManager.AddRule(
-                { m_map.At(x, y), m_map.At(x + 1, y), m_map.At(x + 2, y) });
-
-            m_map.At(x, y).isRule = true;
-            m_map.At(x + 1, y).isRule = true;
-            m_map.At(x + 2, y).isRule = true;
-        }
+        return;
     }
-    else if (direction == RuleDirection::VERTICAL)
+
+    std::vector<ObjectType> subjects = At(0).GetTypes();
+    std::size_t offset = 1;
+
+    while (offset + 1 < remaining && At(offset).HasType(ObjectType::AND) &&
+           !At(offset).HasVerbType() && At(offset + 1).HasNounType())
     {
-        if (y + 2 >= height)
-        {
-            return;
-        }
+        const auto types = At(offset + 1).GetTypes();
+        subjects.insert(subjects.end(), types.begin(), types.end());
+        offset += 2;
+    }
 
-        if (m_map.At(x, y).HasNounType() && m_map.At(x, y + 1).HasVerbType() &&
-            (m_map.At(x, y + 2).HasNounType() ||
-             m_map.At(x, y + 2).HasPropertyType()))
-        {
-            m_ruleManager.AddRule(
-                { m_map.At(x, y), m_map.At(x, y + 1), m_map.At(x, y + 2) });
+    if (offset >= remaining || !At(offset).HasVerbType())
+    {
+        return;
+    }
 
-            m_map.At(x, y).isRule = true;
-            m_map.At(x, y + 1).isRule = true;
-            m_map.At(x, y + 2).isRule = true;
-        }
+    const std::size_t verb = offset++;
+
+    if (offset >= remaining ||
+        (!At(offset).HasNounType() && !At(offset).HasPropertyType()))
+    {
+        return;
+    }
+
+    std::vector<ObjectType> predicates = At(offset++).GetTypes();
+
+    while (offset + 1 < remaining && At(offset).HasType(ObjectType::AND) &&
+           (At(offset + 1).HasNounType() || At(offset + 1).HasPropertyType()))
+    {
+        const auto types = At(offset + 1).GetTypes();
+        predicates.insert(predicates.end(), types.begin(), types.end());
+        offset += 2;
+    }
+
+    std::vector<ObjectType> verbs = At(verb).GetTypes();
+    RetainTypes(subjects, IsNounType);
+    RetainTypes(verbs, IsVerbType);
+    RetainTypes(predicates, IsRulePredicate);
+    AddRuleCombinations(m_ruleManager, subjects, verbs, predicates);
+
+    for (std::size_t i = 0; i < offset; ++i)
+    {
+        At(i).isRule = true;
     }
 }
 
@@ -257,12 +329,12 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
     const std::vector<ObjectType> types = m_map.At(_x, _y).GetTypes();
 
     // Check the icon has property 'STOP'.
-    if (m_ruleManager.HasProperty(types, ObjectType::STOP))
+    if (HasIconProperty(m_ruleManager, types, ObjectType::STOP))
     {
         return false;
     }
 
-    if (m_ruleManager.HasProperty(types, ObjectType::PUSH) ||
+    if (HasIconProperty(m_ruleManager, types, ObjectType::PUSH) ||
         m_map.At(_x, _y).HasTextType())
     {
         if (!CanMove(_x, _y, dir))
@@ -279,24 +351,12 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
 {
     const auto [_x, _y] = MovedPosition(x, y, dir);
 
-    std::vector<ObjectType> destinationTypes = m_map.At(_x, _y).GetTypes();
-
-    if (m_ruleManager.HasProperty(destinationTypes, ObjectType::PUSH) ||
+    if (const std::vector<ObjectType> destinationTypes =
+            m_map.At(_x, _y).GetTypes();
+        HasIconProperty(m_ruleManager, destinationTypes, ObjectType::PUSH) ||
         m_map.At(_x, _y).HasTextType())
     {
         ProcessPush(_x, _y, dir);
-        destinationTypes = m_map.At(_x, _y).GetTypes();
-    }
-
-    if (m_ruleManager.HasProperty(destinationTypes, ObjectType::SINK) ||
-        m_ruleManager.HasProperty(destinationTypes, ObjectType::DEFEAT))
-    {
-        for (const ObjectType type : movingTypes)
-        {
-            m_map.RemoveObject(x, y, type);
-        }
-
-        return;
     }
 
     for (const ObjectType type : movingTypes)
@@ -309,22 +369,17 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
 void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
 {
     const auto [targetX, targetY] = MovedPosition(x, y, dir);
-
     const std::vector<ObjectType> targetTypes =
         m_map.At(targetX, targetY).GetTypes();
+
     if (const bool pushesNext =
-            m_ruleManager.HasProperty(targetTypes, ObjectType::PUSH) ||
+            HasIconProperty(m_ruleManager, targetTypes, ObjectType::PUSH) ||
             m_map.At(targetX, targetY).HasTextType();
         pushesNext)
     {
         ProcessPush(targetX, targetY, dir);
     }
 
-    const std::vector<ObjectType> remainingTargetTypes =
-        m_map.At(targetX, targetY).GetTypes();
-    const bool destroysStack =
-        m_ruleManager.HasProperty(remainingTargetTypes, ObjectType::SINK) ||
-        m_ruleManager.HasProperty(remainingTargetTypes, ObjectType::DEFEAT);
     const std::vector<ObjectType> sourceTypes = m_map.At(x, y).GetTypes();
 
     for (const ObjectType pushedType : sourceTypes)
@@ -332,12 +387,30 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
         if (IsTextType(pushedType) ||
             m_ruleManager.HasProperty({ pushedType }, ObjectType::PUSH))
         {
-            if (!destroysStack)
+            m_map.AddObject(targetX, targetY, pushedType);
+            m_map.RemoveObject(x, y, pushedType);
+        }
+    }
+}
+
+void Game::ProcessSink()
+{
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
+    {
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+        {
+            const std::vector<ObjectType> types = m_map.At(x, y).GetTypes();
+
+            if (types.size() < 2 ||
+                !HasIconProperty(m_ruleManager, types, ObjectType::SINK))
             {
-                m_map.AddObject(targetX, targetY, pushedType);
+                continue;
             }
 
-            m_map.RemoveObject(x, y, pushedType);
+            for (const ObjectType type : types)
+            {
+                m_map.RemoveObject(x, y, type);
+            }
         }
     }
 }
@@ -375,6 +448,35 @@ void Game::ProcessHotMelt()
     }
 }
 
+void Game::ProcessDefeat()
+{
+    const auto RemoveDefeatedPlayers = [this](std::size_t x, std::size_t y) {
+        const std::vector<ObjectType> types = m_map.At(x, y).GetTypes();
+
+        if (!HasIconProperty(m_ruleManager, types, ObjectType::DEFEAT))
+        {
+            return;
+        }
+
+        for (const ObjectType type : types)
+        {
+            if (std::find(m_playerIcons.begin(), m_playerIcons.end(), type) !=
+                m_playerIcons.end())
+            {
+                m_map.RemoveObject(x, y, type);
+            }
+        }
+    };
+
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
+    {
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+        {
+            RemoveDefeatedPlayers(x, y);
+        }
+    }
+}
+
 void Game::CheckPlayState()
 {
     if (m_playerIcons.empty())
@@ -392,8 +494,8 @@ void Game::CheckPlayState()
 
         for (const auto& [x, y] : positions)
         {
-            if (m_ruleManager.HasProperty(m_map.At(x, y).GetTypes(),
-                                          ObjectType::WIN))
+            if (HasIconProperty(m_ruleManager, m_map.At(x, y).GetTypes(),
+                                ObjectType::WIN))
             {
                 m_playState = PlayState::WON;
                 return;

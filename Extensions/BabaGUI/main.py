@@ -6,6 +6,8 @@ import sprites
 
 icon_images = {pyBaba.ObjectType.ICON_BABA: 'BABA',
                pyBaba.ObjectType.ICON_FLAG: 'FLAG',
+               pyBaba.ObjectType.ICON_ICE: 'ICE',
+               pyBaba.ObjectType.ICON_JELLY: 'JELLY',
                pyBaba.ObjectType.ICON_WALL: 'WALL',
                pyBaba.ObjectType.ICON_ROCK: 'ROCK',
                pyBaba.ObjectType.ICON_TILE: 'TILE',
@@ -16,7 +18,10 @@ icon_images = {pyBaba.ObjectType.ICON_BABA: 'BABA',
                pyBaba.ObjectType.ICON_FLOWER: 'FLOWER'}
 
 text_images = {pyBaba.ObjectType.BABA: 'BABA',
+               pyBaba.ObjectType.ICE: 'ICE',
+               pyBaba.ObjectType.JELLY: 'JELLY',
                pyBaba.ObjectType.IS: 'IS',
+               pyBaba.ObjectType.AND: 'AND',
                pyBaba.ObjectType.YOU: 'YOU',
                pyBaba.ObjectType.FLAG: 'FLAG',
                pyBaba.ObjectType.GRASS: 'GRASS',
