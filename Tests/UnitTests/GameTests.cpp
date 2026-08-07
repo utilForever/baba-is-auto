@@ -23,6 +23,23 @@
 
 using namespace baba_is_auto;
 
+namespace
+{
+void Move(Game& game, std::string_view actions)
+{
+    constexpr std::string_view keys = "UDLR";
+    constexpr std::array directions = { Direction::UP, Direction::DOWN,
+                                        Direction::LEFT, Direction::RIGHT };
+
+    for (const char action : actions)
+    {
+        const auto index = keys.find(action);
+        REQUIRE(index != std::string_view::npos);
+        game.MovePlayer(directions[index]);
+    }
+}
+}  // namespace
+
 TEST_CASE("Game - Basic")
 {
     Game game(MAPS_DIR "baba_is_you.txt");
@@ -95,16 +112,7 @@ TEST_CASE("Game - Grass Yard")
     constexpr std::string_view solution =
         "URRRRDRDRRRDRUUUURULLLLLLLULDRDLDRRDDRDDRDLLLDLUUUUUUULLRR"
         "UURULLLULDRRRDDRRRRR";
-    constexpr std::string_view actions = "UDLR";
-    constexpr std::array directions = { Direction::UP, Direction::DOWN,
-                                        Direction::LEFT, Direction::RIGHT };
-
-    for (const char action : solution)
-    {
-        const auto index = actions.find(action);
-        REQUIRE(index != std::string_view::npos);
-        game.MovePlayer(directions[index]);
-    }
+    Move(game, solution);
 
     CHECK(game.GetPlayState() == PlayState::WON);
 }
@@ -152,28 +160,6 @@ TEST_CASE("Game - Rule after stacked AND and verb")
 
 TEST_CASE("Game - Icy Waters")
 {
-    const auto Move = [](Game& game, std::string_view actions) {
-        for (const char action : actions)
-        {
-            if (action == 'U')
-            {
-                game.MovePlayer(Direction::UP);
-            }
-            else if (action == 'D')
-            {
-                game.MovePlayer(Direction::DOWN);
-            }
-            else if (action == 'L')
-            {
-                game.MovePlayer(Direction::LEFT);
-            }
-            else if (action == 'R')
-            {
-                game.MovePlayer(Direction::RIGHT);
-            }
-        }
-    };
-
     SUBCASE("Loads and resets")
     {
         Game game(MAPS_DIR "icy_waters.txt");
