@@ -17,6 +17,7 @@
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
+#include <algorithm>
 #include <array>
 #include <string_view>
 
