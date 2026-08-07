@@ -47,6 +47,38 @@ bool HasIconProperty(RuleManager& rules, const std::vector<ObjectType>& types,
             return !IsTextType(type) && rules.HasProperty({ type }, property);
         });
 }
+
+constexpr bool IsRulePredicate(ObjectType type)
+{
+    return IsNounType(type) || IsPropertyType(type);
+}
+
+template <typename Predicate>
+void RetainTypes(std::vector<ObjectType>& types, Predicate predicate)
+{
+    types.erase(std::remove_if(
+                    types.begin(), types.end(),
+                    [predicate](ObjectType type) { return !predicate(type); }),
+                types.end());
+}
+
+void AddRuleCombinations(RuleManager& rules,
+                         const std::vector<ObjectType>& subjects,
+                         const std::vector<ObjectType>& verbs,
+                         const std::vector<ObjectType>& predicates)
+{
+    for (const ObjectType subject : subjects)
+    {
+        for (const ObjectType verb : verbs)
+        {
+            for (const ObjectType predicate : predicates)
+            {
+                rules.AddRule({ Object({ subject }), Object({ verb }),
+                                Object({ predicate }) });
+            }
+        }
+    }
+}
 }  // namespace
 
 Game::Game(std::string_view filename)
@@ -221,14 +253,16 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
     const auto At = [this, &x, &y, &horizontal](std::size_t offset) -> Object& {
         return horizontal ? m_map.At(x + offset, y) : m_map.At(x, y + offset);
     };
+    const auto Before = [this, &x, &y,
+                         &horizontal](std::size_t offset) -> Object& {
+        return horizontal ? m_map.At(x - offset, y) : m_map.At(x, y - offset);
+    };
 
-    if (remaining < 3 || !At(0).HasNounType() ||
-        ((horizontal ? x : y) > 1 &&
-         (horizontal ? m_map.At(x - 1, y) : m_map.At(x, y - 1))
-             .HasType(ObjectType::AND) &&
-         !(horizontal ? m_map.At(x - 1, y) : m_map.At(x, y - 1))
-              .HasVerbType() &&
-         (horizontal ? m_map.At(x - 2, y) : m_map.At(x, y - 2)).HasNounType()))
+    const bool continuesPrevious =
+        (horizontal ? x : y) > 1 && Before(1).HasType(ObjectType::AND) &&
+        !Before(1).HasVerbType() && Before(2).HasNounType();
+
+    if (remaining < 3 || !At(0).HasNounType() || continuesPrevious)
     {
         return;
     }
@@ -267,31 +301,11 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
         offset += 2;
     }
 
-    for (const ObjectType subject : subjects)
-    {
-        if (!IsNounType(subject))
-        {
-            continue;
-        }
-
-        for (const ObjectType op : At(verb).GetTypes())
-        {
-            if (!IsVerbType(op))
-            {
-                continue;
-            }
-
-            for (const ObjectType predicate : predicates)
-            {
-                if (IsNounType(predicate) || IsPropertyType(predicate))
-                {
-                    m_ruleManager.AddRule(
-                        { Object({ subject }), Object({ op }),
-                          Object({ predicate }) });
-                }
-            }
-        }
-    }
+    std::vector<ObjectType> verbs = At(verb).GetTypes();
+    RetainTypes(subjects, IsNounType);
+    RetainTypes(verbs, IsVerbType);
+    RetainTypes(predicates, IsRulePredicate);
+    AddRuleCombinations(m_ruleManager, subjects, verbs, predicates);
 
     for (std::size_t i = 0; i < offset; ++i)
     {
