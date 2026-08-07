@@ -336,10 +336,10 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
                        const std::vector<ObjectType>& movingTypes)
 {
     const auto [_x, _y] = MovedPosition(x, y, dir);
-    const std::vector<ObjectType> destinationTypes =
-        m_map.At(_x, _y).GetTypes();
 
-    if (HasIconProperty(m_ruleManager, destinationTypes, ObjectType::PUSH) ||
+    if (const std::vector<ObjectType> destinationTypes =
+            m_map.At(_x, _y).GetTypes();
+        HasIconProperty(m_ruleManager, destinationTypes, ObjectType::PUSH) ||
         m_map.At(_x, _y).HasTextType())
     {
         ProcessPush(_x, _y, dir);
