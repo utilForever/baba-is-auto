@@ -255,6 +255,61 @@ TEST_CASE("Game - Icy Waters")
     }
 }
 
+TEST_CASE("Game - Turns")
+{
+    SUBCASE("Loads and resets")
+    {
+        Game game(MAPS_DIR "turns.txt");
+        CHECK(game.GetMap().GetWidth() == 28);
+        CHECK(game.GetMap().GetHeight() == 16);
+        CHECK(game.GetRuleManager().GetNumRules() == 6);
+        CHECK(game.GetMap().At(23, 8).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_CRAB));
+        CHECK(game.GetMap().At(10, 6).HasType(ObjectType::ICON_STAR));
+        CHECK(game.GetMap().At(8, 6).HasType(ObjectType::ICON_SKULL));
+
+        game.MovePlayer(Direction::LEFT);
+        game.Reset();
+        CHECK(game.GetMap().At(23, 8).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_CRAB));
+        CHECK(game.GetRuleManager().GetNumRules() == 6);
+        CHECK(game.GetPlayState() == PlayState::PLAYING);
+    }
+
+    SUBCASE("Chains STAR properties, controls both YOU types, and wins")
+    {
+        Game game(MAPS_DIR "turns.txt");
+
+        Move(game, "LULLLDDDLLLLULURDRUUULLDRRDRUU");
+        CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_STAR },
+                                                ObjectType::PUSH));
+        CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_STAR },
+                                                ObjectType::SINK));
+
+        Move(game, "LLLLLLLL");
+        CHECK(game.GetMap().GetPositions(ObjectType::ICON_STAR).empty());
+        CHECK(game.GetMap().GetPositions(ObjectType::ICON_SKULL).empty());
+
+        Move(game, "LLDLURRRRRRRRRRRUULDRDLLLLLLLLLLUULDD");
+        CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_CRAB },
+                                                ObjectType::YOU));
+        CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_BABA },
+                                                ObjectType::YOU));
+        CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_CRAB));
+        CHECK(game.GetMap().At(6, 6).HasType(ObjectType::ICON_BABA));
+
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(game.GetMap().At(3, 6).HasType(ObjectType::ICON_CRAB));
+        CHECK(game.GetMap().At(7, 6).HasType(ObjectType::ICON_BABA));
+        CHECK_FALSE(game.GetMap().At(2, 6).HasType(ObjectType::ICON_CRAB));
+        CHECK_FALSE(game.GetMap().At(6, 6).HasType(ObjectType::ICON_BABA));
+
+        Move(game, "DDDDD");
+        CHECK(game.GetMap().At(3, 11).HasType(ObjectType::ICON_CRAB));
+        CHECK(game.GetPlayState() == PlayState::WON);
+    }
+}
+
 TEST_CASE("Game - Editor Smoke Map")
 {
     Game game(MAPS_DIR "editor_smoke.txt");
