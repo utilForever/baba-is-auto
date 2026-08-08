@@ -230,6 +230,60 @@ def test_game_icy_waters_sink_from_either_side(tmp_path):
     assert destination_sink.GetPlayState() == pyBaba.PlayState.LOST
 
 
+def test_game_turns_load_and_reset():
+    game = pyBaba.Game("Resources/Maps/turns.txt")
+    assert game.GetMap().GetWidth() == 28
+    assert game.GetMap().GetHeight() == 16
+    assert game.GetRuleManager().GetNumRules() == 6
+    assert game.GetMap().At(23, 8).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(2, 6).HasType(pyBaba.ObjectType.ICON_CRAB)
+    assert game.GetMap().At(10, 6).HasType(pyBaba.ObjectType.ICON_STAR)
+    assert game.GetMap().At(8, 6).HasType(pyBaba.ObjectType.ICON_SKULL)
+
+    game.MovePlayer(pyBaba.Direction.LEFT)
+    game.Reset()
+    assert game.GetMap().At(23, 8).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(2, 6).HasType(pyBaba.ObjectType.ICON_CRAB)
+    assert game.GetRuleManager().GetNumRules() == 6
+    assert game.GetPlayState() == pyBaba.PlayState.PLAYING
+
+
+def test_game_turns_rules_multiple_you_and_win():
+    game = pyBaba.Game("Resources/Maps/turns.txt")
+
+    _move(game, "LULLLDDDLLLLULURDRUUULLDRRDRUU")
+    assert game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_STAR], pyBaba.ObjectType.PUSH
+    )
+    assert game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_STAR], pyBaba.ObjectType.SINK
+    )
+
+    _move(game, "LLLLLLLL")
+    assert not game.GetMap().GetPositions(pyBaba.ObjectType.ICON_STAR)
+    assert not game.GetMap().GetPositions(pyBaba.ObjectType.ICON_SKULL)
+
+    _move(game, "LLDLURRRRRRRRRRRUULDRDLLLLLLLLLLUULDD")
+    assert game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_CRAB], pyBaba.ObjectType.YOU
+    )
+    assert game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.YOU
+    )
+    assert game.GetMap().At(2, 6).HasType(pyBaba.ObjectType.ICON_CRAB)
+    assert game.GetMap().At(6, 6).HasType(pyBaba.ObjectType.ICON_BABA)
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().At(3, 6).HasType(pyBaba.ObjectType.ICON_CRAB)
+    assert game.GetMap().At(7, 6).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert not game.GetMap().At(2, 6).HasType(pyBaba.ObjectType.ICON_CRAB)
+    assert not game.GetMap().At(6, 6).HasType(pyBaba.ObjectType.ICON_BABA)
+
+    _move(game, "DDDDD")
+    assert game.GetMap().At(3, 11).HasType(pyBaba.ObjectType.ICON_CRAB)
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
 def test_game_sink_reparses_destroyed_rule_text():
     game = pyBaba.Game("Resources/Maps/sink_rule_reparse.txt")
 

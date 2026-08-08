@@ -5,6 +5,7 @@ import sys
 import sprites
 
 icon_images = {pyBaba.ObjectType.ICON_BABA: 'BABA',
+               pyBaba.ObjectType.ICON_CRAB: 'CRAB',
                pyBaba.ObjectType.ICON_FLAG: 'FLAG',
                pyBaba.ObjectType.ICON_ICE: 'ICE',
                pyBaba.ObjectType.ICON_JELLY: 'JELLY',
@@ -15,9 +16,11 @@ icon_images = {pyBaba.ObjectType.ICON_BABA: 'BABA',
                pyBaba.ObjectType.ICON_GRASS: 'GRASS',
                pyBaba.ObjectType.ICON_LAVA: 'LAVA',
                pyBaba.ObjectType.ICON_SKULL: 'SKULL',
+               pyBaba.ObjectType.ICON_STAR: 'STAR',
                pyBaba.ObjectType.ICON_FLOWER: 'FLOWER'}
 
 text_images = {pyBaba.ObjectType.BABA: 'BABA',
+               pyBaba.ObjectType.CRAB: 'CRAB',
                pyBaba.ObjectType.ICE: 'ICE',
                pyBaba.ObjectType.JELLY: 'JELLY',
                pyBaba.ObjectType.IS: 'IS',
@@ -36,6 +39,7 @@ text_images = {pyBaba.ObjectType.BABA: 'BABA',
                pyBaba.ObjectType.MELT: 'MELT',
                pyBaba.ObjectType.HOT: 'HOT',
                pyBaba.ObjectType.SKULL: 'SKULL',
+               pyBaba.ObjectType.STAR: 'STAR',
                pyBaba.ObjectType.DEFEAT: 'DEFEAT'}
 
 game = pyBaba.Game("../../Resources/Maps/off_limits_bug.txt")
