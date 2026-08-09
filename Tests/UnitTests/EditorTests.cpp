@@ -34,6 +34,7 @@ TEST_CASE("Editor - Level File Round Trip")
     CHECK(source.tiles[0][0] == ObjectType::BABA);
     CHECK(source.tiles[0][1] == ObjectType::ICON_EMPTY);
     CHECK(source.tiles[0][2] == ObjectType::ICON_EMPTY);
+    CHECK(source.directions[0][0] == Direction::RIGHT);
 
     {
         std::ofstream reserved(predictableTemporary);
@@ -53,6 +54,8 @@ TEST_CASE("Editor - Level File Round Trip")
                         ObjectType::ROCK };
     source.tiles[1] = { ObjectType::ICON_EMPTY, ObjectType::ICON_WALL,
                         ObjectType::ICON_EMPTY };
+    source.directions[0][0] = Direction::UP;
+    source.directions[1][1] = Direction::LEFT;
     REQUIRE(SaveLevelFile(path, source));
 
     LevelFile loaded;
@@ -60,6 +63,7 @@ TEST_CASE("Editor - Level File Round Trip")
     CHECK(loaded.width == source.width);
     CHECK(loaded.height == source.height);
     CHECK(loaded.tiles == source.tiles);
+    CHECK(loaded.directions == source.directions);
 
     LevelFile invalidSave = source;
     invalidSave.tiles[0][1] = ObjectType::OP_TYPE;
@@ -130,4 +134,71 @@ TEST_CASE("Map - Load Dimension Limits")
 
     CHECK_THROWS_WITH(map.Load(path.string()), "Invalid map dimensions");
     fs::remove(path, error);
+}
+
+TEST_CASE("Editor - Affection direction round trip")
+{
+    namespace fs = std::filesystem;
+
+    LevelFile affection;
+    REQUIRE(LoadLevelFile(MAPS_DIR "affection.txt", affection));
+    CHECK(affection.width == 24);
+    CHECK(affection.height == 14);
+    CHECK(affection.tiles[3 * affection.width + 6][0] == ObjectType::ICON_KEKE);
+    CHECK(affection.directions[3 * affection.width + 6][0] == Direction::RIGHT);
+    CHECK(affection.directions[7 * affection.width + 7][0] == Direction::UP);
+    CHECK(affection.directions[10 * affection.width + 12][0] ==
+          Direction::DOWN);
+
+    const fs::path path =
+        fs::current_path() / "baba-is-auto-affection-round-trip.txt";
+    std::error_code error;
+    REQUIRE(SaveLevelFile(path, affection));
+
+    LevelFile loaded;
+    REQUIRE(LoadLevelFile(path, loaded));
+    CHECK(loaded.tiles == affection.tiles);
+    CHECK(loaded.directions == affection.directions);
+
+    fs::remove(path, error);
+}
+
+TEST_CASE("Editor - Affection sprite assets")
+{
+    namespace fs = std::filesystem;
+
+    const fs::path root = (fs::path(MAPS_DIR) / "../..").lexically_normal();
+
+    for (const fs::path& path : {
+             "Extensions/BabaGUI/sprites/text/KEKE.gif",
+             "Extensions/BabaGUI/sprites/text/LOVE.gif",
+             "Extensions/BabaGUI/sprites/text/ALGAE.gif",
+             "Extensions/BabaGUI/sprites/text/MOVE.gif",
+             "Extensions/BabaGUI/sprites/icon/KEKE.gif",
+             "Extensions/BabaGUI/sprites/icon/LOVE.gif",
+             "Extensions/BabaGUI/sprites/icon/ALGAE.gif",
+         })
+    {
+        CHECK(fs::is_regular_file(root / path));
+    }
+}
+
+TEST_CASE("Editor - Layer tile direction updates")
+{
+    LevelFile::LayerTile tiles{ ObjectType::ICON_EMPTY, ObjectType::ICON_EMPTY,
+                                ObjectType::ICON_EMPTY };
+    LevelFile::LayerDirections directions{ Direction::RIGHT, Direction::RIGHT,
+                                           Direction::RIGHT };
+
+    CHECK(SetLevelLayerTile(tiles, directions, 1, ObjectType::ICON_KEKE,
+                            Direction::UP));
+    CHECK(tiles[1] == ObjectType::ICON_KEKE);
+    CHECK(directions[1] == Direction::UP);
+    CHECK_FALSE(SetLevelLayerTile(tiles, directions, 1, ObjectType::ICON_KEKE,
+                                  Direction::NONE));
+    CHECK(directions[1] == Direction::UP);
+    CHECK(SetLevelLayerTile(tiles, directions, 1, ObjectType::ICON_EMPTY,
+                            Direction::DOWN));
+    CHECK(tiles[1] == ObjectType::ICON_EMPTY);
+    CHECK(directions[1] == Direction::RIGHT);
 }
