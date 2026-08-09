@@ -23,12 +23,27 @@ void AddMap(pybind11::module& m)
              "Restores the objects recorded when the map was loaded.")
         .def("GetWidth", &Map::GetWidth, "Returns the map width.")
         .def("GetHeight", &Map::GetHeight, "Returns the map height.")
-        .def("Load", &Map::Load,
-             "Loads a one-to-three-layer text map.")
-        .def("AddObject", &Map::AddObject,
-             "Adds one object type to the cell at zero-based (x, y).")
-        .def("RemoveObject", &Map::RemoveObject,
+        .def("Load", &Map::Load, "Loads a one-to-three-layer text map.")
+        .def("AddObject",
+             static_cast<void (Map::*)(std::size_t, std::size_t, ObjectType)>(
+                 &Map::AddObject),
+             "Adds one object type to the cell at zero-based (x, y), facing "
+             "right.")
+        .def("AddObject",
+             static_cast<void (Map::*)(std::size_t, std::size_t, ObjectType,
+                                       Direction)>(&Map::AddObject),
+             "Adds one object type with facing to the cell at zero-based (x, "
+             "y).")
+        .def("RemoveObject",
+             static_cast<void (Map::*)(std::size_t, std::size_t, ObjectType)>(
+                 &Map::RemoveObject),
              "Removes one object type from the cell at zero-based (x, y).")
+        .def("GetPosition", &Map::GetPosition,
+             "Returns the current zero-based position for an object ID.")
+        .def("SetDirection", &Map::SetDirection,
+             "Sets the facing direction for an object ID.")
+        .def("GetDirection", &Map::GetDirection,
+             "Returns the facing direction for an object ID.")
         .def("At",
              static_cast<Object& (Map::*)(std::size_t, std::size_t)>(&Map::At),
              "Returns a copy of the Object stored at zero-based (x, y).")

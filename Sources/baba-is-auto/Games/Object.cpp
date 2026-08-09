@@ -17,98 +17,155 @@ Object::Object(std::vector<ObjectType> types)
         Add(type);
     }
 
-    if (m_types.empty())
+    if (m_instances.empty())
     {
-        m_types.emplace(ObjectType::ICON_EMPTY, 1);
+        Add(ObjectType::ICON_EMPTY);
     }
 }
 
 bool Object::operator==(const Object& rhs) const
 {
-    return m_types == rhs.m_types;
+    return GetTypes() == rhs.GetTypes();
 }
 
 void Object::Add(ObjectType type)
 {
+    Add(type, Direction::RIGHT, 0);
+}
+
+void Object::Add(ObjectType type, Direction direction, ObjectID id)
+{
     if (type == ObjectType::ICON_EMPTY)
     {
-        if (m_types.empty())
+        if (m_instances.empty())
         {
-            m_types.emplace(type, 1);
+            m_instances.push_back({ 0, type, Direction::RIGHT });
         }
 
         return;
     }
 
-    m_types.erase(ObjectType::ICON_EMPTY);
-    ++m_types[type];
+    m_instances.erase(std::remove_if(m_instances.begin(), m_instances.end(),
+                                     [](const ObjectInstance& instance) {
+                                         return instance.type ==
+                                                ObjectType::ICON_EMPTY;
+                                     }),
+                      m_instances.end());
+    m_instances.push_back({ id, type, direction });
+}
+
+void Object::Add(const ObjectInstance& instance)
+{
+    Add(instance.type, instance.direction, instance.id);
 }
 
 void Object::Remove(ObjectType type)
 {
-    if (auto iter = m_types.find(type); iter != m_types.end())
+    const auto iter = std::find_if(
+        m_instances.begin(), m_instances.end(),
+        [type](const auto& instance) { return instance.type == type; });
+
+    if (iter != m_instances.end())
     {
-        if (m_types[type] == 1)
-        {
-            m_types.erase(iter);
-        }
-        else
-        {
-            m_types[type] -= 1;
-        }
+        m_instances.erase(iter);
     }
 
-    if (m_types.empty())
+    if (m_instances.empty())
     {
-        m_types.emplace(ObjectType::ICON_EMPTY, 1);
+        Add(ObjectType::ICON_EMPTY);
     }
+}
+
+bool Object::Remove(ObjectID id)
+{
+    const auto iter = std::find_if(
+        m_instances.begin(), m_instances.end(),
+        [id](const ObjectInstance& instance) { return instance.id == id; });
+
+    if (iter == m_instances.end() || iter->type == ObjectType::ICON_EMPTY)
+    {
+        return false;
+    }
+
+    m_instances.erase(iter);
+
+    if (m_instances.empty())
+    {
+        Add(ObjectType::ICON_EMPTY);
+    }
+
+    return true;
 }
 
 std::vector<ObjectType> Object::GetTypes() const
 {
     std::vector<ObjectType> ret;
 
-    for (const auto& [type, count] : m_types)
+    for (const ObjectInstance& instance : m_instances)
     {
-        for (std::size_t i = 0; i < count; ++i)
-        {
-            ret.emplace_back(type);
-        }
+        ret.emplace_back(instance.type);
     }
+
+    std::sort(ret.begin(), ret.end());
 
     return ret;
 }
 
+const std::vector<ObjectInstance>& Object::GetInstances() const
+{
+    return m_instances;
+}
+
+ObjectInstance* Object::GetInstance(ObjectID id)
+{
+    const auto iter = std::find_if(
+        m_instances.begin(), m_instances.end(),
+        [id](const ObjectInstance& instance) { return instance.id == id; });
+    return iter == m_instances.end() ? nullptr : &*iter;
+}
+
+const ObjectInstance* Object::GetInstance(ObjectID id) const
+{
+    const auto iter = std::find_if(
+        m_instances.begin(), m_instances.end(),
+        [id](const ObjectInstance& instance) { return instance.id == id; });
+    return iter == m_instances.end() ? nullptr : &*iter;
+}
+
 bool Object::HasType(ObjectType type) const
 {
-    return m_types.find(type) != m_types.end();
+    return std::any_of(m_instances.begin(), m_instances.end(),
+                       [type](const ObjectInstance& instance) {
+                           return instance.type == type;
+                       });
 }
 
 bool Object::HasTextType() const
 {
-    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
-        return entry.first <= ObjectType::ICON_TYPE;
-    });
+    return std::any_of(m_instances.begin(), m_instances.end(),
+                       [](const ObjectInstance& instance) {
+                           return IsTextType(instance.type);
+                       });
 }
 
 bool Object::HasNounType() const
 {
-    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
-        return IsNounType(entry.first);
-    });
+    return std::any_of(
+        m_instances.begin(), m_instances.end(),
+        [](const auto& instance) { return IsNounType(instance.type); });
 }
 
 bool Object::HasVerbType() const
 {
-    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
-        return IsVerbType(entry.first);
-    });
+    return std::any_of(
+        m_instances.begin(), m_instances.end(),
+        [](const auto& instance) { return IsVerbType(instance.type); });
 }
 
 bool Object::HasPropertyType() const
 {
-    return std::any_of(m_types.begin(), m_types.end(), [](const auto& entry) {
-        return IsPropertyType(entry.first);
-    });
+    return std::any_of(
+        m_instances.begin(), m_instances.end(),
+        [](const auto& instance) { return IsPropertyType(instance.type); });
 }
 }  // namespace baba_is_auto

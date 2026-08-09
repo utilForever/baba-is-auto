@@ -9,11 +9,26 @@
 
 #include <baba-is-auto/Enums/GameEnums.hpp>
 
-#include <map>
+#include <cstdint>
 #include <vector>
 
 namespace baba_is_auto
 {
+using ObjectID = std::uint64_t;
+
+//!
+//! \brief Object instance struct.
+//!
+//! This struct represents an instance of an object in the game. It contains the
+//! object's ID, type, and direction.
+//!
+struct ObjectInstance
+{
+    ObjectID id = 0;
+    ObjectType type = ObjectType::ICON_EMPTY;
+    Direction direction = Direction::RIGHT;
+};
+
 //!
 //! \brief Object class.
 //!
@@ -47,13 +62,42 @@ class Object
     //! \param type An object type to add.
     void Add(ObjectType type);
 
+    //! Adds an object instance.
+    //! \param type An object type to add.
+    //! \param direction The direction the object faces.
+    //! \param id The stable map object ID, or zero outside a map.
+    void Add(ObjectType type, Direction direction, ObjectID id);
+
+    //! Adds an existing object instance.
+    //! \param instance The instance to add.
+    void Add(const ObjectInstance& instance);
+
     //! Removes an object type.
     //! \param type An object type to remove.
     void Remove(ObjectType type);
 
+    //! Removes the object with the given stable ID.
+    //! \param id The stable map object ID.
+    //! \return Whether an object was removed.
+    bool Remove(ObjectID id);
+
     //! Gets a list of object types, including duplicate stacked objects.
     //! \return A list of object types.
     std::vector<ObjectType> GetTypes() const;
+
+    //! Gets the object instances in insertion order.
+    //! \return The object instances.
+    const std::vector<ObjectInstance>& GetInstances() const;
+
+    //! Gets a writable object instance by ID.
+    //! \param id The stable map object ID.
+    //! \return The instance, or nullptr when it is absent.
+    ObjectInstance* GetInstance(ObjectID id);
+
+    //! Gets an object instance by ID.
+    //! \param id The stable map object ID.
+    //! \return The instance, or nullptr when it is absent.
+    const ObjectInstance* GetInstance(ObjectID id) const;
 
     //! Checks the object has specific type.
     //! \param type An object type to check.
@@ -80,7 +124,7 @@ class Object
     bool isRule = false;
 
  private:
-    std::map<ObjectType, std::size_t> m_types;
+    std::vector<ObjectInstance> m_instances;
 };
 }  // namespace baba_is_auto
 

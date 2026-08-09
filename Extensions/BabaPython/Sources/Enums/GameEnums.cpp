@@ -14,8 +14,8 @@ using namespace baba_is_auto;
 void AddGameEnums(pybind11::module& m)
 {
 #define X(val) .value(#val, ObjectType::val)
-    pybind11::enum_<ObjectType>(
-        m, "ObjectType", "Identifies text tiles and in-game icons.")
+    pybind11::enum_<ObjectType>(m, "ObjectType",
+                                "Identifies text tiles and in-game icons.")
         .value("NOUN_TYPE", ObjectType::NOUN_TYPE)
 #include <baba-is-auto/Enums/NounType.def>
         .value("OP_TYPE", ObjectType::OP_TYPE)
@@ -24,6 +24,10 @@ void AddGameEnums(pybind11::module& m)
 #include <baba-is-auto/Enums/PropertyType.def>
         .value("ICON_TYPE", ObjectType::ICON_TYPE)
 #include <baba-is-auto/Enums/IconType.def>
+        .value("LOCKED_UP", ObjectType::LOCKED_UP)
+        .value("LOCKED_DOWN", ObjectType::LOCKED_DOWN)
+        .value("LOCKED_LEFT", ObjectType::LOCKED_LEFT)
+        .value("LOCKED_RIGHT", ObjectType::LOCKED_RIGHT)
         .export_values();
 #undef X
 
