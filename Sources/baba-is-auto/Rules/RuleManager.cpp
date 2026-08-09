@@ -19,6 +19,7 @@ void RuleManager::AddRule(const Rule& rule)
 void RuleManager::RemoveRule(const Rule& rule)
 {
     const auto iter = std::find(m_rules.begin(), m_rules.end(), rule);
+
     if (iter != m_rules.end())
     {
         m_rules.erase(iter);
@@ -56,7 +57,8 @@ ObjectType RuleManager::FindPlayer() const
 {
     for (auto& rule : m_rules)
     {
-        if (std::get<2>(rule.objects).HasType(ObjectType::YOU))
+        if (rule.conditions.empty() &&
+            std::get<2>(rule.objects).HasType(ObjectType::YOU))
         {
             const ObjectType type = std::get<0>(rule.objects).GetTypes()[0];
             return ConvertTextToIcon(type);
@@ -75,7 +77,8 @@ bool RuleManager::HasProperty(const std::vector<ObjectType>& types,
 
         for (auto& rule : m_rules)
         {
-            if (std::get<0>(rule.objects).HasType(type) &&
+            if (rule.conditions.empty() &&
+                std::get<0>(rule.objects).HasType(type) &&
                 std::get<2>(rule.objects).HasType(property))
             {
                 return true;

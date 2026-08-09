@@ -72,15 +72,53 @@ class Game
     //! \return The flag indicates that an object can move.
     bool CanMove(std::size_t x, std::size_t y, Direction dir);
 
+    //! Moves objects with the active YOU property.
+    //! \param dir The direction to move.
+    void ProcessPlayerMove(Direction dir);
+
+    //! Resolves all MOVE attempts in round order.
+    void ProcessMoveProperty();
+
+    //! Applies active noun transformations from one board snapshot.
+    void ProcessTransformations();
+
+    //! Adds nouns currently present in the level to the persistent ALL set.
+    void UpdateAllNouns();
+
+    //! Checks an object instance has a property under the current rules.
+    //! \param instance The object instance to check.
+    //! \param property The property to check.
+    //! \return The flag indicates that an object instance has a property.
+    bool HasProperty(const ObjectInstance& instance, ObjectType property) const;
+
+    //! Checks all conditions attached to a rule for an object instance.
+    //! \param instance The object instance to check.
+    //! \param conditions The conditions to check.
+    //! \return The flag indicates that an object instance matches all
+    //! conditions.
+    bool MatchesConditions(const ObjectInstance& instance,
+                           const std::vector<RuleCondition>& conditions) const;
+
+    //! Checks one condition attached to a rule for an object instance.
+    //! \param instance The object instance to check.
+    //! \param condition The condition to check.
+    //! \return The flag indicates that an object instance matches the
+    //! condition.
+    bool MatchesCondition(const ObjectInstance& instance,
+                          const RuleCondition& condition) const;
+
     //! Processes the move of the player.
     //! \param x The x position.
     //! \param y The y position.
     //! \param dir The direction to move.
-    //! \param types The object types to move together.
+    //! \param ids The object instances to move together.
     void ProcessMove(std::size_t x, std::size_t y, Direction dir,
-                     const std::vector<ObjectType>& types);
+                     const std::vector<ObjectID>& ids);
 
     //! Pushes every movable object stacked at a position as one group.
+    //! \param x The x position.
+    //! \param y The y position.
+    //! \param dir The direction to move.
     void ProcessPush(std::size_t x, std::size_t y, Direction dir);
 
     //! Removes all objects where a SINK object overlaps another object.
@@ -100,7 +138,9 @@ class Game
 
     PlayState m_playState = PlayState::INVALID;
     ObjectType m_playerIcon = ObjectType::ICON_EMPTY;
+
     std::vector<ObjectType> m_playerIcons;
+    std::vector<ObjectType> m_allNouns;
 };
 }  // namespace baba_is_auto
 

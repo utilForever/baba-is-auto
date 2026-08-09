@@ -400,3 +400,115 @@ def test_game_hot_melt(tmp_path):
     assert game.GetMap().At(12, 1).HasType(pyBaba.ObjectType.ICON_BABA) is False
     assert game.GetMap().At(12, 1).HasType(pyBaba.ObjectType.ICON_LAVA)
     assert game.GetPlayState() == pyBaba.PlayState.LOST
+
+
+def test_game_move_wait_stacks_weak_and_locks():
+    game = pyBaba.Game("Resources/Maps/move_rules.txt")
+    rock = game.GetMap().At(5, 11).GetInstances()[0].id
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().At(11, 8).HasType(pyBaba.ObjectType.ICON_KEKE)
+    assert game.GetMap().At(5, 8).HasType(pyBaba.ObjectType.ICON_KEKE)
+    assert game.GetMap().At(6, 8).HasType(pyBaba.ObjectType.ICON_ROBOT)
+    assert not game.GetMap().GetPositions(pyBaba.ObjectType.ICON_ALGAE)
+    assert game.GetMap().GetPosition(rock) == (5, 11)
+    assert game.GetMap().GetDirection(rock) == pyBaba.Direction.RIGHT
+
+
+def test_game_move_special_noun_conditions():
+    game = pyBaba.Game("Resources/Maps/move_special_conditions.txt")
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().At(2, 5).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(9, 5).HasType(pyBaba.ObjectType.ICON_LOVE)
+    assert game.GetMap().At(3, 8).HasType(pyBaba.ObjectType.ICON_KEKE)
+
+
+def test_game_noun_transformations_are_snapshotted():
+    game = pyBaba.Game("Resources/Maps/transformations.txt")
+    keke = game.GetMap().At(0, 9).GetInstances()[0].id
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().At(0, 9).HasType(pyBaba.ObjectType.ICON_LOVE)
+    assert game.GetMap().At(0, 9).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert game.GetMap().GetDirection(keke) == pyBaba.Direction.RIGHT
+    assert game.GetMap().At(3, 9).HasType(pyBaba.ObjectType.ICON_ALGAE)
+    assert game.GetMap().At(5, 9).HasType(pyBaba.ObjectType.ICON_WALL)
+    assert game.GetMap().At(6, 9).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert game.GetMap().At(12, 9).HasType(pyBaba.ObjectType.ICON_EMPTY)
+    assert game.GetMap().At(19, 10).HasType(pyBaba.ObjectType.ICON_FLOWER)
+
+
+def test_game_text_transformation_writes_the_source_noun(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/special_transformations.txt"),
+        tmp_path / "text_transformation.txt",
+        (
+            (0, 3, pyBaba.ObjectType.BABA),
+            (1, 3, pyBaba.ObjectType.IS),
+            (2, 3, pyBaba.ObjectType.TEXT),
+        ),
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().At(0, 0).HasType(pyBaba.ObjectType.BABA)
+    assert not game.GetMap().At(0, 0).HasType(pyBaba.ObjectType.ICON_TEXT)
+
+
+def test_game_all_transformation_expands_without_a_self_guard(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/special_transformations.txt"),
+        tmp_path / "all_transformation.txt",
+        (
+            (0, 3, pyBaba.ObjectType.BABA),
+            (1, 3, pyBaba.ObjectType.IS),
+            (2, 3, pyBaba.ObjectType.ALL),
+        ),
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+
+    result = game.GetMap().At(0, 0)
+    assert result.HasType(pyBaba.ObjectType.ICON_BABA)
+    assert result.HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert result.HasType(pyBaba.ObjectType.ICON_LOVE)
+    assert len(result.GetInstances()) == 3
+
+
+def test_game_affection_layout_directions_and_wait():
+    game = pyBaba.Game("Resources/Maps/affection.txt")
+    assert game.GetMap().GetWidth() == 24
+    assert game.GetMap().GetHeight() == 14
+
+    right = game.GetMap().At(6, 3).GetInstances()[0].id
+    up = game.GetMap().At(7, 7).GetInstances()[0].id
+    down = game.GetMap().At(12, 10).GetInstances()[0].id
+    assert game.GetMap().GetDirection(right) == pyBaba.Direction.RIGHT
+    assert game.GetMap().GetDirection(up) == pyBaba.Direction.UP
+    assert game.GetMap().GetDirection(down) == pyBaba.Direction.DOWN
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().At(7, 3).HasType(pyBaba.ObjectType.ICON_KEKE)
+    assert game.GetMap().At(7, 6).HasType(pyBaba.ObjectType.ICON_KEKE)
+    assert game.GetMap().At(12, 11).HasType(pyBaba.ObjectType.ICON_KEKE)
+
+
+def test_game_affection_move_solution():
+    game = pyBaba.Game("Resources/Maps/affection.txt")
+
+    _move(game, "RRRRRUUUUURRRDDDD")
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    game.MovePlayer(pyBaba.Direction.NONE)
+
+    _move(game, "DUUUUURRRRRRRRDDD")
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
+def test_game_affection_transformation_solution():
+    game = pyBaba.Game("Resources/Maps/affection.txt")
+
+    _move(game, "URRRRRRRRDDUULDDUULLDRRDRUUUURUURU")
+    assert game.GetPlayState() == pyBaba.PlayState.WON
