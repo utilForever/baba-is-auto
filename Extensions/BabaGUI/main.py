@@ -1,28 +1,36 @@
+import sys
+
 import pygame
 import pyBaba
+
 import config
-import sys
+import orientation
 import sprites
 
-icon_images = {pyBaba.ObjectType.ICON_BABA: 'BABA',
+icon_images = {pyBaba.ObjectType.ICON_ALGAE: 'ALGAE',
+               pyBaba.ObjectType.ICON_BABA: 'BABA',
                pyBaba.ObjectType.ICON_CRAB: 'CRAB',
                pyBaba.ObjectType.ICON_FLAG: 'FLAG',
                pyBaba.ObjectType.ICON_ICE: 'ICE',
                pyBaba.ObjectType.ICON_JELLY: 'JELLY',
+               pyBaba.ObjectType.ICON_KEKE: 'KEKE',
                pyBaba.ObjectType.ICON_WALL: 'WALL',
                pyBaba.ObjectType.ICON_ROCK: 'ROCK',
                pyBaba.ObjectType.ICON_TILE: 'TILE',
                pyBaba.ObjectType.ICON_WATER: 'WATER',
                pyBaba.ObjectType.ICON_GRASS: 'GRASS',
                pyBaba.ObjectType.ICON_LAVA: 'LAVA',
+               pyBaba.ObjectType.ICON_LOVE: 'LOVE',
                pyBaba.ObjectType.ICON_SKULL: 'SKULL',
                pyBaba.ObjectType.ICON_STAR: 'STAR',
                pyBaba.ObjectType.ICON_FLOWER: 'FLOWER'}
 
-text_images = {pyBaba.ObjectType.BABA: 'BABA',
+text_images = {pyBaba.ObjectType.ALGAE: 'ALGAE',
+               pyBaba.ObjectType.BABA: 'BABA',
                pyBaba.ObjectType.CRAB: 'CRAB',
                pyBaba.ObjectType.ICE: 'ICE',
                pyBaba.ObjectType.JELLY: 'JELLY',
+               pyBaba.ObjectType.KEKE: 'KEKE',
                pyBaba.ObjectType.IS: 'IS',
                pyBaba.ObjectType.AND: 'AND',
                pyBaba.ObjectType.YOU: 'YOU',
@@ -36,13 +44,17 @@ text_images = {pyBaba.ObjectType.BABA: 'BABA',
                pyBaba.ObjectType.WATER: 'WATER',
                pyBaba.ObjectType.SINK: 'SINK',
                pyBaba.ObjectType.LAVA: 'LAVA',
+               pyBaba.ObjectType.LOVE: 'LOVE',
                pyBaba.ObjectType.MELT: 'MELT',
+               pyBaba.ObjectType.MOVE: 'MOVE',
                pyBaba.ObjectType.HOT: 'HOT',
                pyBaba.ObjectType.SKULL: 'SKULL',
                pyBaba.ObjectType.STAR: 'STAR',
                pyBaba.ObjectType.DEFEAT: 'DEFEAT'}
 
-game = pyBaba.Game("../../Resources/Maps/off_limits_bug.txt")
+game = pyBaba.Game(
+    sys.argv[1] if len(sys.argv) > 1 else "../../Resources/Maps/affection.txt"
+)
 screen_size = (game.GetMap().GetWidth() * config.BLOCK_SIZE,
                game.GetMap().GetHeight() * config.BLOCK_SIZE)
 screen = pygame.display.set_mode(
@@ -57,17 +69,19 @@ result_image_group.add(result_image)
 
 def draw_obj(x_pos, y_pos):
     objects = game.GetMap().At(x_pos, y_pos)
-    is_icon = False
 
-    for obj_type in objects.GetTypes():
+    for instance, rotation in orientation.oriented_instances(objects):
+        obj_type = instance.type
+        is_icon = not pyBaba.IsTextType(obj_type)
+
         if pyBaba.IsTextType(obj_type):
             obj_image = text_images[obj_type]
         else:
-            if obj_type == pyBaba.ObjectType.ICON_EMPTY:
-                continue
             obj_image = icon_images[obj_type]
-            is_icon = True
-        map_sprite = sprites.MapSprite(obj_image, x_pos * config.BLOCK_SIZE, y_pos * config.BLOCK_SIZE, is_icon)
+
+        map_sprite = sprites.MapSprite(
+            obj_image, x_pos * config.BLOCK_SIZE,
+            y_pos * config.BLOCK_SIZE, is_icon, rotation)
         map_sprite_group.add(map_sprite)
 
 
