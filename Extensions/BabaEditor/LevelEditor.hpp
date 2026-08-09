@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace baba_is_auto::editor
@@ -76,7 +77,9 @@ class LevelEditor
     static constexpr ObjectType EMPTY = ObjectType::ICON_EMPTY;
 
     using LayerTile = std::array<ObjectType, LAYER_COUNT>;
+    using LayerDirections = std::array<Direction, LAYER_COUNT>;
     using LevelTiles = std::vector<LayerTile>;
+    using LevelDirections = std::vector<LayerDirections>;
 
     // Level lifecycle and current numeric map-format I/O.
     void NewLevel(std::size_t width, std::size_t height);
@@ -100,8 +103,8 @@ class LevelEditor
     void DrawStatusBar();
 
     // Sprite-backed palette, tile rendering, and paint interactions.
-    void DrawSpriteInRect(ObjectType type, const ImVec2& min,
-                          const ImVec2& max) const;
+    void DrawSpriteInRect(ObjectType type, Direction direction,
+                          const ImVec2& min, const ImVec2& max) const;
     bool DrawSpriteButton(ObjectType type, const ImVec2& size);
     void DrawTileButton(std::size_t x, std::size_t y, float tileSize);
     void HandleTileInteraction(std::size_t x, std::size_t y);
@@ -115,8 +118,10 @@ class LevelEditor
 
     // Tile accessors for the current layer and visible tile (topmost
     // non-empty).
+    std::size_t VisibleLayer(std::size_t x, std::size_t y) const;
     ObjectType VisibleTile(std::size_t x, std::size_t y) const;
     ObjectType CurrentLayerTile(std::size_t x, std::size_t y) const;
+    Direction CurrentLayerDirection(std::size_t x, std::size_t y) const;
     LayerTile& Tile(std::size_t x, std::size_t y);
     const LayerTile& Tile(std::size_t x, std::size_t y) const;
 
@@ -149,7 +154,8 @@ class LevelEditor
     int m_nextWidth = 22;
     int m_nextHeight = 14;
     LevelTiles m_tiles;
-    std::vector<LevelTiles> m_undoStack;
+    LevelDirections m_directions;
+    std::vector<std::pair<LevelTiles, LevelDirections>> m_undoStack;
 
     // File paths and status messages.
     std::string m_levelPath;
@@ -162,6 +168,7 @@ class LevelEditor
 
     // Editor state variables.
     ObjectType m_selected = ObjectType::ICON_BABA;
+    Direction m_selectedDirection = Direction::RIGHT;
     PlacementMode m_mode = PlacementMode::Freeform;
     std::size_t m_currentLayer = 0;
     bool m_showGrid = true;

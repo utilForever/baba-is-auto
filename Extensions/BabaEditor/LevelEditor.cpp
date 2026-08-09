@@ -47,6 +47,26 @@ ImVec4 ColorU8(int r, int g, int b)
     return { r / 255.0f, g / 255.0f, b / 255.0f, 1.0f };
 }
 
+//! Return the display name for a map direction.
+const char* DirectionName(Direction direction)
+{
+    switch (direction)
+    {
+        case Direction::RIGHT:
+            return "RIGHT";
+        case Direction::UP:
+            return "UP";
+        case Direction::LEFT:
+            return "LEFT";
+        case Direction::DOWN:
+            return "DOWN";
+        case Direction::NONE:
+            return "NONE";
+    }
+
+    return "NONE";
+}
+
 //! Normalize text for case-insensitive comparisons.
 std::string Normalize(std::string value)
 {
@@ -133,13 +153,16 @@ const std::vector<ObjectEntry>& ObjectCatalog()
     // Expose only objects that have matching sprites in BabaGUI.
     static const std::vector<ObjectEntry> catalog = {
         { ObjectType::ICON_EMPTY, "EMPTY", "Special", ColorU8(18, 22, 32) },
+        { ObjectType::ALGAE, "ALGAE", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::BABA, "BABA", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::CRAB, "CRAB", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::FLAG, "FLAG", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::GRASS, "GRASS", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::ICE, "ICE", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::JELLY, "JELLY", "Text: Nouns", ColorU8(238, 238, 238) },
+        { ObjectType::KEKE, "KEKE", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::LAVA, "LAVA", "Text: Nouns", ColorU8(238, 238, 238) },
+        { ObjectType::LOVE, "LOVE", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::ROCK, "ROCK", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::SKULL, "SKULL", "Text: Nouns", ColorU8(238, 238, 238) },
         { ObjectType::STAR, "STAR", "Text: Nouns", ColorU8(238, 238, 238) },
@@ -160,6 +183,9 @@ const std::vector<ObjectEntry>& ObjectCatalog()
         { ObjectType::HOT, "HOT", "Text: Properties", ColorU8(238, 238, 238) },
         { ObjectType::MELT, "MELT", "Text: Properties",
           ColorU8(238, 238, 238) },
+        { ObjectType::MOVE, "MOVE", "Text: Properties",
+          ColorU8(238, 238, 238) },
+        { ObjectType::ICON_ALGAE, "ALGAE", "Objects", ColorU8(84, 150, 64) },
         { ObjectType::ICON_BABA, "BABA", "Objects", ColorU8(236, 236, 236) },
         { ObjectType::ICON_CRAB, "CRAB", "Objects", ColorU8(196, 90, 117) },
         { ObjectType::ICON_FLAG, "FLAG", "Objects", ColorU8(237, 217, 96) },
@@ -167,7 +193,9 @@ const std::vector<ObjectEntry>& ObjectCatalog()
         { ObjectType::ICON_GRASS, "GRASS", "Objects", ColorU8(66, 128, 74) },
         { ObjectType::ICON_ICE, "ICE", "Objects", ColorU8(52, 85, 145) },
         { ObjectType::ICON_JELLY, "JELLY", "Objects", ColorU8(163, 201, 232) },
+        { ObjectType::ICON_KEKE, "KEKE", "Objects", ColorU8(196, 90, 117) },
         { ObjectType::ICON_LAVA, "LAVA", "Objects", ColorU8(225, 74, 52) },
+        { ObjectType::ICON_LOVE, "LOVE", "Objects", ColorU8(241, 120, 242) },
         { ObjectType::ICON_ROCK, "ROCK", "Objects", ColorU8(74, 67, 55) },
         { ObjectType::ICON_SKULL, "SKULL", "Objects", ColorU8(238, 238, 238) },
         { ObjectType::ICON_STAR, "STAR", "Objects", ColorU8(227, 142, 89) },
@@ -337,6 +365,9 @@ void LevelEditor::NewLevel(std::size_t width, std::size_t height)
     m_nextWidth = static_cast<int>(m_width);
     m_nextHeight = static_cast<int>(m_height);
     m_tiles.assign(m_width * m_height, { EMPTY, EMPTY, EMPTY });
+    m_directions.assign(
+        m_width * m_height,
+        { Direction::RIGHT, Direction::RIGHT, Direction::RIGHT });
     m_undoStack.clear();
     m_levelPath.clear();
     m_dirty = true;
@@ -357,6 +388,9 @@ void LevelEditor::ResizeLevel(std::size_t width, std::size_t height)
     }
 
     LevelTiles resized(width * height, { EMPTY, EMPTY, EMPTY });
+    LevelDirections resizedDirections(
+        width * height,
+        { Direction::RIGHT, Direction::RIGHT, Direction::RIGHT });
     const std::size_t copyWidth = std::min(width, m_width);
     const std::size_t copyHeight = std::min(height, m_height);
 
@@ -366,6 +400,8 @@ void LevelEditor::ResizeLevel(std::size_t width, std::size_t height)
     {
         std::copy_n(m_tiles.begin() + y * m_width, copyWidth,
                     resized.begin() + y * width);
+        std::copy_n(m_directions.begin() + y * m_width, copyWidth,
+                    resizedDirections.begin() + y * width);
     }
 
     m_width = width;
@@ -373,6 +409,7 @@ void LevelEditor::ResizeLevel(std::size_t width, std::size_t height)
     m_nextWidth = static_cast<int>(m_width);
     m_nextHeight = static_cast<int>(m_height);
     m_tiles = std::move(resized);
+    m_directions = std::move(resizedDirections);
     m_undoStack.clear();
     m_dirty = true;
     m_status = "Resized level";
@@ -395,6 +432,7 @@ bool LevelEditor::ImportLevel(const fs::path& filename)
     m_nextWidth = static_cast<int>(m_width);
     m_nextHeight = static_cast<int>(m_height);
     m_tiles = std::move(level.tiles);
+    m_directions = std::move(level.directions);
     m_undoStack.clear();
     m_dirty = false;
     m_status = "Opened " + displayName;
@@ -409,6 +447,7 @@ bool LevelEditor::ExportLevel(const fs::path& filename) const
     level.width = m_width;
     level.height = m_height;
     level.tiles = m_tiles;
+    level.directions = m_directions;
 
     return SaveLevelFile(filename, level);
 }
@@ -631,6 +670,28 @@ void LevelEditor::DrawTopBar()
     {
         SaveLevel();
     }
+
+    const ImGuiIO& io = ImGui::GetIO();
+
+    if (!io.WantTextInput && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt)
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+        {
+            m_selectedDirection = Direction::RIGHT;
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+        {
+            m_selectedDirection = Direction::UP;
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+        {
+            m_selectedDirection = Direction::LEFT;
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+        {
+            m_selectedDirection = Direction::DOWN;
+        }
+    }
 }
 
 //! Draw the object palette window, allowing the user to select an object to
@@ -762,6 +823,40 @@ void LevelEditor::DrawSettings()
     ImGui::TextUnformatted("Selection");
     ImGui::Text("Held: %s",
                 NameFor(m_mode == PlacementMode::Eraser ? EMPTY : m_selected));
+    ImGui::Text("Direction: %s", DirectionName(m_selectedDirection));
+
+    constexpr float directionButtonWidth = 42.0f;
+    const float directionButtonOffset =
+        directionButtonWidth + ImGui::GetStyle().ItemSpacing.x;
+
+    ImGui::Indent(directionButtonOffset);
+
+    if (ImGui::Button("^##Direction", { directionButtonWidth, 0.0f }))
+    {
+        m_selectedDirection = Direction::UP;
+    }
+
+    ImGui::Unindent(directionButtonOffset);
+
+    if (ImGui::Button("<##Direction", { directionButtonWidth, 0.0f }))
+    {
+        m_selectedDirection = Direction::LEFT;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("v##Direction", { directionButtonWidth, 0.0f }))
+    {
+        m_selectedDirection = Direction::DOWN;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(">##Direction", { directionButtonWidth, 0.0f }))
+    {
+        m_selectedDirection = Direction::RIGHT;
+    }
+
     ImGui::Text("Layer: L%zu", m_currentLayer + 1);
     ImGui::Checkbox("Show grid", &m_showGrid);
 
@@ -1125,8 +1220,8 @@ void LevelEditor::DrawStatusBar()
 //! Draw the sprite for the given object type within the specified rectangle. If
 //! the object type is EMPTY or has no valid texture, a visible marker is drawn
 //! instead.
-void LevelEditor::DrawSpriteInRect(ObjectType type, const ImVec2& min,
-                                   const ImVec2& max) const
+void LevelEditor::DrawSpriteInRect(ObjectType type, Direction direction,
+                                   const ImVec2& min, const ImVec2& max) const
 {
     if (type == EMPTY)
     {
@@ -1161,8 +1256,49 @@ void LevelEditor::DrawSpriteInRect(ObjectType type, const ImVec2& min,
     const ImVec2 imageMin{ x, y };
     const ImVec2 imageMax{ x + size, y + size };
 
-    ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)texture->id,
-                                         imageMin, imageMax);
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    if (type != ObjectType::ICON_KEKE)
+    {
+        drawList->AddImage((ImTextureID)(intptr_t)texture->id, imageMin,
+                           imageMax);
+        return;
+    }
+
+    ImVec2 uv0{ 0.0f, 0.0f };
+    ImVec2 uv1{ 1.0f, 0.0f };
+    ImVec2 uv2{ 1.0f, 1.0f };
+    ImVec2 uv3{ 0.0f, 1.0f };
+
+    switch (direction)
+    {
+        case Direction::UP:
+            uv0 = { 1.0f, 0.0f };
+            uv1 = { 1.0f, 1.0f };
+            uv2 = { 0.0f, 1.0f };
+            uv3 = { 0.0f, 0.0f };
+            break;
+        case Direction::LEFT:
+            uv0 = { 1.0f, 1.0f };
+            uv1 = { 0.0f, 1.0f };
+            uv2 = { 0.0f, 0.0f };
+            uv3 = { 1.0f, 0.0f };
+            break;
+        case Direction::DOWN:
+            uv0 = { 0.0f, 1.0f };
+            uv1 = { 0.0f, 0.0f };
+            uv2 = { 1.0f, 0.0f };
+            uv3 = { 1.0f, 1.0f };
+            break;
+        case Direction::RIGHT:
+        case Direction::NONE:
+            break;
+    }
+
+    drawList->AddImageQuad(
+        (ImTextureID)(intptr_t)texture->id, imageMin,
+        { imageMax.x, imageMin.y }, imageMax, { imageMin.x, imageMax.y }, uv0,
+        uv1, uv2, uv3);
 }
 
 //! Draw a button for the given object type, using its sprite as the button
@@ -1195,7 +1331,7 @@ bool LevelEditor::DrawSpriteButton(ObjectType type, const ImVec2& size)
                           3.0f, 0, 2.0f);
     }
 
-    DrawSpriteInRect(type, min, max);
+    DrawSpriteInRect(type, Direction::RIGHT, min, max);
     return clicked;
 }
 
@@ -1209,6 +1345,9 @@ void LevelEditor::DrawTileButton(std::size_t x, std::size_t y, float tileSize)
 {
     const ObjectType visible = VisibleTile(x, y);
     const ObjectType layerValue = CurrentLayerTile(x, y);
+    const std::size_t visibleLayer = VisibleLayer(x, y);
+    const Direction visibleDirection =
+        m_directions.at(y * m_width + x)[visibleLayer];
 
     ImGui::InvisibleButton("tile", { tileSize, tileSize });
 
@@ -1231,13 +1370,14 @@ void LevelEditor::DrawTileButton(std::size_t x, std::size_t y, float tileSize)
                           0.0f, 0, 2.0f);
     }
 
-    DrawSpriteInRect(visible, min, max);
+    DrawSpriteInRect(visible, visibleDirection, min, max);
 
     if (ImGui::IsItemHovered())
     {
-        ImGui::SetTooltip("(%zu, %zu)\nVisible: %s\nL%zu: %s", x, y,
-                          NameFor(visible), m_currentLayer + 1,
-                          NameFor(layerValue));
+        ImGui::SetTooltip(
+            "(%zu, %zu)\nVisible: %s\nL%zu: %s\nDirection: %s", x, y,
+            NameFor(visible), m_currentLayer + 1, NameFor(layerValue),
+            DirectionName(CurrentLayerDirection(x, y)));
     }
 
     HandleTileInteraction(x, y);
@@ -1255,6 +1395,7 @@ void LevelEditor::HandleTileInteraction(std::size_t x, std::size_t y)
         if (picked != EMPTY)
         {
             m_selected = picked;
+            m_selectedDirection = CurrentLayerDirection(x, y);
             m_mode = PlacementMode::Freeform;
             m_status = "Picked " + std::string(NameFor(picked));
         }
@@ -1393,8 +1534,11 @@ void LevelEditor::ApplyFloodFill(std::size_t x, std::size_t y)
     const ObjectType target = CurrentLayerTile(x, y);
     const ObjectType replacement =
         m_mode == PlacementMode::Eraser ? EMPTY : m_selected;
+    const Direction targetDirection = CurrentLayerDirection(x, y);
+    const Direction replacementDirection =
+        replacement == EMPTY ? Direction::RIGHT : m_selectedDirection;
 
-    if (target == replacement)
+    if (target == replacement && targetDirection == replacementDirection)
     {
         return;
     }
@@ -1408,7 +1552,8 @@ void LevelEditor::ApplyFloodFill(std::size_t x, std::size_t y)
         const auto [cx, cy] = pending.front();
         pending.pop();
 
-        if (CurrentLayerTile(cx, cy) != target)
+        if (CurrentLayerTile(cx, cy) != target ||
+            CurrentLayerDirection(cx, cy) != targetDirection)
         {
             continue;
         }
@@ -1441,13 +1586,28 @@ void LevelEditor::ApplyFloodFill(std::size_t x, std::size_t y)
 //! current layer.
 void LevelEditor::SetTile(std::size_t x, std::size_t y, ObjectType type)
 {
-    ObjectType& tile = Tile(x, y)[m_currentLayer];
-
-    if (tile != type)
+    if (SetLevelLayerTile(Tile(x, y), m_directions.at(y * m_width + x),
+                          m_currentLayer, type, m_selectedDirection))
     {
-        tile = type;
         m_dirty = true;
     }
+}
+
+//! Get the topmost non-empty layer at the given coordinates. Empty cells use
+//! the current layer so their stored direction remains inspectable.
+std::size_t LevelEditor::VisibleLayer(std::size_t x, std::size_t y) const
+{
+    const LayerTile& tile = Tile(x, y);
+
+    for (std::size_t layer = LAYER_COUNT; layer > 0; --layer)
+    {
+        if (tile[layer - 1] != EMPTY)
+        {
+            return layer - 1;
+        }
+    }
+
+    return m_currentLayer;
 }
 
 //! Get the visible object type at the given coordinates, considering all layers
@@ -1455,26 +1615,20 @@ void LevelEditor::SetTile(std::size_t x, std::size_t y, ObjectType type)
 //! EMPTY.
 ObjectType LevelEditor::VisibleTile(std::size_t x, std::size_t y) const
 {
-    const LayerTile& tile = Tile(x, y);
-
-    // Higher layers visually cover lower ones once layered maps are enabled.
-    for (std::size_t layer = LAYER_COUNT; layer > 0; --layer)
-    {
-        const ObjectType type = tile[layer - 1];
-
-        if (type != EMPTY)
-        {
-            return type;
-        }
-    }
-
-    return EMPTY;
+    return Tile(x, y)[VisibleLayer(x, y)];
 }
 
 //! Get the object type at the given coordinates on the current layer.
 ObjectType LevelEditor::CurrentLayerTile(std::size_t x, std::size_t y) const
 {
     return Tile(x, y)[m_currentLayer];
+}
+
+//! Get the stored direction at the given coordinates on the current layer.
+Direction LevelEditor::CurrentLayerDirection(std::size_t x,
+                                             std::size_t y) const
+{
+    return m_directions.at(y * m_width + x)[m_currentLayer];
 }
 
 //! Get a reference to the tile at the given coordinates, allowing modification
@@ -1497,7 +1651,7 @@ const LevelEditor::LayerTile& LevelEditor::Tile(std::size_t x,
 //! memory usage while retaining enough history for normal editing.
 void LevelEditor::PushUndo()
 {
-    m_undoStack.emplace_back(m_tiles);
+    m_undoStack.emplace_back(m_tiles, m_directions);
 
     // Bound memory use while retaining enough history for normal editing.
     if (m_undoStack.size() > 32)
@@ -1515,7 +1669,8 @@ void LevelEditor::Undo()
         return;
     }
 
-    m_tiles = m_undoStack.back();
+    m_tiles = m_undoStack.back().first;
+    m_directions = m_undoStack.back().second;
     m_undoStack.pop_back();
     m_dirty = true;
     m_status = "Undo";
