@@ -169,7 +169,7 @@ TEST_CASE("Editor - Affection sprite assets")
 
     const fs::path root = (fs::path(MAPS_DIR) / "../..").lexically_normal();
 
-    for (const fs::path& path : {
+    for (const char* path : {
              "Extensions/BabaGUI/sprites/text/KEKE.gif",
              "Extensions/BabaGUI/sprites/text/LOVE.gif",
              "Extensions/BabaGUI/sprites/text/ALGAE.gif",
