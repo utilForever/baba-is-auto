@@ -37,6 +37,7 @@ class Rule
     //! \param obj1 A first object.
     //! \param obj2 A second object.
     //! \param obj3 A third object.
+    //! \param ruleConditions Optional conditions restricting subject instances.
     Rule(Object obj1, Object obj2, Object obj3,
          std::vector<RuleCondition> ruleConditions = {});
 
