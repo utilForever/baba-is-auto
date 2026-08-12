@@ -15,19 +15,39 @@ def test_keke_rotation_matches_facing_direction():
     assert rotation_for_direction(pyBaba.Direction.DOWN) == -90
 
 
+def test_directionless_keke_uses_unrotated_sprite():
+    assert rotation_for_direction(pyBaba.Direction.NONE) == 0
+
+
 def test_render_input_preserves_each_keke_direction():
     game_map = pyBaba.Map(1, 1)
-    game_map.AddObject(
-        0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.UP
-    )
-    game_map.AddObject(
-        0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.DOWN
-    )
+    game_map.AddObject(0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.UP)
+    game_map.AddObject(0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.DOWN)
 
     rendered = list(oriented_instances(game_map.At(0, 0)))
     assert [(instance.type, angle) for instance, angle in rendered] == [
         (pyBaba.ObjectType.ICON_KEKE, 90),
         (pyBaba.ObjectType.ICON_KEKE, -90),
+    ]
+
+
+def test_render_input_preserves_directional_lock_markers():
+    game_map = pyBaba.Map(1, 1)
+
+    for marker in (
+        pyBaba.ObjectType.LOCKED_UP,
+        pyBaba.ObjectType.LOCKED_DOWN,
+        pyBaba.ObjectType.LOCKED_LEFT,
+        pyBaba.ObjectType.LOCKED_RIGHT,
+    ):
+        game_map.AddObject(0, 0, marker)
+
+    rendered = list(oriented_instances(game_map.At(0, 0)))
+    assert [(instance.type, angle) for instance, angle in rendered] == [
+        (pyBaba.ObjectType.LOCKED_UP, 0),
+        (pyBaba.ObjectType.LOCKED_DOWN, 0),
+        (pyBaba.ObjectType.LOCKED_LEFT, 0),
+        (pyBaba.ObjectType.LOCKED_RIGHT, 0),
     ]
 
 
@@ -88,9 +108,7 @@ def test_affection_sprite_palettes_keep_colored_pixels_opaque():
         ]
         assert len(controls) == 3
         assert all(data[index + 3] & 1 for index in controls)
-        assert all(
-            data[index + 6] == transparent_index for index in controls
-        )
+        assert all(data[index + 6] == transparent_index for index in controls)
 
         for start in palettes:
             assert tuple(data[start : start + 3]) == color

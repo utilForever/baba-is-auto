@@ -1,7 +1,7 @@
 import pyBaba
 
-
 _ROTATIONS = {
+    pyBaba.Direction.NONE: 0,
     pyBaba.Direction.RIGHT: 0,
     pyBaba.Direction.UP: 90,
     pyBaba.Direction.LEFT: 180,
