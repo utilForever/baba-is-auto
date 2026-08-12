@@ -286,7 +286,7 @@ void Game::ProcessPlayerMove(Direction dir)
 
             if (!ids.empty())
             {
-                players.push_back({ { x, y }, std::move(ids) });
+                players.push_back({ { x, y }, ids });
             }
         }
     }
@@ -658,8 +658,8 @@ bool Game::MatchesConditionAt(const ObjectInstance& instance,
     {
         std::vector<const ObjectInstance*> candidates;
 
-        const auto AddCandidates = [this, &candidates, &instance, x, y](
-                                       int candidateX, int candidateY) {
+        const auto AddCandidates = [this, &candidates, &instance, _x = x,
+                                    _y = y](int candidateX, int candidateY) {
             if (candidateX < 0 || candidateY < 0 ||
                 candidateX >= static_cast<int>(m_map.GetWidth()) ||
                 candidateY >= static_cast<int>(m_map.GetHeight()))
@@ -674,8 +674,8 @@ bool Game::MatchesConditionAt(const ObjectInstance& instance,
                      .GetInstances())
             {
                 if (candidate.id != instance.id ||
-                    candidateX != static_cast<int>(x) ||
-                    candidateY != static_cast<int>(y))
+                    candidateX != static_cast<int>(_x) ||
+                    candidateY != static_cast<int>(_y))
                 {
                     candidates.emplace_back(&candidate);
                 }
