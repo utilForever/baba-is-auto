@@ -30,7 +30,7 @@ TEST_CASE("Editor - Level File Round Trip")
     fs::remove(predictableTemporary, error);
 
     LevelFile source;
-    REQUIRE(LoadLevelFile(MAPS_DIR "editor_smoke.txt", source));
+    CHECK(LoadLevelFile(MAPS_DIR "editor_smoke.txt", source));
     CHECK(source.tiles[0][0] == ObjectType::BABA);
     CHECK(source.tiles[0][1] == ObjectType::ICON_EMPTY);
     CHECK(source.tiles[0][2] == ObjectType::ICON_EMPTY);
@@ -41,7 +41,7 @@ TEST_CASE("Editor - Level File Round Trip")
         reserved << "reserved";
     }
 
-    REQUIRE(SaveLevelFile(path, source));
+    CHECK(SaveLevelFile(path, source));
 
     {
         std::ifstream reserved(predictableTemporary);
@@ -56,10 +56,10 @@ TEST_CASE("Editor - Level File Round Trip")
                         ObjectType::ICON_EMPTY };
     source.directions[0][0] = Direction::UP;
     source.directions[1][1] = Direction::LEFT;
-    REQUIRE(SaveLevelFile(path, source));
+    CHECK(SaveLevelFile(path, source));
 
     LevelFile loaded;
-    REQUIRE(LoadLevelFile(path, loaded));
+    CHECK(LoadLevelFile(path, loaded));
     CHECK(loaded.width == source.width);
     CHECK(loaded.height == source.height);
     CHECK(loaded.tiles == source.tiles);
@@ -141,7 +141,7 @@ TEST_CASE("Editor - Affection direction round trip")
     namespace fs = std::filesystem;
 
     LevelFile affection;
-    REQUIRE(LoadLevelFile(MAPS_DIR "affection.txt", affection));
+    CHECK(LoadLevelFile(MAPS_DIR "affection.txt", affection));
     CHECK(affection.width == 24);
     CHECK(affection.height == 14);
     CHECK(affection.tiles[3 * affection.width + 6][0] == ObjectType::ICON_KEKE);
@@ -153,10 +153,10 @@ TEST_CASE("Editor - Affection direction round trip")
     const fs::path path =
         fs::current_path() / "baba-is-auto-affection-round-trip.txt";
     std::error_code error;
-    REQUIRE(SaveLevelFile(path, affection));
+    CHECK(SaveLevelFile(path, affection));
 
     LevelFile loaded;
-    REQUIRE(LoadLevelFile(path, loaded));
+    CHECK(LoadLevelFile(path, loaded));
     CHECK(loaded.tiles == affection.tiles);
     CHECK(loaded.directions == affection.directions);
 
