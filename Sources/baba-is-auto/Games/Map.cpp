@@ -163,8 +163,18 @@ void Map::Load(std::string_view filename)
 
         if (type != ObjectType::ICON_EMPTY)
         {
-            tileInstances[i % tileCount].push_back(
-                { nextObjectID++, type, *direction });
+            tileInstances[i % tileCount].push_back({ 0, type, *direction });
+        }
+    }
+
+    for (std::size_t x = 0; x < width; ++x)
+    {
+        for (std::size_t y = 0; y < height; ++y)
+        {
+            for (ObjectInstance& instance : tileInstances[y * width + x])
+            {
+                instance.id = nextObjectID++;
+            }
         }
     }
 
@@ -174,14 +184,17 @@ void Map::Load(std::string_view filename)
     for (auto& instances : tileInstances)
     {
         Object object;
+
         for (const ObjectInstance& instance : instances)
         {
             object.Add(instance);
         }
+
         if (instances.empty())
         {
             object.Add(ObjectType::ICON_EMPTY);
         }
+
         objects.emplace_back(std::move(object));
     }
 
@@ -206,6 +219,17 @@ void Map::AddObject(std::size_t x, std::size_t y, ObjectType type,
         throw std::invalid_argument("Object direction cannot be NONE");
     }
 
+    if (m_mayHaveMissingObjectIDs)
+    {
+        AssignMissingObjectIDs();
+    }
+
+    AddGeneratedObject(x, y, type, direction);
+}
+
+void Map::AddGeneratedObject(std::size_t x, std::size_t y, ObjectType type,
+                             Direction direction)
+{
     const ObjectID id = type == ObjectType::ICON_EMPTY ? 0 : m_nextObjectID++;
     m_objects.at(y * m_width + x).Add(type, direction, id);
 }
@@ -273,6 +297,11 @@ bool Map::MoveObject(ObjectID id, std::size_t x, std::size_t y)
 
 std::optional<Position> Map::GetPosition(ObjectID id) const
 {
+    if (id == 0)
+    {
+        return std::nullopt;
+    }
+
     for (std::size_t y = 0; y < m_height; ++y)
     {
         for (std::size_t x = 0; x < m_width; ++x)
@@ -328,6 +357,7 @@ std::optional<Direction> Map::GetDirection(ObjectID id) const
 
 Object& Map::At(std::size_t x, std::size_t y)
 {
+    m_mayHaveMissingObjectIDs = true;
     return m_objects.at(y * m_width + x);
 }
 

@@ -7,6 +7,7 @@
 #include <baba-is-auto/Games/Game.hpp>
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <optional>
 #include <utility>
@@ -41,15 +42,6 @@ std::pair<int, int> MovedPosition(std::size_t x, std::size_t y, Direction dir)
     return { movedX, movedY };
 }
 
-bool HasIconProperty(RuleManager& rules, const std::vector<ObjectType>& types,
-                     ObjectType property)
-{
-    return std::any_of(
-        types.begin(), types.end(), [&rules, &property](ObjectType type) {
-            return !IsTextType(type) && rules.HasProperty({ type }, property);
-        });
-}
-
 constexpr bool IsRulePredicate(ObjectType type)
 {
     return IsNounType(type) || IsPropertyType(type);
@@ -81,6 +73,15 @@ constexpr bool IsDirectionType(ObjectType type)
            type == ObjectType::LEFT || type == ObjectType::RIGHT;
 }
 
+constexpr Direction ToDirection(ObjectType type)
+{
+    return type == ObjectType::UP      ? Direction::UP
+           : type == ObjectType::DOWN  ? Direction::DOWN
+           : type == ObjectType::LEFT  ? Direction::LEFT
+           : type == ObjectType::RIGHT ? Direction::RIGHT
+                                       : Direction::NONE;
+}
+
 constexpr Direction Opposite(Direction direction)
 {
     switch (direction)
@@ -98,6 +99,14 @@ constexpr Direction Opposite(Direction direction)
     }
 
     return Direction::NONE;
+}
+
+constexpr std::size_t DirectionIndex(Direction direction)
+{
+    return direction == Direction::UP      ? 0
+           : direction == Direction::RIGHT ? 1
+           : direction == Direction::DOWN  ? 2
+                                           : 3;
 }
 
 constexpr ObjectType LockedProperty(Direction direction)
@@ -183,6 +192,7 @@ Game::Game(std::string_view filename)
 
     UpdateAllNouns();
     ParseRules();
+    ProcessDirectionProperties();
 
     m_playState = PlayState::PLAYING;
 }
@@ -194,8 +204,14 @@ void Game::Reset()
 
     UpdateAllNouns();
     ParseRules();
+    ProcessDirectionProperties();
 
     m_playState = PlayState::PLAYING;
+}
+
+void Game::SetRandomSeed(std::uint32_t seed)
+{
+    m_randomEngine.seed(seed);
 }
 
 Map& Game::GetMap()
@@ -233,12 +249,14 @@ void Game::MovePlayer(Direction dir)
     }
 
     ParseRules();
+    ProcessDirectionProperties();
     ProcessMoveProperty();
     ParseRules();
     ProcessTransformations();
     ParseRules();
 
     ProcessSink();
+    ProcessWeak();
     ProcessHotMelt();
     ProcessDefeat();
 
@@ -248,60 +266,92 @@ void Game::MovePlayer(Direction dir)
 
 void Game::ProcessPlayerMove(Direction dir)
 {
-    std::vector<Position> positions;
+    using PlayerStack = std::pair<Position, std::vector<ObjectID>>;
+
+    std::vector<PlayerStack> players;
 
     for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
         for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            const auto hasPlayer =
-                std::any_of(m_playerIcons.begin(), m_playerIcons.end(),
-                            [this, x, y](ObjectType type) {
-                                return m_map.At(x, y).HasType(type);
-                            });
+            std::vector<ObjectID> ids;
 
-            if (hasPlayer)
+            for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
             {
-                positions.emplace_back(x, y);
+                if (HasProperty(instance, ObjectType::YOU))
+                {
+                    ids.emplace_back(instance.id);
+                }
+            }
+
+            if (!ids.empty())
+            {
+                players.push_back({ { x, y }, std::move(ids) });
             }
         }
     }
 
-    std::sort(positions.begin(), positions.end(),
-              [dir](const Position& lhs, const Position& rhs) {
+    std::sort(players.begin(), players.end(),
+              [dir](const PlayerStack& lhs, const PlayerStack& rhs) {
+                  const Position& lhsPosition = lhs.first;
+                  const Position& rhsPosition = rhs.first;
+
                   if (dir == Direction::LEFT)
                   {
-                      return lhs.first < rhs.first;
+                      return lhsPosition.first < rhsPosition.first;
                   }
+
                   if (dir == Direction::RIGHT)
                   {
-                      return lhs.first > rhs.first;
+                      return lhsPosition.first > rhsPosition.first;
                   }
+
                   if (dir == Direction::UP)
                   {
-                      return lhs.second < rhs.second;
+                      return lhsPosition.second < rhsPosition.second;
                   }
 
-                  return lhs.second > rhs.second;
+                  return lhsPosition.second > rhsPosition.second;
               });
 
-    for (const auto& [x, y] : positions)
+    for (const auto& [position, playerIDs] : players)
     {
-        std::vector<ObjectID> playerIDs;
+        std::vector<ObjectID> movableIDs;
 
-        for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
+        for (const ObjectID id : playerIDs)
         {
-            if (std::find(m_playerIcons.begin(), m_playerIcons.end(),
-                          instance.type) != m_playerIcons.end())
+            m_map.SetDirection(id, dir);
+
+            const ObjectInstance* instance = m_map.GetInstance(id);
+
+            if (instance != nullptr &&
+                !HasProperty(*instance, LockedProperty(dir)))
             {
-                playerIDs.emplace_back(instance.id);
-                m_map.SetDirection(instance.id, dir);
+                movableIDs.emplace_back(id);
             }
         }
 
-        if (!playerIDs.empty() && CanMove(x, y, dir))
+        if (movableIDs.empty())
         {
-            ProcessMove(x, y, dir, playerIDs);
+            continue;
+        }
+
+        if (CanMove(position.first, position.second, dir))
+        {
+            ProcessMove(position.first, position.second, dir, movableIDs);
+        }
+        else
+        {
+            for (const ObjectID id : movableIDs)
+            {
+                const ObjectInstance* instance = m_map.GetInstance(id);
+
+                if (instance != nullptr &&
+                    HasProperty(*instance, ObjectType::WEAK))
+                {
+                    m_map.RemoveObject(id);
+                }
+            }
         }
     }
 }
@@ -332,22 +382,18 @@ void Game::ParseRules()
 
     m_playerIcons.clear();
 
-    for (const Rule& rule : m_ruleManager.GetRules(ObjectType::YOU))
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
-        if (!rule.conditions.empty())
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            continue;
-        }
-
-        for (const ObjectType type : std::get<0>(rule.objects).GetTypes())
-        {
-            const ObjectType icon = ConvertTextToIcon(type);
-
-            if (IsNounType(type) &&
-                std::find(m_playerIcons.begin(), m_playerIcons.end(), icon) ==
-                    m_playerIcons.end())
+            for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
             {
-                m_playerIcons.emplace_back(icon);
+                if (HasProperty(instance, ObjectType::YOU) &&
+                    std::find(m_playerIcons.begin(), m_playerIcons.end(),
+                              instance.type) == m_playerIcons.end())
+                {
+                    m_playerIcons.emplace_back(instance.type);
+                }
             }
         }
     }
@@ -535,6 +581,17 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
 bool Game::HasProperty(const ObjectInstance& instance,
                        ObjectType property) const
 {
+    const auto position = m_map.GetPosition(instance.id);
+    return position && HasPropertyAtPosition(instance, *position, property);
+}
+
+bool Game::HasPropertyAtPosition(const ObjectInstance& instance,
+                                 const Position& position,
+                                 ObjectType property) const
+{
+    const ObjectInstance atPosition =
+        instance.type == ObjectType::ICON_EMPTY ? EmptyAt(position) : instance;
+
     for (const Rule& rule : m_ruleManager.GetRules(property))
     {
         if (!std::get<2>(rule.objects).HasType(property))
@@ -544,8 +601,8 @@ bool Game::HasProperty(const ObjectInstance& instance,
 
         for (const ObjectType subject : std::get<0>(rule.objects).GetTypes())
         {
-            if (SubjectMatches(subject, instance.type) &&
-                MatchesConditions(instance, rule.conditions))
+            if (SubjectMatches(subject, atPosition.type) &&
+                MatchesConditionsAt(atPosition, position, rule.conditions))
             {
                 return true;
             }
@@ -555,26 +612,42 @@ bool Game::HasProperty(const ObjectInstance& instance,
     return false;
 }
 
+bool Game::HasPropertyAt(std::size_t x, std::size_t y,
+                         ObjectType property) const
+{
+    const Position position{ x, y };
+    const auto& instances = m_map.At(x, y).GetInstances();
+
+    return std::any_of(
+        instances.begin(), instances.end(),
+        [this, &position, property](const ObjectInstance& instance) {
+            return HasPropertyAtPosition(instance, position, property);
+        });
+}
+
 bool Game::MatchesConditions(const ObjectInstance& instance,
                              const std::vector<RuleCondition>& conditions) const
 {
-    return std::all_of(conditions.begin(), conditions.end(),
-                       [this, &instance](const RuleCondition& condition) {
-                           return MatchesCondition(instance, condition);
-                       });
+    const auto position = m_map.GetPosition(instance.id);
+    return position && MatchesConditionsAt(instance, *position, conditions);
 }
 
-bool Game::MatchesCondition(const ObjectInstance& instance,
-                            const RuleCondition& condition) const
+bool Game::MatchesConditionsAt(
+    const ObjectInstance& instance, const Position& position,
+    const std::vector<RuleCondition>& conditions) const
 {
-    const auto position = m_map.GetPosition(instance.id);
+    return std::all_of(
+        conditions.begin(), conditions.end(),
+        [this, &instance, &position](const RuleCondition& condition) {
+            return MatchesConditionAt(instance, position, condition);
+        });
+}
 
-    if (!position)
-    {
-        return false;
-    }
-
-    const auto [x, y] = *position;
+bool Game::MatchesConditionAt(const ObjectInstance& instance,
+                              const Position& position,
+                              const RuleCondition& condition) const
+{
+    const auto [x, y] = position;
     bool matches;
 
     if (condition.op == ObjectType::LONELY)
@@ -585,7 +658,7 @@ bool Game::MatchesCondition(const ObjectInstance& instance,
     {
         std::vector<const ObjectInstance*> candidates;
 
-        const auto AddCandidates = [this, &candidates, &instance](
+        const auto AddCandidates = [this, &candidates, &instance, x, y](
                                        int candidateX, int candidateY) {
             if (candidateX < 0 || candidateY < 0 ||
                 candidateX >= static_cast<int>(m_map.GetWidth()) ||
@@ -600,7 +673,9 @@ bool Game::MatchesCondition(const ObjectInstance& instance,
                          static_cast<std::size_t>(candidateY))
                      .GetInstances())
             {
-                if (candidate.id != instance.id)
+                if (candidate.id != instance.id ||
+                    candidateX != static_cast<int>(x) ||
+                    candidateY != static_cast<int>(y))
                 {
                     candidates.emplace_back(&candidate);
                 }
@@ -637,8 +712,6 @@ bool Game::MatchesCondition(const ObjectInstance& instance,
             {
                 std::copy_if(m_allNouns.begin(), m_allNouns.end(),
                              std::back_inserter(targets), IsSpawnableAllNoun);
-                targets.emplace_back(ObjectType::TEXT);
-                targets.emplace_back(ObjectType::EMPTY);
             }
             else
             {
@@ -654,12 +727,7 @@ bool Game::MatchesCondition(const ObjectInstance& instance,
                 if (target == ObjectType::UP || target == ObjectType::DOWN ||
                     target == ObjectType::LEFT || target == ObjectType::RIGHT)
                 {
-                    const Direction direction =
-                        target == ObjectType::UP     ? Direction::UP
-                        : target == ObjectType::DOWN ? Direction::DOWN
-                        : target == ObjectType::LEFT ? Direction::LEFT
-                                                     : Direction::RIGHT;
-                    return instance.direction == direction;
+                    return instance.direction == ToDirection(target);
                 }
 
                 const auto found = std::find_if(
@@ -684,51 +752,218 @@ bool Game::MatchesCondition(const ObjectInstance& instance,
     return condition.negated ? !matches : matches;
 }
 
+ObjectInstance Game::EmptyAt(const Position& position) const
+{
+    ObjectInstance empty{ 0, ObjectType::ICON_EMPTY, Direction::NONE };
+
+    for (const Rule& rule : m_ruleManager.GetRules(ObjectType::IS))
+    {
+        const auto subjects = std::get<0>(rule.objects).GetTypes();
+
+        if (!std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+            !std::any_of(subjects.begin(), subjects.end(),
+                         [&empty](ObjectType subject) {
+                             return SubjectMatches(subject, empty.type);
+                         }) ||
+            !MatchesConditionsAt(empty, position, rule.conditions))
+        {
+            continue;
+        }
+
+        for (const ObjectType predicate : std::get<2>(rule.objects).GetTypes())
+        {
+            if (IsDirectionType(predicate))
+            {
+                empty.direction = ToDirection(predicate);
+            }
+        }
+    }
+
+    return empty;
+}
+
+void Game::ProcessDirectionProperties()
+{
+    constexpr std::array directions = { Direction::UP, Direction::RIGHT,
+                                        Direction::DOWN, Direction::LEFT };
+    const auto rules = m_ruleManager.GetRules(ObjectType::IS);
+    std::vector<ObjectID> ids;
+
+    for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+    {
+        for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
+        {
+            for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
+            {
+                if (instance.type != ObjectType::ICON_EMPTY)
+                {
+                    ids.emplace_back(instance.id);
+                }
+            }
+        }
+    }
+
+    for (const ObjectID id : ids)
+    {
+        ObjectInstance* instance = m_map.GetInstance(id);
+
+        if (instance == nullptr)
+        {
+            continue;
+        }
+
+        std::array<std::size_t, 4> counts{};
+
+        for (const Rule& rule : rules)
+        {
+            const auto subjects = std::get<0>(rule.objects).GetTypes();
+
+            if (!std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+                !std::any_of(subjects.begin(), subjects.end(),
+                             [instance](ObjectType subject) {
+                                 return SubjectMatches(subject, instance->type);
+                             }) ||
+                !MatchesConditions(*instance, rule.conditions))
+            {
+                continue;
+            }
+
+            for (const ObjectType predicate :
+                 std::get<2>(rule.objects).GetTypes())
+            {
+                if (IsDirectionType(predicate))
+                {
+                    ++counts[DirectionIndex(ToDirection(predicate))];
+                }
+            }
+        }
+
+        const std::size_t highest =
+            *std::max_element(counts.begin(), counts.end());
+
+        if (highest == 0)
+        {
+            continue;
+        }
+
+        const std::size_t current = instance->direction == Direction::NONE
+                                        ? directions.size() - 1
+                                        : DirectionIndex(instance->direction);
+
+        for (std::size_t offset = 1; offset <= directions.size(); ++offset)
+        {
+            const std::size_t index = (current + offset) % directions.size();
+
+            if (counts[index] == highest)
+            {
+                instance->direction = directions[index];
+                break;
+            }
+        }
+    }
+}
+
 void Game::ProcessMoveProperty()
 {
     struct MoveState
     {
-        ObjectID id;
-        std::size_t attempts;
+        ObjectID id = 0;
+        Position position{};
+        Direction direction = Direction::NONE;
+        std::size_t attempts = 0;
         bool turned = false;
+        bool active = true;
     };
 
     const auto rules = m_ruleManager.GetRules(ObjectType::MOVE);
     std::vector<MoveState> moving;
     std::size_t rounds = 0;
 
-    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
+    for (const Rule& rule : rules)
     {
+        if (!std::get<2>(rule.objects).HasType(ObjectType::MOVE))
+        {
+            continue;
+        }
+
+        const auto subjects = std::get<0>(rule.objects).GetTypes();
+        std::vector<ObjectID> matching;
+
         for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
+            for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
             {
-                std::size_t attempts = 0;
-
-                for (const Rule& rule : rules)
+                for (const ObjectInstance& instance :
+                     m_map.At(x, y).GetInstances())
                 {
-                    if (!std::get<2>(rule.objects).HasType(ObjectType::MOVE) ||
-                        !MatchesConditions(instance, rule.conditions))
+                    if (instance.type == ObjectType::ICON_EMPTY ||
+                        !MatchesConditions(instance, rule.conditions) ||
+                        !std::any_of(subjects.begin(), subjects.end(),
+                                     [&instance](ObjectType subject) {
+                                         return SubjectMatches(subject,
+                                                               instance.type);
+                                     }))
                     {
                         continue;
                     }
 
-                    const auto subjects = std::get<0>(rule.objects).GetTypes();
-
-                    if (std::any_of(subjects.begin(), subjects.end(),
-                                    [&instance](ObjectType subject) {
-                                        return SubjectMatches(subject,
-                                                              instance.type);
-                                    }))
-                    {
-                        ++attempts;
-                    }
+                    matching.emplace_back(instance.id);
                 }
+            }
+        }
 
-                if (attempts != 0)
+        std::sort(matching.begin(), matching.end());
+
+        for (const ObjectID id : matching)
+        {
+            auto found = std::find_if(
+                moving.begin(), moving.end(),
+                [id](const MoveState& state) { return state.id == id; });
+
+            if (found == moving.end())
+            {
+                moving.push_back({ id });
+                found = std::prev(moving.end());
+            }
+
+            rounds = std::max(rounds, ++found->attempts);
+        }
+
+        if (std::any_of(
+                subjects.begin(), subjects.end(), [](ObjectType subject) {
+                    return SubjectMatches(subject, ObjectType::ICON_EMPTY);
+                }))
+        {
+            for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+            {
+                for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
                 {
-                    moving.push_back({ instance.id, attempts });
-                    rounds = std::max(rounds, attempts);
+                    if (!m_map.At(x, y).HasType(ObjectType::ICON_EMPTY))
+                    {
+                        continue;
+                    }
+
+                    const Position position{ x, y };
+                    const ObjectInstance empty = EmptyAt(position);
+
+                    if (!MatchesConditionsAt(empty, position, rule.conditions))
+                    {
+                        continue;
+                    }
+
+                    auto found = std::find_if(
+                        moving.begin(), moving.end(),
+                        [&position](const MoveState& state) {
+                            return state.id == 0 && state.position == position;
+                        });
+
+                    if (found == moving.end())
+                    {
+                        moving.push_back({ 0, position, empty.direction });
+                        found = std::prev(moving.end());
+                    }
+
+                    rounds = std::max(rounds, ++found->attempts);
                 }
             }
         }
@@ -736,10 +971,80 @@ void Game::ProcessMoveProperty()
 
     for (std::size_t round = 0; round < rounds; ++round)
     {
-        for (MoveState& state : moving)
+        for (std::size_t index = 0; index < moving.size(); ++index)
         {
-            if (round >= state.attempts)
+            MoveState& state = moving[index];
+
+            if (!state.active || round >= state.attempts)
             {
+                continue;
+            }
+
+            if (state.id == 0)
+            {
+                if (!m_map.At(state.position.first, state.position.second)
+                         .HasType(ObjectType::ICON_EMPTY))
+                {
+                    continue;
+                }
+
+                if (state.direction == Direction::NONE)
+                {
+                    state.direction = RandomDirection();
+                }
+
+                const Direction direction = state.direction;
+
+                if (!state.turned &&
+                    HasPropertyAt(state.position.first, state.position.second,
+                                  LockedProperty(direction)))
+                {
+                    continue;
+                }
+
+                if (CanMove(state.position.first, state.position.second,
+                            direction))
+                {
+                    ProcessMove(state.position.first, state.position.second,
+                                direction, {});
+
+                    state.position = MovedPosition(
+                        state.position.first, state.position.second, direction);
+
+                    for (std::size_t duplicateIndex = 0;
+                         duplicateIndex < moving.size(); ++duplicateIndex)
+                    {
+                        MoveState& duplicate = moving[duplicateIndex];
+
+                        if (duplicateIndex == index || !duplicate.active ||
+                            duplicate.id != 0 ||
+                            duplicate.position != state.position)
+                        {
+                            continue;
+                        }
+
+                        if (duplicateIndex < index)
+                        {
+                            duplicate.attempts =
+                                std::max(duplicate.attempts, state.attempts);
+                            state.active = false;
+                        }
+                        else
+                        {
+                            state.attempts =
+                                std::max(state.attempts, duplicate.attempts);
+                            duplicate.active = false;
+                        }
+
+                        break;
+                    }
+                }
+                else if (!state.turned)
+                {
+                    state.direction = Opposite(direction);
+                    state.turned = true;
+                }
+
                 continue;
             }
 
@@ -788,13 +1093,17 @@ void Game::ProcessTransformations()
     {
         ObjectType subject;
         ObjectType predicate;
+        std::vector<RuleCondition> conditions;
     };
 
     struct Result
     {
         bool matched = false;
+        bool transforms = false;
+        bool expandsAll = false;
         bool protectedByIdentity = false;
         std::vector<ObjectType> targets;
+        std::vector<ObjectType> allTargets;
     };
 
     UpdateAllNouns();
@@ -803,8 +1112,7 @@ void Game::ProcessTransformations()
 
     for (const Rule& rule : m_ruleManager.GetRules(ObjectType::IS))
     {
-        if (!rule.conditions.empty() ||
-            !std::get<1>(rule.objects).HasType(ObjectType::IS))
+        if (!std::get<1>(rule.objects).HasType(ObjectType::IS))
         {
             continue;
         }
@@ -824,17 +1132,31 @@ void Game::ProcessTransformations()
                     continue;
                 }
 
-                transformations.push_back({ subject, predicate });
+                transformations.push_back(
+                    { subject, predicate, rule.conditions });
             }
         }
     }
 
-    const auto Resolve = [this, &transformations](ObjectType source) {
+    const auto Resolve = [this, &transformations](
+                             const ObjectInstance& source,
+                             const Position* position = nullptr) {
         Result result;
 
         for (const Transformation& transformation : transformations)
         {
-            if (!SubjectMatches(transformation.subject, source))
+            if (!SubjectMatches(transformation.subject, source.type))
+            {
+                continue;
+            }
+
+            const bool matches =
+                position == nullptr
+                    ? MatchesConditions(source, transformation.conditions)
+                    : MatchesConditionsAt(source, *position,
+                                          transformation.conditions);
+
+            if (!matches)
             {
                 continue;
             }
@@ -843,24 +1165,29 @@ void Game::ProcessTransformations()
 
             if (transformation.predicate == ObjectType::ALL)
             {
+                result.expandsAll = true;
+
                 for (const ObjectType noun : m_allNouns)
                 {
                     if (IsSpawnableAllNoun(noun))
                     {
-                        result.targets.emplace_back(ConvertTextToIcon(noun));
+                        result.allTargets.emplace_back(ConvertTextToIcon(noun));
                     }
                 }
 
                 continue;
             }
 
+            result.transforms = true;
+
             const ObjectType target =
                 transformation.predicate == ObjectType::TEXT
-                    ? (IsTextType(source) ? source : ConvertIconToText(source))
+                    ? (IsTextType(source.type) ? source.type
+                                               : ConvertIconToText(source.type))
                     : ConvertTextToIcon(transformation.predicate);
 
             result.targets.emplace_back(target);
-            result.protectedByIdentity |= target == source;
+            result.protectedByIdentity |= target == source.type;
         }
 
         return result;
@@ -888,11 +1215,66 @@ void Game::ProcessTransformations()
         }
     }
 
+    std::vector<std::pair<ObjectInstance, Result>> pending;
+    pending.reserve(instances.size());
+
     for (const ObjectInstance& snapshot : instances)
     {
-        const Result result = Resolve(snapshot.type);
+        pending.emplace_back(snapshot, Resolve(snapshot));
+    }
 
+    struct EmptyResult
+    {
+        Position position;
+        Direction direction;
+        Result result;
+    };
+
+    std::vector<EmptyResult> pendingEmpty;
+    pendingEmpty.reserve(emptyTiles.size());
+
+    for (const Position& position : emptyTiles)
+    {
+        const ObjectInstance empty = EmptyAt(position);
+        pendingEmpty.push_back(
+            { position, empty.direction, Resolve(empty, &position) });
+    }
+
+    for (const auto& [snapshot, result] : pending)
+    {
         if (!result.matched || result.protectedByIdentity)
+        {
+            continue;
+        }
+
+        const auto position = m_map.GetPosition(snapshot.id);
+
+        if (!position)
+        {
+            continue;
+        }
+
+        bool spawned = false;
+
+        for (const ObjectType target : result.allTargets)
+        {
+            if (!m_map.At(position->first, position->second).HasType(target))
+            {
+                m_map.AddGeneratedObject(position->first, position->second,
+                                         target, snapshot.direction);
+                spawned = true;
+            }
+        }
+
+        if (result.expandsAll && spawned &&
+            (IsTextType(snapshot.type) ||
+             snapshot.type == ObjectType::ICON_LEVEL))
+        {
+            m_map.RemoveObject(snapshot.id);
+            continue;
+        }
+
+        if (!result.transforms)
         {
             continue;
         }
@@ -910,9 +1292,8 @@ void Game::ProcessTransformations()
         }
 
         ObjectInstance* instance = m_map.GetInstance(snapshot.id);
-        const auto position = m_map.GetPosition(snapshot.id);
 
-        if (instance == nullptr || !position)
+        if (instance == nullptr)
         {
             continue;
         }
@@ -922,25 +1303,41 @@ void Game::ProcessTransformations()
         for (auto target = std::next(targets.begin()); target != targets.end();
              ++target)
         {
-            m_map.AddObject(position->first, position->second, *target,
-                            snapshot.direction);
+            m_map.AddGeneratedObject(position->first, position->second, *target,
+                                     snapshot.direction);
         }
     }
 
-    const Result emptyResult = Resolve(ObjectType::ICON_EMPTY);
-
-    if (!emptyResult.matched || emptyResult.protectedByIdentity)
+    for (const auto& [position, direction, result] : pendingEmpty)
     {
-        return;
-    }
+        if (!result.matched || result.protectedByIdentity)
+        {
+            continue;
+        }
 
-    for (const auto& [x, y] : emptyTiles)
-    {
-        for (const ObjectType target : emptyResult.targets)
+        for (const ObjectType target : result.allTargets)
+        {
+            if (!m_map.At(position.first, position.second).HasType(target))
+            {
+                m_map.AddGeneratedObject(position.first, position.second,
+                                         target, Direction::NONE);
+            }
+        }
+
+        for (const ObjectType target : result.targets)
         {
             if (target != ObjectType::ICON_EMPTY)
             {
-                m_map.AddObject(x, y, target);
+                if (direction == Direction::NONE)
+                {
+                    m_map.AddGeneratedObject(position.first, position.second,
+                                             target, RandomDirection());
+                }
+                else
+                {
+                    m_map.AddGeneratedObject(position.first, position.second,
+                                             target, direction);
+                }
             }
         }
     }
@@ -969,6 +1366,13 @@ void Game::UpdateAllNouns()
     }
 }
 
+Direction Game::RandomDirection()
+{
+    constexpr std::array directions = { Direction::UP, Direction::RIGHT,
+                                        Direction::DOWN, Direction::LEFT };
+    return directions[m_randomEngine() % directions.size()];
+}
+
 bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
 {
     if (dir == Direction::NONE)
@@ -987,32 +1391,62 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
         return false;
     }
 
-    const std::vector<ObjectType> types = m_map.At(_x, _y).GetTypes();
+    const auto& destination =
+        m_map.At(static_cast<std::size_t>(_x), static_cast<std::size_t>(_y));
+    const auto& instances = destination.GetInstances();
+    const Position destinationPosition{ static_cast<std::size_t>(_x),
+                                        static_cast<std::size_t>(_y) };
 
     // Check the icon has property 'STOP'.
-    if (HasIconProperty(m_ruleManager, types, ObjectType::STOP))
+    if (std::any_of(
+            instances.begin(), instances.end(),
+            [this, &destinationPosition](const ObjectInstance& instance) {
+                return !IsTextType(instance.type) &&
+                       HasPropertyAtPosition(instance, destinationPosition,
+                                             ObjectType::STOP) &&
+                       !HasPropertyAtPosition(instance, destinationPosition,
+                                              ObjectType::PUSH) &&
+                       !HasPropertyAtPosition(instance, destinationPosition,
+                                              ObjectType::WEAK);
+            }))
     {
         return false;
     }
 
-    for (const ObjectInstance& instance :
-         m_map.At(static_cast<std::size_t>(_x), static_cast<std::size_t>(_y))
-             .GetInstances())
+    for (const ObjectInstance& instance : instances)
     {
         if ((IsTextType(instance.type) ||
-             HasProperty(instance, ObjectType::PUSH)) &&
-            HasProperty(instance, LockedProperty(dir)))
+             HasPropertyAtPosition(instance, destinationPosition,
+                                   ObjectType::PUSH)) &&
+            HasPropertyAtPosition(instance, destinationPosition,
+                                  LockedProperty(dir)) &&
+            !HasPropertyAtPosition(instance, destinationPosition,
+                                   ObjectType::WEAK))
         {
             return false;
         }
     }
 
-    if (HasIconProperty(m_ruleManager, types, ObjectType::PUSH) ||
-        m_map.At(_x, _y).HasTextType())
+    if (std::any_of(
+            instances.begin(), instances.end(),
+            [this, &destinationPosition](const ObjectInstance& instance) {
+                return IsTextType(instance.type) ||
+                       HasPropertyAtPosition(instance, destinationPosition,
+                                             ObjectType::PUSH);
+            }))
     {
         if (!CanMove(_x, _y, dir))
         {
-            return false;
+            return std::all_of(
+                instances.begin(), instances.end(),
+                [this, &destinationPosition](const ObjectInstance& instance) {
+                    return (!IsTextType(instance.type) &&
+                            !HasPropertyAtPosition(instance,
+                                                   destinationPosition,
+                                                   ObjectType::PUSH)) ||
+                           HasPropertyAtPosition(instance, destinationPosition,
+                                                 ObjectType::WEAK);
+                });
         }
     }
 
@@ -1023,11 +1457,13 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
                        const std::vector<ObjectID>& movingIDs)
 {
     const auto [_x, _y] = MovedPosition(x, y, dir);
+    const auto& instances = m_map.At(_x, _y).GetInstances();
 
-    if (const std::vector<ObjectType> destinationTypes =
-            m_map.At(_x, _y).GetTypes();
-        HasIconProperty(m_ruleManager, destinationTypes, ObjectType::PUSH) ||
-        m_map.At(_x, _y).HasTextType())
+    if (std::any_of(instances.begin(), instances.end(),
+                    [this](const ObjectInstance& instance) {
+                        return IsTextType(instance.type) ||
+                               HasProperty(instance, ObjectType::PUSH);
+                    }))
     {
         ProcessPush(_x, _y, dir);
     }
@@ -1042,27 +1478,57 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
 
 void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
 {
-    const auto [targetX, targetY] = MovedPosition(x, y, dir);
-    const std::vector<ObjectType> targetTypes =
-        m_map.At(targetX, targetY).GetTypes();
-
-    if (const bool pushesNext =
-            HasIconProperty(m_ruleManager, targetTypes, ObjectType::PUSH) ||
-            m_map.At(targetX, targetY).HasTextType();
-        pushesNext)
-    {
-        ProcessPush(targetX, targetY, dir);
-    }
-
     std::vector<ObjectID> pushedIDs;
 
     for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
     {
-        if (IsTextType(instance.type) ||
-            m_ruleManager.HasProperty({ instance.type }, ObjectType::PUSH))
+        if ((IsTextType(instance.type) ||
+             HasProperty(instance, ObjectType::PUSH)) &&
+            !HasProperty(instance, LockedProperty(dir)))
         {
             pushedIDs.emplace_back(instance.id);
         }
+    }
+
+    if (pushedIDs.empty())
+    {
+        return;
+    }
+
+    if (!CanMove(x, y, dir))
+    {
+        std::vector<ObjectID> weakIDs;
+
+        for (const ObjectID id : pushedIDs)
+        {
+            const ObjectInstance* instance = m_map.GetInstance(id);
+
+            if (instance != nullptr && HasProperty(*instance, ObjectType::WEAK))
+            {
+                weakIDs.emplace_back(id);
+            }
+        }
+
+        for (const ObjectID id : weakIDs)
+        {
+            m_map.RemoveObject(id);
+        }
+
+        return;
+    }
+
+    const auto [targetX, targetY] = MovedPosition(x, y, dir);
+    const auto& targetInstances = m_map.At(targetX, targetY).GetInstances();
+
+    if (const bool pushesNext =
+            std::any_of(targetInstances.begin(), targetInstances.end(),
+                        [this](const ObjectInstance& instance) {
+                            return IsTextType(instance.type) ||
+                                   HasProperty(instance, ObjectType::PUSH);
+                        });
+        pushesNext)
+    {
+        ProcessPush(targetX, targetY, dir);
     }
 
     for (const ObjectID id : pushedIDs)
@@ -1075,110 +1541,152 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
 
 void Game::ProcessSink()
 {
+    std::vector<ObjectID> sinkIDs;
+
     for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
         for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            const std::vector<ObjectType> types = m_map.At(x, y).GetTypes();
+            const auto& instances = m_map.At(x, y).GetInstances();
 
-            if (types.size() < 2 ||
-                !HasIconProperty(m_ruleManager, types, ObjectType::SINK))
+            if (instances.size() < 2 || !HasPropertyAt(x, y, ObjectType::SINK))
             {
                 continue;
             }
 
-            for (const ObjectType type : types)
+            for (const ObjectInstance& instance : instances)
             {
-                m_map.RemoveObject(x, y, type);
+                sinkIDs.emplace_back(instance.id);
             }
         }
+    }
+
+    for (const ObjectID id : sinkIDs)
+    {
+        m_map.RemoveObject(id);
+    }
+}
+
+void Game::ProcessWeak()
+{
+    std::vector<ObjectID> weakIDs;
+
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
+    {
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+        {
+            const auto& instances = m_map.At(x, y).GetInstances();
+
+            if (instances.size() < 2)
+            {
+                continue;
+            }
+
+            for (const ObjectInstance& instance : instances)
+            {
+                if (HasProperty(instance, ObjectType::WEAK))
+                {
+                    weakIDs.emplace_back(instance.id);
+                }
+            }
+        }
+    }
+
+    for (const ObjectID id : weakIDs)
+    {
+        m_map.RemoveObject(id);
     }
 }
 
 void Game::ProcessHotMelt()
 {
+    std::vector<ObjectID> meltIDs;
+
     for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
         for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            std::vector<ObjectType> iconTypes;
+            const std::vector<ObjectInstance> instances =
+                m_map.At(x, y).GetInstances();
 
-            for (const ObjectType type : m_map.At(x, y).GetTypes())
-            {
-                if (!IsTextType(type))
-                {
-                    iconTypes.emplace_back(type);
-                }
-            }
+            const bool hasHot =
+                std::any_of(instances.begin(), instances.end(),
+                            [this](const ObjectInstance& instance) {
+                                return HasProperty(instance, ObjectType::HOT);
+                            });
 
-            if (!m_ruleManager.HasProperty(iconTypes, ObjectType::HOT) ||
-                !m_ruleManager.HasProperty(iconTypes, ObjectType::MELT))
+            if (!hasHot)
             {
                 continue;
             }
 
-            for (const ObjectType type : iconTypes)
+            for (const ObjectInstance& instance : instances)
             {
-                if (m_ruleManager.HasProperty({ type }, ObjectType::MELT))
+                if (HasProperty(instance, ObjectType::MELT))
                 {
-                    m_map.RemoveObject(x, y, type);
+                    meltIDs.emplace_back(instance.id);
                 }
             }
         }
+    }
+
+    for (const ObjectID id : meltIDs)
+    {
+        m_map.RemoveObject(id);
     }
 }
 
 void Game::ProcessDefeat()
 {
-    const auto RemoveDefeatedPlayers = [this](std::size_t x, std::size_t y) {
-        const std::vector<ObjectType> types = m_map.At(x, y).GetTypes();
-
-        if (!HasIconProperty(m_ruleManager, types, ObjectType::DEFEAT))
-        {
-            return;
-        }
-
-        for (const ObjectType type : types)
-        {
-            if (std::find(m_playerIcons.begin(), m_playerIcons.end(), type) !=
-                m_playerIcons.end())
-            {
-                m_map.RemoveObject(x, y, type);
-            }
-        }
-    };
+    std::vector<ObjectID> playerIDs;
 
     for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
         for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            RemoveDefeatedPlayers(x, y);
+            if (!HasPropertyAt(x, y, ObjectType::DEFEAT))
+            {
+                continue;
+            }
+
+            for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
+            {
+                if (HasProperty(instance, ObjectType::YOU))
+                {
+                    playerIDs.emplace_back(instance.id);
+                }
+            }
         }
+    }
+
+    for (const ObjectID id : playerIDs)
+    {
+        m_map.RemoveObject(id);
     }
 }
 
 void Game::CheckPlayState()
 {
-    if (m_playerIcons.empty())
-    {
-        m_playState = PlayState::LOST;
-        return;
-    }
-
     bool hasPlayer = false;
 
-    for (const ObjectType playerIcon : m_playerIcons)
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
-        const auto positions = m_map.GetPositions(playerIcon);
-        hasPlayer = hasPlayer || !positions.empty();
-
-        for (const auto& [x, y] : positions)
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
         {
-            if (HasIconProperty(m_ruleManager, m_map.At(x, y).GetTypes(),
-                                ObjectType::WIN))
+            for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
             {
-                m_playState = PlayState::WON;
-                return;
+                if (!HasProperty(instance, ObjectType::YOU))
+                {
+                    continue;
+                }
+
+                hasPlayer = true;
+
+                if (HasPropertyAt(x, y, ObjectType::WIN))
+                {
+                    m_playState = PlayState::WON;
+                    return;
+                }
             }
         }
     }

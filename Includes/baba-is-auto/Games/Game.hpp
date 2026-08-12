@@ -11,6 +11,8 @@
 #include <baba-is-auto/Games/Map.hpp>
 #include <baba-is-auto/Rules/RuleManager.hpp>
 
+#include <cstdint>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -30,6 +32,10 @@ class Game
 
     //! Resets map and rule data.
     void Reset();
+
+    //! Sets the random seed used for directionless EMPTY behavior.
+    //! \param seed The random seed.
+    void SetRandomSeed(std::uint32_t seed);
 
     //! Gets a map object.
     //! \return A map object.
@@ -79,17 +85,41 @@ class Game
     //! Resolves all MOVE attempts in round order.
     void ProcessMoveProperty();
 
+    //! Applies active directional properties to object facing.
+    void ProcessDirectionProperties();
+
+    //! Builds the EMPTY instance state at a position for this turn.
+    //! \return An object instance representing the EMPTY state at a position.
+    ObjectInstance EmptyAt(const Position& position) const;
+
     //! Applies active noun transformations from one board snapshot.
     void ProcessTransformations();
 
     //! Adds nouns currently present in the level to the persistent ALL set.
     void UpdateAllNouns();
 
-    //! Checks an object instance has a property under the current rules.
+    //! Chooses a random cardinal direction.
+    //! \return A randomly chosen cardinal direction (UP, DOWN, LEFT, RIGHT).
+    Direction RandomDirection();
+
+    //! Checks an object instance has a property, including attached
+    //! conditions.
     //! \param instance The object instance to check.
     //! \param property The property to check.
     //! \return The flag indicates that an object instance has a property.
     bool HasProperty(const ObjectInstance& instance, ObjectType property) const;
+
+    //! Checks an object instance has a property at a known position.
+    bool HasPropertyAtPosition(const ObjectInstance& instance,
+                               const Position& position,
+                               ObjectType property) const;
+
+    //! Checks whether any object at a position has a property.
+    //! \param x The x position.
+    //! \param y The y position.
+    //! \param property The property to check.
+    //! \return The flag indicates that an object at a position has a property.
+    bool HasPropertyAt(std::size_t x, std::size_t y, ObjectType property) const;
 
     //! Checks all conditions attached to a rule for an object instance.
     //! \param instance The object instance to check.
@@ -99,13 +129,25 @@ class Game
     bool MatchesConditions(const ObjectInstance& instance,
                            const std::vector<RuleCondition>& conditions) const;
 
-    //! Checks one condition attached to a rule for an object instance.
+    //! Checks all conditions attached to a rule at a known position.
     //! \param instance The object instance to check.
+    //! \param position The position at which to evaluate the conditions.
+    //! \param conditions The conditions to check.
+    //! \return The flag indicates that an object instance matches all
+    //! conditions.
+    bool MatchesConditionsAt(
+        const ObjectInstance& instance, const Position& position,
+        const std::vector<RuleCondition>& conditions) const;
+
+    //! Checks one condition attached to a rule at a known position.
+    //! \param instance The object instance to check.
+    //! \param position The position at which to evaluate the condition.
     //! \param condition The condition to check.
     //! \return The flag indicates that an object instance matches the
     //! condition.
-    bool MatchesCondition(const ObjectInstance& instance,
-                          const RuleCondition& condition) const;
+    bool MatchesConditionAt(const ObjectInstance& instance,
+                            const Position& position,
+                            const RuleCondition& condition) const;
 
     //! Processes the move of the player.
     //! \param x The x position.
@@ -124,6 +166,9 @@ class Game
     //! Removes all objects where a SINK object overlaps another object.
     void ProcessSink();
 
+    //! Removes WEAK objects that overlap another object.
+    void ProcessWeak();
+
     //! Removes MELT objects overlapping HOT objects.
     void ProcessHotMelt();
 
@@ -141,6 +186,7 @@ class Game
 
     std::vector<ObjectType> m_playerIcons;
     std::vector<ObjectType> m_allNouns;
+    std::mt19937 m_randomEngine{ std::random_device{}() };
 };
 }  // namespace baba_is_auto
 

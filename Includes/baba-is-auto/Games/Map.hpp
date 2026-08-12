@@ -130,6 +130,14 @@ class Map
  private:
     friend class Game;
 
+    //! Adds an internally generated object after pending IDs are assigned.
+    //! \param x The x position.
+    //! \param y The y position.
+    //! \param type An object type to add to the map.
+    //! \param direction An initial facing direction of the object.
+    void AddGeneratedObject(std::size_t x, std::size_t y, ObjectType type,
+                            Direction direction);
+
     //! Assigns missing object IDs to objects.
     void AssignMissingObjectIDs();
 
@@ -138,6 +146,8 @@ class Map
 
     ObjectID m_initNextObjectID = 1;
     ObjectID m_nextObjectID = 1;
+
+    bool m_mayHaveMissingObjectIDs = false;
 
     std::vector<Object> m_initObjects;
     std::vector<Object> m_objects;
