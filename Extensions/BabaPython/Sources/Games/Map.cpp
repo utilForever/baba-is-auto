@@ -38,6 +38,11 @@ void AddMap(pybind11::module& m)
              static_cast<void (Map::*)(std::size_t, std::size_t, ObjectType)>(
                  &Map::RemoveObject),
              "Removes one object type from the cell at zero-based (x, y).")
+        .def("RemoveObject",
+             static_cast<bool (Map::*)(ObjectID)>(&Map::RemoveObject),
+             "Removes the object with the given stable ID.")
+        .def("MoveObject", &Map::MoveObject,
+             "Moves an object ID to zero-based (x, y), preserving its state.")
         .def("GetPosition", &Map::GetPosition,
              "Returns the current zero-based position for an object ID.")
         .def("SetDirection", &Map::SetDirection,

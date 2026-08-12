@@ -61,6 +61,10 @@ void AddGameEnumUtils(pybind11::module& m)
           "Returns whether an object type represents a supported verb.");
     m.def("IsPropertyType", IsPropertyType,
           "Returns whether an object type represents property text.");
+    m.def("IsLockedType", IsLockedType,
+          "Returns whether an object type is a directional LOCKED property.");
+    m.def("IsIconType", IsIconType,
+          "Returns whether an object type represents an in-game icon.");
 
     m.def("ConvertIconToText", ConvertIconToText,
           "Converts an icon type to its matching text type; other values are "

@@ -32,13 +32,9 @@ def test_map_object_identity_and_facing():
     game_map = pyBaba.Map(2, 1)
 
     with pytest.raises(ValueError):
-        game_map.AddObject(
-            0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.NONE
-        )
+        game_map.AddObject(0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.NONE)
 
-    game_map.AddObject(
-        0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.UP
-    )
+    game_map.AddObject(0, 0, pyBaba.ObjectType.ICON_KEKE, pyBaba.Direction.UP)
     game_map.AddObject(1, 0, pyBaba.ObjectType.ICON_LOVE)
 
     keke = game_map.At(0, 0).GetInstances()[0]
@@ -52,3 +48,15 @@ def test_map_object_identity_and_facing():
     assert game_map.GetDirection(keke.id) == pyBaba.Direction.LEFT
     assert not game_map.SetDirection(keke.id, pyBaba.Direction.NONE)
     assert game_map.GetDirection(keke.id) == pyBaba.Direction.LEFT
+
+    assert game_map.MoveObject(keke.id, 1, 0)
+    assert game_map.GetPosition(keke.id) == (1, 0)
+    assert game_map.RemoveObject(keke.id)
+    assert game_map.GetPosition(keke.id) is None
+
+
+def test_object_type_classifiers():
+    assert pyBaba.IsLockedType(pyBaba.ObjectType.LOCKED_UP)
+    assert not pyBaba.IsLockedType(pyBaba.ObjectType.MOVE)
+    assert pyBaba.IsIconType(pyBaba.ObjectType.ICON_KEKE)
+    assert not pyBaba.IsIconType(pyBaba.ObjectType.KEKE)

@@ -29,8 +29,9 @@ void AddRuleManager(pybind11::module& m)
         .def("GetNumRules", &RuleManager::GetNumRules,
              "Returns the number of active rules.")
         .def("FindPlayer", &RuleManager::FindPlayer,
-             "Returns the icon type selected by the first active YOU rule.")
+             "Returns the icon type selected by the first unconditional YOU "
+             "rule.")
         .def("HasProperty", &RuleManager::HasProperty,
-             "Returns whether any supplied object type has the active "
+             "Returns whether any supplied object type has the unconditional "
              "property.");
 }

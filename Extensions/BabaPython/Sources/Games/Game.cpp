@@ -20,6 +20,9 @@ void AddGame(pybind11::module& m)
         .def("Reset", &Game::Reset,
              "Restores the loaded map and recalculates its initial rules and "
              "play state.")
+        .def("SetRandomSeed", &Game::SetRandomSeed,
+             "Sets the 32-bit random seed used for directionless EMPTY "
+             "behavior.")
         .def("GetMap", static_cast<Map& (Game::*)()>(&Game::GetMap),
              "Returns a copy of the map owned by the game.")
         .def("GetMap",

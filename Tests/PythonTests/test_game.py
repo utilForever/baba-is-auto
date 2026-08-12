@@ -85,6 +85,131 @@ def test_game_basic():
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING
 
 
+def test_game_random_seed_repeats_empty_directions(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/special_transformations.txt"),
+        tmp_path / "seeded_empty.txt",
+        [
+            (0, 1, pyBaba.ObjectType.EMPTY),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.KEKE),
+        ],
+    )
+    first = pyBaba.Game(str(level))
+    second = pyBaba.Game(str(level))
+
+    for game in (first, second):
+        game.SetRandomSeed(12345)
+        game.MovePlayer(pyBaba.Direction.NONE)
+
+    def directions(game):
+        game_map = game.GetMap()
+        return [
+            instance.direction
+            for y in range(game_map.GetHeight())
+            for x in range(game_map.GetWidth())
+            for instance in game_map.At(x, y).GetInstances()
+            if instance.type == pyBaba.ObjectType.ICON_KEKE
+        ]
+
+    first_directions = directions(first)
+    assert first_directions
+    assert first_directions == directions(second)
+
+
+def test_game_stacked_empty_move_advances_each_step(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/special_transformations.txt"),
+        tmp_path / "empty_move_stacks.txt",
+        [
+            (0, 1, pyBaba.ObjectType.EMPTY),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.UP),
+            (0, 2, pyBaba.ObjectType.EMPTY),
+            (1, 2, pyBaba.ObjectType.IS),
+            (2, 2, pyBaba.ObjectType.MOVE),
+            (3, 2, pyBaba.ObjectType.AND),
+            (4, 2, pyBaba.ObjectType.MOVE),
+            (7, 0, pyBaba.ObjectType.ICON_WALL),
+            (7, 1, pyBaba.ObjectType.ICON_WALL),
+            (7, 2, pyBaba.ObjectType.BABA),
+        ],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+
+    game_map = game.GetMap()
+    assert game_map.At(7, 0).HasType(pyBaba.ObjectType.BABA)
+    assert game_map.At(7, 1).HasType(pyBaba.ObjectType.ICON_WALL)
+    assert game_map.At(7, 2).HasType(pyBaba.ObjectType.ICON_EMPTY)
+
+
+def test_game_empty_move_turns_before_moving_away_from_obstacle(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/special_transformations.txt"),
+        tmp_path / "empty_move_bounce.txt",
+        [
+            (0, 1, pyBaba.ObjectType.EMPTY),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.UP),
+            (0, 2, pyBaba.ObjectType.EMPTY),
+            (1, 2, pyBaba.ObjectType.NEAR),
+            (2, 2, pyBaba.ObjectType.LOVE),
+            (3, 2, pyBaba.ObjectType.IS),
+            (4, 2, pyBaba.ObjectType.MOVE),
+            (6, 0, pyBaba.ObjectType.ICON_LOVE),
+            (7, 1, pyBaba.ObjectType.BABA),
+        ],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+
+    game_map = game.GetMap()
+    assert game_map.At(7, 1).HasType(pyBaba.ObjectType.BABA)
+    assert game_map.At(7, 2).HasType(pyBaba.ObjectType.ICON_EMPTY)
+
+
+def test_game_empty_move_cannot_start_in_locked_direction(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/special_transformations.txt"),
+        tmp_path / "empty_move_locked.txt",
+        [
+            (0, 1, pyBaba.ObjectType.EMPTY),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.UP),
+            (0, 2, pyBaba.ObjectType.EMPTY),
+            (1, 2, pyBaba.ObjectType.IS),
+            (2, 2, pyBaba.ObjectType.LOCKED_UP),
+            (0, 3, pyBaba.ObjectType.EMPTY),
+            (1, 3, pyBaba.ObjectType.NEAR),
+            (2, 3, pyBaba.ObjectType.LOVE),
+            (3, 3, pyBaba.ObjectType.IS),
+            (4, 3, pyBaba.ObjectType.MOVE),
+            (6, 2, pyBaba.ObjectType.ICON_LOVE),
+            (7, 1, pyBaba.ObjectType.BABA),
+        ],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+
+    game_map = game.GetMap()
+    assert game_map.At(7, 1).HasType(pyBaba.ObjectType.BABA)
+    assert game_map.At(7, 0).HasType(pyBaba.ObjectType.ICON_EMPTY)
+
+
+def test_game_empty_move_recalculates_positions_between_steps():
+    game = pyBaba.Game("Resources/Maps/empty_move_recalculation.txt")
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+
+    game_map = game.GetMap()
+    assert game_map.At(9, 0).HasType(pyBaba.ObjectType.BABA)
+    assert game_map.At(9, 1).HasType(pyBaba.ObjectType.ICON_EMPTY)
+
+
 def test_game_grass_yard():
     game = pyBaba.Game("Resources/Maps/grass_yard.txt")
     assert game.GetMap().GetWidth() == 24
@@ -137,6 +262,29 @@ def test_game_arbitrary_and_chains():
     assert rules.HasProperty([pyBaba.ObjectType.ICON_ROCK], pyBaba.ObjectType.YOU)
     assert rules.HasProperty([pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.PUSH)
     assert rules.HasProperty([pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.SINK)
+
+
+def test_rule_conditions_are_visible_in_python():
+    assert hasattr(pyBaba, "RuleCondition")
+
+    condition = pyBaba.RuleCondition()
+    condition.op = pyBaba.ObjectType.ON
+    condition.targets = [pyBaba.ObjectType.LOVE]
+    condition.negated = True
+
+    rule = pyBaba.Rule(
+        pyBaba.Object([pyBaba.ObjectType.BABA]),
+        pyBaba.Object([pyBaba.ObjectType.IS]),
+        pyBaba.Object([pyBaba.ObjectType.MOVE]),
+        [condition],
+    )
+
+    assert rule.conditions == [condition]
+    assert rule != pyBaba.Rule(
+        pyBaba.Object([pyBaba.ObjectType.BABA]),
+        pyBaba.Object([pyBaba.ObjectType.IS]),
+        pyBaba.Object([pyBaba.ObjectType.MOVE]),
+    )
 
 
 def test_game_rule_after_leading_and():
@@ -422,6 +570,16 @@ def test_game_move_special_noun_conditions():
     assert game.GetMap().At(2, 5).HasType(pyBaba.ObjectType.ICON_BABA)
     assert game.GetMap().At(9, 5).HasType(pyBaba.ObjectType.ICON_LOVE)
     assert game.GetMap().At(3, 8).HasType(pyBaba.ObjectType.ICON_KEKE)
+
+
+def test_game_later_empty_direction_rule_controls_facing():
+    game = pyBaba.Game("Resources/Maps/conditional_empty_assigned_facing.txt")
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    instances = game.GetMap().At(2, 3).GetInstances()
+    assert len(instances) == 1
+    assert instances[0].type == pyBaba.ObjectType.ICON_KEKE
+    assert instances[0].direction == pyBaba.Direction.UP
 
 
 def test_game_noun_transformations_are_snapshotted():
