@@ -61,11 +61,10 @@ void Object::Add(const ObjectInstance& instance)
 
 void Object::Remove(ObjectType type)
 {
-    const auto iter = std::find_if(
-        m_instances.begin(), m_instances.end(),
-        [type](const auto& instance) { return instance.type == type; });
-
-    if (iter != m_instances.end())
+    if (const auto iter = std::find_if(
+            m_instances.begin(), m_instances.end(),
+            [type](const auto& instance) { return instance.type == type; });
+        iter != m_instances.end())
     {
         m_instances.erase(iter);
     }
