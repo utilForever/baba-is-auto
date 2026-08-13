@@ -707,7 +707,8 @@ bool Game::HasPropertyAtPosition(const ObjectInstance& instance,
 
     for (const Rule& rule : m_ruleManager.GetRules(property))
     {
-        if (!std::get<2>(rule.objects).HasType(property))
+        if (!std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+            !std::get<2>(rule.objects).HasType(property))
         {
             continue;
         }

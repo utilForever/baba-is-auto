@@ -58,6 +58,7 @@ ObjectType RuleManager::FindPlayer() const
     for (auto& rule : m_rules)
     {
         if (rule.conditions.empty() &&
+            std::get<1>(rule.objects).HasType(ObjectType::IS) &&
             std::get<2>(rule.objects).HasType(ObjectType::YOU))
         {
             const ObjectType type = std::get<0>(rule.objects).GetTypes()[0];
@@ -78,6 +79,7 @@ bool RuleManager::HasProperty(const std::vector<ObjectType>& types,
         for (auto& rule : m_rules)
         {
             if (rule.conditions.empty() &&
+                std::get<1>(rule.objects).HasType(ObjectType::IS) &&
                 std::get<0>(rule.objects).HasType(type) &&
                 std::get<2>(rule.objects).HasType(property))
             {

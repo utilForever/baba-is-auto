@@ -97,6 +97,16 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetPlayState() == PlayState::PLAYING);
 }
 
+TEST_CASE("Game - HAS does not grant properties")
+{
+    Game game(MAPS_DIR "has_property.txt");
+
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
+    CHECK(game.GetRuleManager().FindPlayer() == ObjectType::ICON_EMPTY);
+    CHECK_FALSE(game.GetRuleManager().HasProperty({ ObjectType::ICON_BABA },
+                                                  ObjectType::YOU));
+}
+
 TEST_CASE("Game - Grass Yard")
 {
     Game game(MAPS_DIR "grass_yard.txt");

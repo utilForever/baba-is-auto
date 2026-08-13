@@ -264,6 +264,16 @@ def test_game_arbitrary_and_chains():
     assert rules.HasProperty([pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.SINK)
 
 
+def test_has_does_not_grant_properties():
+    game = pyBaba.Game("Resources/Maps/has_property.txt")
+
+    assert game.GetPlayerIcon() == pyBaba.ObjectType.ICON_EMPTY
+    assert game.GetRuleManager().FindPlayer() == pyBaba.ObjectType.ICON_EMPTY
+    assert not game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.YOU
+    )
+
+
 def test_rule_conditions_are_visible_in_python():
     assert hasattr(pyBaba, "RuleCondition")
 
