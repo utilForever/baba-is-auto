@@ -50,10 +50,12 @@ def test_rl_environment_uses_gym_spaces(monkeypatch, name):
     ]
 
     seeds = []
-    env.unwrapped.game = SimpleNamespace(SetRandomSeed=seeds.append)
-    assert env.unwrapped.seed(2**32 + 7) == [2**32 + 7]
-    assert seeds == [7]
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            env.unwrapped, "game", SimpleNamespace(SetRandomSeed=seeds.append)
+        )
+        assert env.unwrapped.seed(2**32 + 7) == [2**32 + 7]
+        assert seeds == [7]
 
-    env.unwrapped.game = pyBaba.Game(env.unwrapped.path)
     assert env.observation_space.contains(env.reset())
     assert env.observation_space.contains(env.step(env.action_space.sample())[0])
