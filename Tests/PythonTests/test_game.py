@@ -267,10 +267,22 @@ def test_game_arbitrary_and_chains():
 def test_rule_conditions_are_visible_in_python():
     assert hasattr(pyBaba, "RuleCondition")
 
+    default = pyBaba.RuleCondition()
+    assert default.op == pyBaba.ObjectType.ON
+    assert default.targets == []
+    assert not default.negated
+
     condition = pyBaba.RuleCondition()
     condition.op = pyBaba.ObjectType.ON
     condition.targets = [pyBaba.ObjectType.LOVE]
     condition.negated = True
+
+    same = pyBaba.RuleCondition()
+    same.op = pyBaba.ObjectType.ON
+    same.targets = [pyBaba.ObjectType.LOVE]
+    same.negated = True
+    assert condition == same
+    assert condition != default
 
     rule = pyBaba.Rule(
         pyBaba.Object([pyBaba.ObjectType.BABA]),
