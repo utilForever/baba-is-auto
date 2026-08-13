@@ -49,8 +49,14 @@ def test_map_object_identity_and_facing():
     assert not game_map.SetDirection(keke.id, pyBaba.Direction.NONE)
     assert game_map.GetDirection(keke.id) == pyBaba.Direction.LEFT
 
+    assert not game_map.MoveObject(keke.id, 2, 0)
+    assert not game_map.MoveObject(keke.id, 0, 1)
+    assert game_map.GetPosition(keke.id) == (0, 0)
+    assert game_map.GetDirection(keke.id) == pyBaba.Direction.LEFT
+
     assert game_map.MoveObject(keke.id, 1, 0)
     assert game_map.GetPosition(keke.id) == (1, 0)
+    assert game_map.GetDirection(keke.id) == pyBaba.Direction.LEFT
     assert game_map.RemoveObject(keke.id)
     assert game_map.GetPosition(keke.id) is None
 

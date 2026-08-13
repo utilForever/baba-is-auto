@@ -61,6 +61,113 @@ std::optional<Direction> ParseDirection(int value)
             return std::nullopt;
     }
 }
+
+using TileInstances = std::vector<std::vector<ObjectInstance>>;
+
+void ReadMapValues(std::istream& file, std::vector<int>& values,
+                   std::vector<int>& directions, bool& readingDirections)
+{
+    std::string token;
+
+    while (file >> token)
+    {
+        if (token == "DIRECTIONS")
+        {
+            if (readingDirections)
+            {
+                throw std::runtime_error("Invalid map direction data");
+            }
+
+            readingDirections = true;
+            continue;
+        }
+
+        const auto value = ParseInt(token);
+
+        if (!value.has_value())
+        {
+            throw std::runtime_error("Invalid map tile data");
+        }
+
+        (readingDirections ? directions : values).emplace_back(*value);
+    }
+}
+
+TileInstances BuildTileInstances(const std::vector<int>& values,
+                                 const std::vector<int>& directions,
+                                 bool hasDirections, std::size_t tileCount)
+{
+    TileInstances tileInstances(tileCount);
+
+    for (std::size_t i = 0; i < values.size(); ++i)
+    {
+        if (!IsValidMapTile(values[i]))
+        {
+            throw std::runtime_error("Invalid map object type");
+        }
+
+        const auto type = static_cast<ObjectType>(values[i]);
+        const auto direction = hasDirections
+                                   ? ParseDirection(directions[i])
+                                   : std::optional{ Direction::RIGHT };
+
+        if (!direction.has_value())
+        {
+            throw std::runtime_error("Invalid map direction data");
+        }
+
+        if (type != ObjectType::ICON_EMPTY)
+        {
+            tileInstances[i % tileCount].push_back({ 0, type, *direction });
+        }
+    }
+
+    return tileInstances;
+}
+
+ObjectID AssignObjectIDs(TileInstances& tiles, std::size_t width,
+                         std::size_t height)
+{
+    ObjectID nextObjectID = 1;
+
+    for (std::size_t x = 0; x < width; ++x)
+    {
+        for (std::size_t y = 0; y < height; ++y)
+        {
+            for (ObjectInstance& instance : tiles[y * width + x])
+            {
+                instance.id = nextObjectID++;
+            }
+        }
+    }
+
+    return nextObjectID;
+}
+
+std::vector<Object> BuildObjects(const TileInstances& tiles)
+{
+    std::vector<Object> objects;
+    objects.reserve(tiles.size());
+
+    for (const auto& instances : tiles)
+    {
+        Object object;
+
+        for (const ObjectInstance& instance : instances)
+        {
+            object.Add(instance);
+        }
+
+        if (instances.empty())
+        {
+            object.Add(ObjectType::ICON_EMPTY);
+        }
+
+        objects.emplace_back(std::move(object));
+    }
+
+    return objects;
+}
 }  // namespace
 
 Map::Map(std::size_t width, std::size_t height)
@@ -111,29 +218,8 @@ void Map::Load(std::string_view filename)
     std::vector<int> values;
     std::vector<int> directionValues;
     bool readingDirections = false;
-    std::string token;
 
-    while (mapFile >> token)
-    {
-        if (token == "DIRECTIONS")
-        {
-            if (readingDirections)
-            {
-                throw std::runtime_error("Invalid map direction data");
-            }
-
-            readingDirections = true;
-            continue;
-        }
-
-        const auto value = ParseInt(token);
-        if (!value)
-        {
-            throw std::runtime_error("Invalid map tile data");
-        }
-
-        (readingDirections ? directionValues : values).emplace_back(*value);
-    }
+    ReadMapValues(mapFile, values, directionValues, readingDirections);
 
     if (values.empty() || values.size() % tileCount != 0 ||
         values.size() / tileCount > MAX_MAP_LAYERS ||
@@ -142,61 +228,10 @@ void Map::Load(std::string_view filename)
         throw std::runtime_error("Invalid map tile data");
     }
 
-    std::vector<std::vector<ObjectInstance>> tileInstances(tileCount);
-    ObjectID nextObjectID = 1;
-
-    for (std::size_t i = 0; i < values.size(); ++i)
-    {
-        if (!IsValidMapTile(values[i]))
-        {
-            throw std::runtime_error("Invalid map object type");
-        }
-
-        const ObjectType type = static_cast<ObjectType>(values[i]);
-        const auto direction = readingDirections
-                                   ? ParseDirection(directionValues[i])
-                                   : std::optional{ Direction::RIGHT };
-        if (!direction)
-        {
-            throw std::runtime_error("Invalid map direction data");
-        }
-
-        if (type != ObjectType::ICON_EMPTY)
-        {
-            tileInstances[i % tileCount].push_back({ 0, type, *direction });
-        }
-    }
-
-    for (std::size_t x = 0; x < width; ++x)
-    {
-        for (std::size_t y = 0; y < height; ++y)
-        {
-            for (ObjectInstance& instance : tileInstances[y * width + x])
-            {
-                instance.id = nextObjectID++;
-            }
-        }
-    }
-
-    std::vector<Object> objects;
-    objects.reserve(tileCount);
-
-    for (auto& instances : tileInstances)
-    {
-        Object object;
-
-        for (const ObjectInstance& instance : instances)
-        {
-            object.Add(instance);
-        }
-
-        if (instances.empty())
-        {
-            object.Add(ObjectType::ICON_EMPTY);
-        }
-
-        objects.emplace_back(std::move(object));
-    }
+    auto tileInstances = BuildTileInstances(values, directionValues,
+                                            readingDirections, tileCount);
+    const ObjectID nextObjectID = AssignObjectIDs(tileInstances, width, height);
+    std::vector<Object> objects = BuildObjects(tileInstances);
 
     m_width = width;
     m_height = height;
@@ -268,6 +303,11 @@ bool Map::RemoveObject(ObjectID id)
 
 bool Map::MoveObject(ObjectID id, std::size_t x, std::size_t y)
 {
+    if (x >= m_width || y >= m_height)
+    {
+        return false;
+    }
+
     const auto position = GetPosition(id);
 
     if (!position)
