@@ -175,7 +175,7 @@ inline bool LoadLevelFile(const fs::path& filename, LevelFile& level)
 
         const auto value = ParseLevelInt(token);
 
-        if (!value)
+        if (!value.has_value())
         {
             return false;
         }
@@ -212,7 +212,7 @@ inline bool LoadLevelFile(const fs::path& filename, LevelFile& level)
         {
             const auto direction = ParseLevelDirection(directionValues[i]);
 
-            if (!direction)
+            if (!direction.has_value())
             {
                 return false;
             }
@@ -356,6 +356,96 @@ inline bool WriteTemporaryLevelFile(const fs::path& destination,
 #endif
 }
 
+inline Direction LevelDirectionAt(const LevelFile& level, std::size_t index,
+                                  std::size_t layer)
+{
+    return level.directions.empty() ? Direction::RIGHT
+                                    : level.directions[index][layer];
+}
+
+inline bool InspectLevel(const LevelFile& level, std::size_t& layerCount,
+                         bool& hasDirections)
+{
+    for (std::size_t index = 0; index < level.tiles.size(); ++index)
+    {
+        for (std::size_t layer = 0; layer < LEVEL_LAYER_COUNT; ++layer)
+        {
+            const ObjectType tile = level.tiles[index][layer];
+
+            if (!IsValidLevelTile(tile))
+            {
+                return false;
+            }
+
+            if (tile != ObjectType::ICON_EMPTY)
+            {
+                layerCount = std::max(layerCount, layer + 1);
+            }
+
+            const Direction direction = LevelDirectionAt(level, index, layer);
+
+            if (!EncodeLevelDirection(direction).has_value())
+            {
+                return false;
+            }
+
+            hasDirections = hasDirections || direction != Direction::RIGHT;
+        }
+    }
+
+    return true;
+}
+
+inline void AppendLevelTiles(std::string& contents, const LevelFile& level,
+                             std::size_t layerCount)
+{
+    for (std::size_t layer = 0; layer < layerCount; ++layer)
+    {
+        for (std::size_t y = 0; y < level.height; ++y)
+        {
+            for (std::size_t x = 0; x < level.width; ++x)
+            {
+                const ObjectType tile = level.tiles[y * level.width + x][layer];
+
+                contents += std::to_string(static_cast<int>(tile));
+                contents += x + 1 < level.width ? ' ' : '\n';
+            }
+        }
+
+        if (layer + 1 < layerCount)
+        {
+            contents += '\n';
+        }
+    }
+}
+
+inline void AppendLevelDirections(std::string& contents, const LevelFile& level,
+                                  std::size_t layerCount)
+{
+    contents += "\nDIRECTIONS\n";
+
+    for (std::size_t layer = 0; layer < layerCount; ++layer)
+    {
+        for (std::size_t y = 0; y < level.height; ++y)
+        {
+            for (std::size_t x = 0; x < level.width; ++x)
+            {
+                const std::size_t index = y * level.width + x;
+                const Direction direction =
+                    LevelDirectionAt(level, index, layer);
+
+                contents += std::to_string(*EncodeLevelDirection(direction));
+                contents += x + 1 < level.width ? ' ' : '\n';
+            }
+        }
+
+        if (layer + 1 < layerCount)
+        {
+            contents += '\n';
+        }
+    }
+}
+
 //! Saves the provided LevelFile object to the given path, ensuring atomicity.
 inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
 {
@@ -371,32 +461,9 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
     std::size_t layerCount = 1;
     bool hasDirections = false;
 
-    for (const LevelFile::LayerTile& tile : level.tiles)
+    if (!InspectLevel(level, layerCount, hasDirections))
     {
-        for (std::size_t layer = 0; layer < LEVEL_LAYER_COUNT; ++layer)
-        {
-            if (!IsValidLevelTile(tile[layer]))
-            {
-                return false;
-            }
-
-            if (tile[layer] != ObjectType::ICON_EMPTY)
-            {
-                layerCount = std::max(layerCount, layer + 1);
-            }
-
-            const Direction direction =
-                level.directions.empty()
-                    ? Direction::RIGHT
-                    : level.directions[&tile - level.tiles.data()][layer];
-
-            if (!EncodeLevelDirection(direction))
-            {
-                return false;
-            }
-
-            hasDirections = hasDirections || direction != Direction::RIGHT;
-        }
+        return false;
     }
 
     std::string contents = std::to_string(level.width);
@@ -404,51 +471,11 @@ inline bool SaveLevelFile(const fs::path& filename, const LevelFile& level)
     contents += std::to_string(level.height);
     contents += '\n';
 
-    for (std::size_t layer = 0; layer < layerCount; ++layer)
-    {
-        for (std::size_t y = 0; y < level.height; ++y)
-        {
-            for (std::size_t x = 0; x < level.width; ++x)
-            {
-                const auto tile = level.tiles[y * level.width + x][layer];
-                contents += std::to_string(static_cast<int>(tile));
-                contents += x + 1 < level.width ? ' ' : '\n';
-            }
-        }
-
-        if (layer + 1 < layerCount)
-        {
-            contents += '\n';
-        }
-    }
+    AppendLevelTiles(contents, level, layerCount);
 
     if (hasDirections)
     {
-        contents += "\nDIRECTIONS\n";
-
-        for (std::size_t layer = 0; layer < layerCount; ++layer)
-        {
-            for (std::size_t y = 0; y < level.height; ++y)
-            {
-                for (std::size_t x = 0; x < level.width; ++x)
-                {
-                    const std::size_t index = y * level.width + x;
-                    const Direction direction =
-                        level.directions.empty()
-                            ? Direction::RIGHT
-                            : level.directions[index][layer];
-
-                    contents +=
-                        std::to_string(*EncodeLevelDirection(direction));
-                    contents += x + 1 < level.width ? ' ' : '\n';
-                }
-            }
-
-            if (layer + 1 < layerCount)
-            {
-                contents += '\n';
-            }
-        }
+        AppendLevelDirections(contents, level, layerCount);
     }
 
     if (fs::path temporary;
