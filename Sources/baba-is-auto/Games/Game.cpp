@@ -1470,10 +1470,9 @@ void Game::ApplyTransformation(const LocatedInstance& source,
         return;
     }
 
-    const bool spawned = SpawnAllTargets(
-        source.position, source.instance.direction, result.allTargets);
-
-    if (result.expandsAll && spawned &&
+    if (const bool spawned = SpawnAllTargets(
+            source.position, source.instance.direction, result.allTargets);
+        result.expandsAll && spawned &&
         (IsTextType(source.instance.type) ||
          source.instance.type == ObjectType::ICON_LEVEL))
     {
@@ -1675,7 +1674,8 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
     const Position destination{ static_cast<std::size_t>(_x),
                                 static_cast<std::size_t>(_y) };
 
-    if (const auto& instances = m_map.At(_x, _y).GetInstances();
+    if (const auto& instances =
+            m_map.At(destination.first, destination.second).GetInstances();
         std::any_of(instances.begin(), instances.end(),
                     [this, &destination](const ObjectInstance& instance) {
                         return IsTextType(instance.type) ||
@@ -1683,14 +1683,13 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
                                                      ObjectType::PUSH);
                     }))
     {
-        ProcessPush(_x, _y, dir);
+        ProcessPush(destination.first, destination.second, dir);
     }
 
     for (const ObjectID id : movingIDs)
     {
         m_map.SetDirection(id, dir);
-        m_map.MoveObject(id, static_cast<std::size_t>(_x),
-                         static_cast<std::size_t>(_y));
+        m_map.MoveObject(id, destination.first, destination.second);
     }
 }
 
@@ -1738,9 +1737,10 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
     }
 
     const auto [targetX, targetY] = MovedPosition(x, y, dir);
-    const auto& targetInstances = m_map.At(targetX, targetY).GetInstances();
     const Position targetPosition{ static_cast<std::size_t>(targetX),
                                    static_cast<std::size_t>(targetY) };
+    const auto& targetInstances =
+        m_map.At(targetPosition.first, targetPosition.second).GetInstances();
 
     if (const bool pushesNext = std::any_of(
             targetInstances.begin(), targetInstances.end(),
@@ -1751,14 +1751,13 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
             });
         pushesNext)
     {
-        ProcessPush(targetX, targetY, dir);
+        ProcessPush(targetPosition.first, targetPosition.second, dir);
     }
 
     for (const ObjectID id : pushedIDs)
     {
         m_map.SetDirection(id, dir);
-        m_map.MoveObject(id, static_cast<std::size_t>(targetX),
-                         static_cast<std::size_t>(targetY));
+        m_map.MoveObject(id, targetPosition.first, targetPosition.second);
     }
 }
 
