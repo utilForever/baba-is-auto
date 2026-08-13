@@ -66,7 +66,7 @@ jobs:
         lcov --gcov-tool "${GCOV_TOOL}" -l coverage.info
         mkdir sonar-gcov
         find . -name '*.gcda' -exec "${GCOV_TOOL}" --preserve-paths {} + > /dev/null
-        mv ./*.gcov sonar-gcov/
+        find . -maxdepth 1 -name '*.gcov' -exec mv -t sonar-gcov {} +
     - name: SonarCloud Scan
       if: ${{ github.actor != 'dependabot[bot]' }}
       run: sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=utilforever-github -Dsonar.login=$SONAR_TOKEN

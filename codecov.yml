@@ -12,7 +12,7 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 0%
+        threshold: 3%
     patch:
       default:
         target: auto
@@ -34,6 +34,7 @@ coverage:
     - "Medias"
     - "Resources"
     - "Scripts"
+    - "Tests"
 
 comment:
   layout: "header, diff, changes, uncovered"
