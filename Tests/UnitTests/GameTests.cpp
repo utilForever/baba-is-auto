@@ -561,6 +561,16 @@ TEST_CASE("Map - Per-object facing")
     const auto& legacy = map.At(1, 0).GetInstances();
     CHECK(legacy.size() == 1);
     CHECK(legacy[0].direction == Direction::RIGHT);
+
+    const ObjectID keke = instances[0].id;
+    CHECK_FALSE(map.MoveObject(keke, 2, 0));
+    CHECK_FALSE(map.MoveObject(keke, 0, 1));
+    CHECK(map.GetPosition(keke) == Position{ 0, 0 });
+    CHECK(map.GetDirection(keke) == Direction::UP);
+
+    CHECK(map.MoveObject(keke, 1, 0));
+    CHECK(map.GetPosition(keke) == Position{ 1, 0 });
+    CHECK(map.GetDirection(keke) == Direction::UP);
 }
 
 TEST_CASE("Map - ID zero is never addressable")
@@ -851,11 +861,12 @@ TEST_CASE("Game - MOVE ignores invalid NONE facing")
     Game game(MAPS_DIR "move_rules.txt");
     const auto keke = game.GetMap().At(10, 8).GetInstances().front().id;
 
+    game.GetMap().AddObject(10, 8, ObjectType::BABA);
+
     auto* instance = game.GetMap().GetInstance(keke);
     CHECK(instance != nullptr);
 
     instance->direction = Direction::NONE;
-    game.GetMap().AddObject(10, 8, ObjectType::BABA);
 
     game.MovePlayer(Direction::NONE);
     CHECK(game.GetMap().GetPosition(keke) == Position{ 10, 8 });
@@ -1264,18 +1275,22 @@ TEST_CASE("Game - random seed repeats EMPTY transformation directions")
     CHECK(firstDirections == Directions(second));
 }
 
-TEST_CASE("Game - EMPTY IS ALL creates directionless objects")
+TEST_CASE("Game - EMPTY IS ALL gives every object one valid direction")
 {
     Game game(MAPS_DIR "special_transformations.txt");
-    AddRule(game, ObjectType::EMPTY, ObjectType::ALL);
+    game.SetRandomSeed(12345);
 
+    AddRule(game, ObjectType::EMPTY, ObjectType::ALL);
     game.MovePlayer(Direction::NONE);
 
     const auto& instances = game.GetMap().At(7, 3).GetInstances();
     CHECK(instances.size() == 3);
+
+    const Direction direction = instances.front().direction;
+    CHECK(direction != Direction::NONE);
     CHECK(std::all_of(instances.begin(), instances.end(),
-                      [](const ObjectInstance& instance) {
-                          return instance.direction == Direction::NONE;
+                      [direction](const ObjectInstance& instance) {
+                          return instance.direction == direction;
                       }));
 }
 
@@ -1492,6 +1507,19 @@ TEST_CASE("RuleManager - Basic")
 
     ruleManager.RemoveRule(rule2);
     CHECK(ruleManager.GetNumRules() == 1);
+}
+
+TEST_CASE("RuleCondition - Equality compares every field")
+{
+    const RuleCondition condition{ ObjectType::ON, { ObjectType::LOVE }, true };
+    CHECK(condition ==
+          RuleCondition{ ObjectType::ON, { ObjectType::LOVE }, true });
+    CHECK_FALSE(condition ==
+                RuleCondition{ ObjectType::NEAR, { ObjectType::LOVE }, true });
+    CHECK_FALSE(condition ==
+                RuleCondition{ ObjectType::ON, { ObjectType::ROCK }, true });
+    CHECK_FALSE(condition ==
+                RuleCondition{ ObjectType::ON, { ObjectType::LOVE }, false });
 }
 
 TEST_CASE("Map - Icon Vanishing")

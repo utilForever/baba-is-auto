@@ -13,7 +13,7 @@
 
 #include <cstdint>
 #include <random>
-#include <string>
+#include <string_view>
 #include <vector>
 
 namespace baba_is_auto
@@ -82,11 +82,53 @@ class Game
     //! \param dir The direction to move.
     void ProcessPlayerMove(Direction dir);
 
+    //! Returns the movable YOU object IDs at a position.
+    std::vector<ObjectID> GetPlayerIDsAt(const Position& position) const;
+
+    //! Resolves movement for one stack of YOU objects.
+    void ProcessPlayerStack(const Position& position,
+                            const std::vector<ObjectID>& playerIDs,
+                            Direction dir);
+
     //! Resolves all MOVE attempts in round order.
     void ProcessMoveProperty();
 
+    struct MoveState
+    {
+        ObjectID id = 0;
+        Position position{};
+        Direction direction = Direction::NONE;
+        std::size_t attempts = 0;
+        bool turned = false;
+        bool active = true;
+    };
+
+    void AddMoveRuleAttempts(const Rule& rule, std::vector<MoveState>& moving,
+                             std::size_t& rounds);
+    void AppendMatchingMoveObjects(const Rule& rule,
+                                   const std::vector<ObjectType>& subjects,
+                                   const Position& position,
+                                   std::vector<ObjectID>& matching) const;
+    void RegisterEmptyMoveAttemptAt(const Rule& rule, const Position& position,
+                                    std::vector<MoveState>& moving,
+                                    std::size_t& rounds);
+    static void RegisterMoveAttempt(std::vector<MoveState>& moving, ObjectID id,
+                                    const Position& position,
+                                    Direction direction, std::size_t& rounds);
+    void ProcessMoveRound(std::vector<MoveState>& moving, std::size_t round);
+    void ProcessEmptyMoveState(std::vector<MoveState>& moving,
+                               std::size_t index);
+    static void MergeEmptyMoveStates(std::vector<MoveState>& moving,
+                                     std::size_t index);
+    void ProcessObjectMoveState(MoveState& state);
+
     //! Applies active directional properties to object facing.
     void ProcessDirectionProperties();
+
+    //! Applies active directional rules to one object instance.
+    void ApplyDirectionProperties(ObjectInstance& instance,
+                                  const Position& position,
+                                  const std::vector<Rule>& rules) const;
 
     //! Builds the EMPTY instance state at a position for this turn.
     //! \return An object instance representing the EMPTY state at a position.
@@ -95,19 +137,63 @@ class Game
     //! Applies active noun transformations from one board snapshot.
     void ProcessTransformations();
 
+    struct Transformation
+    {
+        ObjectType subject;
+        ObjectType predicate;
+        std::vector<RuleCondition> conditions;
+    };
+
+    struct TransformationResult
+    {
+        bool matched = false;
+        bool transforms = false;
+        bool expandsAll = false;
+        bool protectedByIdentity = false;
+        std::vector<ObjectType> targets;
+        std::vector<ObjectType> allTargets;
+    };
+
+    struct LocatedInstance
+    {
+        ObjectInstance instance;
+        Position position;
+    };
+
+    struct EmptyTransformation
+    {
+        Position position;
+        Direction direction;
+        TransformationResult result;
+    };
+
+    std::vector<Transformation> FindTransformations() const;
+    void AppendSubjectTransformations(
+        const Rule& rule, ObjectType subject,
+        std::vector<Transformation>& transformations) const;
+    TransformationResult ResolveTransformation(
+        const LocatedInstance& source,
+        const std::vector<Transformation>& transformations) const;
+    void AppendAllTargets(TransformationResult& result) const;
+    static ObjectType ResolveTransformationTarget(ObjectType source,
+                                                  ObjectType predicate);
+    void CollectTransformationSnapshot(std::vector<LocatedInstance>& instances,
+                                       std::vector<Position>& emptyTiles) const;
+    void AppendTransformationInstancesAt(
+        const Position& position,
+        std::vector<LocatedInstance>& instances) const;
+    void ApplyTransformation(const LocatedInstance& source,
+                             const TransformationResult& result);
+    bool SpawnAllTargets(const Position& position, Direction direction,
+                         const std::vector<ObjectType>& targets);
+    void ApplyEmptyTransformation(const EmptyTransformation& pending);
+
     //! Adds nouns currently present in the level to the persistent ALL set.
     void UpdateAllNouns();
 
     //! Chooses a random cardinal direction.
     //! \return A randomly chosen cardinal direction (UP, DOWN, LEFT, RIGHT).
     Direction RandomDirection();
-
-    //! Checks an object instance has a property, including attached
-    //! conditions.
-    //! \param instance The object instance to check.
-    //! \param property The property to check.
-    //! \return The flag indicates that an object instance has a property.
-    bool HasProperty(const ObjectInstance& instance, ObjectType property) const;
 
     //! Checks an object instance has a property at a known position.
     bool HasPropertyAtPosition(const ObjectInstance& instance,
@@ -120,14 +206,6 @@ class Game
     //! \param property The property to check.
     //! \return The flag indicates that an object at a position has a property.
     bool HasPropertyAt(std::size_t x, std::size_t y, ObjectType property) const;
-
-    //! Checks all conditions attached to a rule for an object instance.
-    //! \param instance The object instance to check.
-    //! \param conditions The conditions to check.
-    //! \return The flag indicates that an object instance matches all
-    //! conditions.
-    bool MatchesConditions(const ObjectInstance& instance,
-                           const std::vector<RuleCondition>& conditions) const;
 
     //! Checks all conditions attached to a rule at a known position.
     //! \param instance The object instance to check.
