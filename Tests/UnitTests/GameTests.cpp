@@ -34,7 +34,7 @@ void Move(Game& game, std::string_view actions)
     for (const char action : actions)
     {
         const auto index = keys.find(action);
-        CHECK(index != std::string_view::npos);
+        REQUIRE(index != std::string_view::npos);
         game.MovePlayer(directions[index]);
     }
 }
@@ -874,7 +874,7 @@ TEST_CASE("Game - MOVE ignores invalid NONE facing")
     game.GetMap().AddObject(10, 8, ObjectType::BABA);
 
     auto* instance = game.GetMap().GetInstance(keke);
-    CHECK(instance != nullptr);
+    REQUIRE(instance != nullptr);
 
     instance->direction = Direction::NONE;
 
@@ -1096,7 +1096,7 @@ TEST_CASE("Game - Transformations use one snapshot")
     }
 
     const auto* transformed = game.GetMap().GetInstance(keke);
-    CHECK(transformed != nullptr);
+    REQUIRE(transformed != nullptr);
     CHECK(transformed->type == ObjectType::ICON_LOVE);
     CHECK(transformed->direction == Direction::UP);
 
@@ -1105,7 +1105,7 @@ TEST_CASE("Game - Transformations use one snapshot")
         game.GetMap().At(0, 9).GetInstances().end(), [](const auto& instance) {
             return instance.type == ObjectType::ICON_ROCK;
         });
-    CHECK(rock != game.GetMap().At(0, 9).GetInstances().end());
+    REQUIRE(rock != game.GetMap().At(0, 9).GetInstances().end());
     CHECK(rock->direction == Direction::UP);
 
     CHECK(game.GetMap().At(3, 9).HasType(ObjectType::ICON_ALGAE));
