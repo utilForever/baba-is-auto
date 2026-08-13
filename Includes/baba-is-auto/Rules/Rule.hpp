@@ -10,9 +10,19 @@
 #include <baba-is-auto/Games/Object.hpp>
 
 #include <tuple>
+#include <vector>
 
 namespace baba_is_auto
 {
+struct RuleCondition
+{
+    ObjectType op = ObjectType::ON;
+    std::vector<ObjectType> targets;
+    bool negated = false;
+
+    bool operator==(const RuleCondition& rhs) const;
+};
+
 //!
 //! \brief Rule class.
 //!
@@ -27,7 +37,9 @@ class Rule
     //! \param obj1 A first object.
     //! \param obj2 A second object.
     //! \param obj3 A third object.
-    Rule(Object obj1, Object obj2, Object obj3);
+    //! \param ruleConditions Optional conditions restricting subject instances.
+    Rule(Object obj1, Object obj2, Object obj3,
+         std::vector<RuleCondition> ruleConditions = {});
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.
@@ -36,6 +48,9 @@ class Rule
 
     //! The subject, operator, and predicate objects.
     std::tuple<Object, Object, Object> objects;
+
+    //! Optional conditions restricting which subject instances match.
+    std::vector<RuleCondition> conditions;
 };
 }  // namespace baba_is_auto
 

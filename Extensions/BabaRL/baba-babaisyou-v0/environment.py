@@ -9,12 +9,12 @@ import rendering
 
 
 class BabaEnv(gym.Env):
-    metadata = {'render.modes': ['human', 'rgb_array']}
+    metadata = {"render.modes": ["human", "rgb_array"]}
 
     def __init__(self, enable_render=True):
         super(BabaEnv, self).__init__()
 
-        self.path = '../../../Resources/Maps/baba_is_you.txt'
+        self.path = "../../../Resources/Maps/baba_is_you.txt"
         self.game = pyBaba.Game(self.path)
         self.renderer = rendering.Renderer(self.game)
 
@@ -22,15 +22,19 @@ class BabaEnv(gym.Env):
             pyBaba.Direction.UP,
             pyBaba.Direction.DOWN,
             pyBaba.Direction.LEFT,
-            pyBaba.Direction.RIGHT
+            pyBaba.Direction.RIGHT,
         ]
         self.action_space = spaces.Discrete(len(self.actions))
         self.observation_space = spaces.Box(
-            low=0, high=1,
-            shape=(pyBaba.Preprocess.TENSOR_DIM,
-                   self.game.GetMap().GetHeight(),
-                   self.game.GetMap().GetWidth()),
-            dtype=np.float32)
+            low=0,
+            high=1,
+            shape=(
+                pyBaba.Preprocess.TENSOR_DIM,
+                self.game.GetMap().GetHeight(),
+                self.game.GetMap().GetWidth(),
+            ),
+            dtype=np.float32,
+        )
         self.action_size = self.action_space.n
 
         self.seed()
@@ -38,6 +42,7 @@ class BabaEnv(gym.Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+        self.game.SetRandomSeed(seed & 0xFFFFFFFF)
 
         return [seed]
 
@@ -63,7 +68,7 @@ class BabaEnv(gym.Env):
 
         return self.get_obs(), reward, self.done, {}
 
-    def render(self, mode='human', close=False):
+    def render(self, mode="human", close=False):
         if close:
             self.renderer.quit_game()
 
@@ -71,13 +76,13 @@ class BabaEnv(gym.Env):
 
     def get_obs(self):
         return np.array(
-            pyBaba.Preprocess.StateToTensor(self.game),
-            dtype=np.float32).reshape(-1, self.game.GetMap().GetHeight(), self.game.GetMap().GetWidth())
+            pyBaba.Preprocess.StateToTensor(self.game), dtype=np.float32
+        ).reshape(-1, self.game.GetMap().GetHeight(), self.game.GetMap().GetWidth())
 
 
 register(
-    id='baba-babaisyou-v0',
-    entry_point='environment:BabaEnv',
+    id="baba-babaisyou-v0",
+    entry_point="environment:BabaEnv",
     max_episode_steps=200,
-    nondeterministic=True
+    nondeterministic=True,
 )

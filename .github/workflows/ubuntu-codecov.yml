@@ -62,6 +62,7 @@ jobs:
       if: ${{ github.actor != 'dependabot[bot]' }}
       uses: codecov/codecov-action@v7
       with:
+        disable_search: true
         fail_ci_if_error: true
         files: ./build/coverage.info.cleaned
         flags: unittests

@@ -6,15 +6,24 @@
 
 #include <baba-is-auto/Rules/Rule.hpp>
 
+#include <utility>
+
 namespace baba_is_auto
 {
-Rule::Rule(Object obj1, Object obj2, Object obj3)
+bool RuleCondition::operator==(const RuleCondition& rhs) const
 {
-    objects = { obj1, obj2, obj3 };
+    return op == rhs.op && targets == rhs.targets && negated == rhs.negated;
+}
+
+Rule::Rule(Object obj1, Object obj2, Object obj3,
+           std::vector<RuleCondition> ruleConditions)
+    : conditions(std::move(ruleConditions))
+{
+    objects = { std::move(obj1), std::move(obj2), std::move(obj3) };
 }
 
 bool Rule::operator==(const Rule& rhs) const
 {
-    return objects == rhs.objects;
+    return objects == rhs.objects && conditions == rhs.conditions;
 }
 }  // namespace baba_is_auto

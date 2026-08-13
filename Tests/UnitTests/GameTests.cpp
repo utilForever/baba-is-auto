@@ -38,6 +38,14 @@ void Move(Game& game, std::string_view actions)
         game.MovePlayer(directions[index]);
     }
 }
+
+void AddRule(Game& game, ObjectType subject, ObjectType predicate,
+             std::size_t y = 3)
+{
+    game.GetMap().AddObject(0, y, subject);
+    game.GetMap().AddObject(1, y, ObjectType::IS);
+    game.GetMap().AddObject(2, y, predicate);
+}
 }  // namespace
 
 TEST_CASE("Game - Basic")
@@ -87,6 +95,16 @@ TEST_CASE("Game - Basic")
     CHECK(game.GetRuleManager().GetNumRules() == 4);
     CHECK(game.GetPlayerIcon() == ObjectType::ICON_BABA);
     CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - HAS does not grant properties")
+{
+    Game game(MAPS_DIR "has_property.txt");
+
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
+    CHECK(game.GetRuleManager().FindPlayer() == ObjectType::ICON_EMPTY);
+    CHECK_FALSE(game.GetRuleManager().HasProperty({ ObjectType::ICON_BABA },
+                                                  ObjectType::YOU));
 }
 
 TEST_CASE("Game - Grass Yard")
@@ -532,6 +550,924 @@ TEST_CASE("Map - Basic")
     CHECK(map.At(4, 3).HasType(ObjectType::BABA));
 }
 
+TEST_CASE("Map - Per-object facing")
+{
+    Map map(2, 1);
+    CHECK_THROWS_AS(map.AddObject(0, 0, ObjectType::ICON_KEKE, Direction::NONE),
+                    std::invalid_argument);
+
+    map.AddObject(0, 0, ObjectType::ICON_KEKE, Direction::UP);
+    map.AddObject(0, 0, ObjectType::ICON_KEKE, Direction::DOWN);
+
+    const auto& instances = map.At(0, 0).GetInstances();
+    CHECK(instances.size() == 2);
+    CHECK(instances[0].id != instances[1].id);
+    CHECK(instances[0].direction == Direction::UP);
+    CHECK(instances[1].direction == Direction::DOWN);
+    CHECK_FALSE(map.SetDirection(instances[0].id, Direction::NONE));
+    CHECK(map.GetDirection(instances[0].id) == Direction::UP);
+
+    map.AddObject(1, 0, ObjectType::ICON_LOVE);
+    const auto& legacy = map.At(1, 0).GetInstances();
+    CHECK(legacy.size() == 1);
+    CHECK(legacy[0].direction == Direction::RIGHT);
+
+    const ObjectID keke = instances[0].id;
+    CHECK_FALSE(map.MoveObject(keke, 2, 0));
+    CHECK_FALSE(map.MoveObject(keke, 0, 1));
+    CHECK(map.GetPosition(keke) == Position{ 0, 0 });
+    CHECK(map.GetDirection(keke) == Direction::UP);
+
+    CHECK(map.MoveObject(keke, 1, 0));
+    CHECK(map.GetPosition(keke) == Position{ 1, 0 });
+    CHECK(map.GetDirection(keke) == Direction::UP);
+}
+
+TEST_CASE("Map - ID zero is never addressable")
+{
+    Map map(2, 1);
+
+    CHECK_FALSE(map.GetPosition(0));
+    CHECK(map.GetInstance(0) == nullptr);
+    CHECK_FALSE(map.GetDirection(0));
+    CHECK_FALSE(map.SetDirection(0, Direction::RIGHT));
+    CHECK_FALSE(map.MoveObject(0, 1, 0));
+    CHECK_FALSE(map.RemoveObject(0));
+}
+
+TEST_CASE("Map - Direction section")
+{
+    Map map;
+    map.Load(MAPS_DIR "directions.txt");
+
+    const auto& instances = map.At(0, 0).GetInstances();
+    CHECK(instances.size() == 2);
+    CHECK(instances[0].direction == Direction::UP);
+    CHECK(instances[1].direction == Direction::LEFT);
+
+    map.Reset();
+    const auto& reset = map.At(0, 0).GetInstances();
+    CHECK(reset.size() == 2);
+    CHECK(reset[0].direction == Direction::UP);
+    CHECK(reset[1].direction == Direction::LEFT);
+}
+
+TEST_CASE("Map - Invalid direction section")
+{
+    Map map;
+    CHECK_THROWS_AS(map.Load(MAPS_DIR "invalid_directions.txt"),
+                    std::runtime_error);
+}
+
+TEST_CASE("Enums - Directional LOCKED preserves map values")
+{
+    CHECK(static_cast<int>(ObjectType::BABA) == 4);
+    CHECK(static_cast<int>(ObjectType::MOVE) == 83);
+    CHECK(static_cast<int>(ObjectType::ICON_BABA) == 114);
+    CHECK(static_cast<int>(ObjectType::ICON_WATER) == 175);
+
+    CHECK(IsTextType(ObjectType::LOCKED_UP));
+    CHECK(IsTextType(ObjectType::LOCKED_DOWN));
+    CHECK(IsPropertyType(ObjectType::LOCKED_LEFT));
+    CHECK(IsPropertyType(ObjectType::LOCKED_RIGHT));
+    CHECK(ConvertIconToText(ObjectType::LOCKED_UP) == ObjectType::LOCKED_UP);
+    CHECK(ConvertTextToIcon(ObjectType::LOCKED_RIGHT) ==
+          ObjectType::LOCKED_RIGHT);
+}
+
+TEST_CASE("Game - Conditional MOVE rules")
+{
+    Game game(MAPS_DIR "move_conditions.txt");
+
+    const auto rules = game.GetRuleManager().GetRules(ObjectType::MOVE);
+    CHECK(rules.size() == 6);
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
+    CHECK(game.GetRuleManager().FindPlayer() == ObjectType::ICON_EMPTY);
+    CHECK_FALSE(game.GetRuleManager().HasProperty({ ObjectType::ICON_KEKE },
+                                                  ObjectType::MOVE));
+
+    const std::array expectedOps = { ObjectType::LONELY, ObjectType::ON,
+                                     ObjectType::NEAR, ObjectType::FACING };
+
+    for (std::size_t i = 0; i < expectedOps.size(); ++i)
+    {
+        CHECK(rules[i].conditions.size() == 1);
+        CHECK(rules[i].conditions[0].op == expectedOps[i]);
+        CHECK_FALSE(rules[i].conditions[0].negated);
+    }
+
+    CHECK(rules[4].conditions.size() == 2);
+    CHECK(rules[4].conditions[0].op == ObjectType::ON);
+    CHECK(rules[4].conditions[0].negated);
+    CHECK(rules[4].conditions[0].targets == std::vector{ ObjectType::LOVE });
+    CHECK(rules[4].conditions[1].op == ObjectType::NEAR);
+    CHECK_FALSE(rules[4].conditions[1].negated);
+
+    CHECK(rules[5].conditions.size() == 1);
+    CHECK(rules[5].conditions[0].op == ObjectType::LONELY);
+    CHECK(rules[5].conditions[0].negated);
+}
+
+TEST_CASE("Game - MOVE special noun conditions")
+{
+    Game game(MAPS_DIR "move_special_conditions.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(2, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(9, 5).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(3, 8).HasType(ObjectType::ICON_KEKE));
+}
+
+TEST_CASE("Game - MOVE ALL conditions exclude special nouns")
+{
+    Game game(MAPS_DIR "move_all_condition.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 2).HasType(ObjectType::ICON_EMPTY));
+
+    const auto& instances = game.GetMap().At(2, 2).GetInstances();
+    CHECK(
+        std::count_if(instances.begin(), instances.end(), [](const auto& obj) {
+            return obj.type == ObjectType::ICON_BABA;
+        }) == 2);
+}
+
+TEST_CASE("Game - Conditional PUSH observes directional lock")
+{
+    Game game(MAPS_DIR "conditional_push_scope.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(1, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_ROCK));
+}
+
+TEST_CASE("Game - YOU cannot move through a directional lock")
+{
+    Game game(MAPS_DIR "locked_you.txt");
+    const auto baba = game.GetMap().At(1, 2).GetInstances().front().id;
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().GetPosition(baba) == Position{ 1, 2 });
+    CHECK(game.GetMap().GetDirection(baba) == Direction::RIGHT);
+}
+
+TEST_CASE("Game - PUSH overrides STOP on the same instance")
+{
+    Game game(MAPS_DIR "conditional_push_stop.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(3, 3).HasType(ObjectType::ICON_ROCK));
+}
+
+TEST_CASE("Game - Conditional YOU applies per instance")
+{
+    Game game(MAPS_DIR "conditional_you.txt");
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_ROCK));
+}
+
+TEST_CASE("Game - Conditional transformations apply per instance")
+{
+    Game game(MAPS_DIR "conditional_transformation.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_LOVE));
+    CHECK_FALSE(game.GetMap().At(1, 1).HasType(ObjectType::ICON_BABA));
+}
+
+TEST_CASE("Game - Conditional transformations use a phase snapshot")
+{
+    Game game(MAPS_DIR "conditional_transformation_snapshot.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 2).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(1, 2).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(game.GetMap().At(1, 2).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(1, 2).HasType(ObjectType::ICON_LOVE));
+}
+
+TEST_CASE("Game - Conditional EMPTY transformations apply per position")
+{
+    Game game(MAPS_DIR "conditional_empty_transformation.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(2, 1).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(3, 1).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(4, 1).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(2, 2).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(4, 2).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(6, 2).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - Directionless EMPTY does not satisfy FACING")
+{
+    Game game(MAPS_DIR "conditional_empty_facing.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_EMPTY));
+    CHECK_FALSE(game.GetMap().At(2, 3).HasType(ObjectType::ICON_KEKE));
+    CHECK_FALSE(game.GetMap().At(2, 3).HasType(ObjectType::ICON_LOVE));
+}
+
+TEST_CASE("Game - Later direction rules set EMPTY FACING direction")
+{
+    Game game(MAPS_DIR "conditional_empty_assigned_facing.txt");
+
+    game.MovePlayer(Direction::NONE);
+
+    const auto& instances = game.GetMap().At(2, 3).GetInstances();
+    CHECK(instances.size() == 1);
+    CHECK(instances.front().type == ObjectType::ICON_KEKE);
+    CHECK(instances.front().direction == Direction::UP);
+}
+
+TEST_CASE("Game - Conditional overlap effects apply per instance")
+{
+    Game game(MAPS_DIR "conditional_sink.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 1).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - SINK conditions use one effect-phase snapshot")
+{
+    Game game(MAPS_DIR "conditional_sink_snapshot.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(3, 2).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(4, 2).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - HOT and MELT conditions use one effect-phase snapshot")
+{
+    Game game(MAPS_DIR "conditional_hot_melt_snapshot.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK_FALSE(game.GetMap().At(3, 3).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(4, 3).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(3, 3).HasType(ObjectType::ICON_WATER));
+    CHECK(game.GetMap().At(4, 3).HasType(ObjectType::ICON_WATER));
+}
+
+TEST_CASE("Game - DEFEAT conditions use one effect-phase snapshot")
+{
+    Game game(MAPS_DIR "conditional_defeat_snapshot.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK_FALSE(game.GetMap().At(3, 4).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(4, 4).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_SKULL));
+    CHECK(game.GetMap().At(4, 4).HasType(ObjectType::ICON_WATER));
+}
+
+TEST_CASE("Game - MOVE uses phase snapshots and stacked counts")
+{
+    Game game(MAPS_DIR "move_conditions.txt");
+    game.GetMap().AddObject(0, 5, ObjectType::ICON_LOVE);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(2, 5).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(1, 8).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(4, 11).HasType(ObjectType::ICON_KEKE));
+}
+
+TEST_CASE("Game - MOVE wait, bounce, WEAK, and directional locks")
+{
+    Game game(MAPS_DIR "move_rules.txt");
+
+    const auto rock = game.GetMap().At(5, 11).GetInstances().front().id;
+    CHECK(game.GetMap().SetDirection(rock, Direction::LEFT));
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(11, 8).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(5, 8).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(5, 8).GetInstances().front().direction ==
+          Direction::LEFT);
+    CHECK(game.GetMap().At(6, 8).HasType(ObjectType::ICON_ROBOT));
+    CHECK(game.GetMap().At(5, 9).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(5, 9).GetInstances().front().direction ==
+          Direction::LEFT);
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_ALGAE).empty());
+    CHECK(game.GetMap().At(6, 11).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().GetDirection(rock) == Direction::RIGHT);
+}
+
+TEST_CASE("Game - MOVE cannot start in a locked direction")
+{
+    Game game(MAPS_DIR "move_rules.txt");
+    const auto rock = game.GetMap().At(5, 11).GetInstances().front().id;
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().GetPosition(rock) == Position{ 5, 11 });
+    CHECK(game.GetMap().GetDirection(rock) == Direction::RIGHT);
+}
+
+TEST_CASE("Game - MOVE ignores invalid NONE facing")
+{
+    Game game(MAPS_DIR "move_rules.txt");
+    const auto keke = game.GetMap().At(10, 8).GetInstances().front().id;
+
+    game.GetMap().AddObject(10, 8, ObjectType::BABA);
+
+    auto* instance = game.GetMap().GetInstance(keke);
+    REQUIRE(instance != nullptr);
+
+    instance->direction = Direction::NONE;
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().GetPosition(keke) == Position{ 10, 8 });
+    CHECK(game.GetMap().GetDirection(keke) == Direction::NONE);
+}
+
+TEST_CASE("Game - MOVE assigns IDs to writable map insertions")
+{
+    Game game(MAPS_DIR "move_rules.txt");
+
+    game.GetMap().At(1, 12).Add(ObjectType::ICON_KEKE);
+    CHECK(game.GetMap().At(1, 12).GetInstances().front().id == 0);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 12).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(2, 12).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(2, 12).GetInstances().front().id != 0);
+}
+
+TEST_CASE("Game - MOVE resolves each stack in rounds")
+{
+    Game game(MAPS_DIR "move_order.txt");
+
+    const auto keke = game.GetMap().At(2, 4).GetInstances().front().id;
+    CHECK(game.GetMap().SetDirection(keke, Direction::UP));
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(4, 4).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().GetDirection(keke) == Direction::RIGHT);
+}
+
+TEST_CASE("Game - MOVE follows column-major object priority")
+{
+    Game game(MAPS_DIR "move_priority.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_EMPTY));
+    CHECK(std::count_if(game.GetMap().At(1, 3).GetInstances().begin(),
+                        game.GetMap().At(1, 3).GetInstances().end(),
+                        [](const ObjectInstance& instance) {
+                            return instance.type == ObjectType::ICON_KEKE;
+                        }) == 2);
+}
+
+TEST_CASE("Game - MOVE keeps priority after new objects are added")
+{
+    Game game(MAPS_DIR "move_priority.txt");
+
+    Map& map = game.GetMap();
+    map.RemoveObject(1, 2, ObjectType::ICON_KEKE);
+    map.RemoveObject(0, 3, ObjectType::ICON_KEKE);
+    map.RemoveObject(1, 3, ObjectType::ICON_ROCK);
+    map.AddObject(2, 3, ObjectType::ICON_KEKE, Direction::LEFT);
+    map.AddObject(1, 3, ObjectType::ICON_ROCK);
+    map.AddObject(0, 3, ObjectType::ICON_KEKE, Direction::RIGHT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(0, 3).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(2, 3).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - MOVE follows rule priority before object priority")
+{
+    Game game(MAPS_DIR "move_rule_priority.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(2, 3).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(2, 4).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(2, 4).HasType(ObjectType::ICON_LOVE));
+}
+
+TEST_CASE("Game - direction properties use their stacked counts")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(0, 1, ObjectType::KEKE);
+    map.AddObject(1, 1, ObjectType::IS);
+    map.AddObject(2, 1, ObjectType::UP);
+    map.AddObject(3, 1, ObjectType::AND);
+    map.AddObject(4, 1, ObjectType::UP);
+    map.AddObject(5, 1, ObjectType::AND);
+    map.AddObject(6, 1, ObjectType::LEFT);
+
+    AddRule(game, ObjectType::KEKE, ObjectType::MOVE, 2);
+
+    map.AddObject(7, 3, ObjectType::ICON_KEKE, Direction::RIGHT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(7, 2).HasType(ObjectType::ICON_KEKE));
+    CHECK(map.At(7, 2).GetInstances().front().direction == Direction::UP);
+}
+
+TEST_CASE("Game - tied direction properties choose clockwise from facing")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    Map& map = game.GetMap();
+
+    map.AddObject(0, 1, ObjectType::KEKE);
+    map.AddObject(1, 1, ObjectType::IS);
+    map.AddObject(2, 1, ObjectType::UP);
+    map.AddObject(3, 1, ObjectType::AND);
+    map.AddObject(4, 1, ObjectType::LEFT);
+    AddRule(game, ObjectType::KEKE, ObjectType::MOVE, 2);
+    map.AddObject(7, 3, ObjectType::ICON_KEKE, Direction::LEFT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(7, 2).HasType(ObjectType::ICON_KEKE));
+    CHECK(map.At(7, 2).GetInstances().front().direction == Direction::UP);
+}
+
+TEST_CASE("Game - stacked EMPTY MOVE advances each step")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    Map& map = game.GetMap();
+
+    AddRule(game, ObjectType::EMPTY, ObjectType::UP, 1);
+    map.AddObject(0, 2, ObjectType::EMPTY);
+    map.AddObject(1, 2, ObjectType::IS);
+    map.AddObject(2, 2, ObjectType::MOVE);
+    map.AddObject(3, 2, ObjectType::AND);
+    map.AddObject(4, 2, ObjectType::MOVE);
+    map.AddObject(7, 0, ObjectType::ICON_WALL);
+    map.AddObject(7, 1, ObjectType::ICON_WALL);
+    map.AddObject(7, 2, ObjectType::BABA);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(7, 0).HasType(ObjectType::BABA));
+    CHECK(map.At(7, 1).HasType(ObjectType::ICON_WALL));
+    CHECK(map.At(7, 2).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - EMPTY MOVE turns before moving away from an obstacle")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    Map& map = game.GetMap();
+
+    AddRule(game, ObjectType::EMPTY, ObjectType::UP, 1);
+    map.AddObject(0, 2, ObjectType::EMPTY);
+    map.AddObject(1, 2, ObjectType::NEAR);
+    map.AddObject(2, 2, ObjectType::LOVE);
+    map.AddObject(3, 2, ObjectType::IS);
+    map.AddObject(4, 2, ObjectType::MOVE);
+    map.AddObject(6, 0, ObjectType::ICON_LOVE);
+    map.AddObject(7, 1, ObjectType::BABA);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(7, 1).HasType(ObjectType::BABA));
+    CHECK(map.At(7, 2).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - EMPTY MOVE cannot start in a locked direction")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    Map& map = game.GetMap();
+
+    AddRule(game, ObjectType::EMPTY, ObjectType::UP, 1);
+    AddRule(game, ObjectType::EMPTY, ObjectType::LOCKED_UP, 2);
+    map.AddObject(0, 3, ObjectType::EMPTY);
+    map.AddObject(1, 3, ObjectType::NEAR);
+    map.AddObject(2, 3, ObjectType::LOVE);
+    map.AddObject(3, 3, ObjectType::IS);
+    map.AddObject(4, 3, ObjectType::MOVE);
+    map.AddObject(6, 2, ObjectType::ICON_LOVE);
+    map.AddObject(7, 1, ObjectType::BABA);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(7, 1).HasType(ObjectType::BABA));
+    CHECK(map.At(7, 0).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - EMPTY MOVE recalculates positions between steps")
+{
+    Game game(MAPS_DIR "empty_move_recalculation.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(9, 0).HasType(ObjectType::BABA));
+    CHECK(game.GetMap().At(9, 1).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - EMPTY properties are evaluated at their position")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    Map& map = game.GetMap();
+
+    AddRule(game, ObjectType::EMPTY, ObjectType::STOP, 1);
+    AddRule(game, ObjectType::BABA, ObjectType::YOU, 2);
+    map.AddObject(7, 3, ObjectType::ICON_BABA);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::UP);
+    CHECK(map.At(7, 3).HasType(ObjectType::ICON_BABA));
+    CHECK(map.At(7, 2).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - Transformations use one snapshot")
+{
+    Game game(MAPS_DIR "transformations.txt");
+
+    const auto keke = game.GetMap().At(0, 9).GetInstances().front().id;
+    CHECK(game.GetMap().SetDirection(keke, Direction::UP));
+
+    game.MovePlayer(Direction::NONE);
+
+    for (const std::size_t x : { 0u, 1u })
+    {
+        CHECK(game.GetMap().At(x, 9).HasType(ObjectType::ICON_LOVE));
+        CHECK(game.GetMap().At(x, 9).HasType(ObjectType::ICON_ROCK));
+        CHECK(std::count_if(game.GetMap().At(x, 9).GetInstances().begin(),
+                            game.GetMap().At(x, 9).GetInstances().end(),
+                            [](const ObjectInstance& instance) {
+                                return instance.type == ObjectType::ICON_LOVE;
+                            }) == 2);
+    }
+
+    const auto* transformed = game.GetMap().GetInstance(keke);
+    REQUIRE(transformed != nullptr);
+    CHECK(transformed->type == ObjectType::ICON_LOVE);
+    CHECK(transformed->direction == Direction::UP);
+
+    const auto rock = std::find_if(
+        game.GetMap().At(0, 9).GetInstances().begin(),
+        game.GetMap().At(0, 9).GetInstances().end(), [](const auto& instance) {
+            return instance.type == ObjectType::ICON_ROCK;
+        });
+    REQUIRE(rock != game.GetMap().At(0, 9).GetInstances().end());
+    CHECK(rock->direction == Direction::UP);
+
+    CHECK(game.GetMap().At(3, 9).HasType(ObjectType::ICON_ALGAE));
+    CHECK_FALSE(game.GetMap().At(3, 9).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(5, 9).HasType(ObjectType::ICON_WALL));
+    CHECK(game.GetMap().At(6, 9).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(8, 9).HasType(ObjectType::ICON_BIRD));
+    CHECK(game.GetMap().At(9, 9).HasType(ObjectType::ICON_BOG));
+    CHECK(game.GetMap().At(10, 9).HasType(ObjectType::ICON_BAT));
+    CHECK(game.GetMap().At(12, 9).HasType(ObjectType::ICON_EMPTY));
+    CHECK(game.GetMap().At(19, 10).HasType(ObjectType::ICON_FLOWER));
+}
+
+TEST_CASE("Game - Special noun TEXT subject transforms every text")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::TEXT, ObjectType::ROCK);
+
+    game.MovePlayer(Direction::NONE);
+
+    for (const std::size_t x : { 0u, 1u, 2u })
+    {
+        CHECK(game.GetMap().At(x, 3).HasType(ObjectType::ICON_ROCK));
+        CHECK_FALSE(game.GetMap().At(x, 3).HasTextType());
+    }
+}
+
+TEST_CASE("Game - Special noun TEXT predicate writes the source noun")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::BABA, ObjectType::TEXT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::BABA));
+    CHECK_FALSE(game.GetMap().At(0, 0).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(0, 0).HasType(ObjectType::ICON_TEXT));
+}
+
+TEST_CASE("Game - Unsupported GROUP predicate does not create an icon")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::BABA, ObjectType::GROUP);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(game.GetMap().At(0, 0).HasType(ObjectType::ICON_GROUP));
+}
+
+TEST_CASE("Game - Special noun ALL subject transforms every member")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::ALL, ObjectType::LOVE);
+    AddRule(game, ObjectType::LOVE, ObjectType::ROCK, 2);
+
+    game.MovePlayer(Direction::NONE);
+
+    for (const std::size_t x : { 0u, 2u, 4u })
+    {
+        CHECK(game.GetMap().At(x, 0).HasType(ObjectType::ICON_LOVE));
+        CHECK(game.GetMap().At(x, 0).GetInstances().size() == 1);
+    }
+}
+
+TEST_CASE("Game - Special noun ALL predicate expands without a self guard")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::BABA, ObjectType::ALL);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(0, 0).GetInstances().size() == 3);
+}
+
+TEST_CASE("Game - Special noun ALL does not duplicate types on its tile")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    game.GetMap().AddObject(0, 0, ObjectType::ICON_ROCK);
+    AddRule(game, ObjectType::BABA, ObjectType::ALL);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(std::count_if(game.GetMap().At(0, 0).GetInstances().begin(),
+                        game.GetMap().At(0, 0).GetInstances().end(),
+                        [](const ObjectInstance& instance) {
+                            return instance.type == ObjectType::ICON_ROCK;
+                        }) == 1);
+    CHECK(game.GetMap().At(0, 0).GetInstances().size() == 3);
+}
+
+TEST_CASE("Game - Identity rule blocks ALL expansion")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::BABA, ObjectType::ALL, 1);
+    AddRule(game, ObjectType::BABA, ObjectType::BABA, 2);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(0, 0).GetInstances().size() == 1);
+}
+
+TEST_CASE("Game - EMPTY identity rule blocks ALL expansion")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::EMPTY, ObjectType::ALL, 1);
+    AddRule(game, ObjectType::EMPTY, ObjectType::EMPTY, 2);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(7, 0).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - Duplicate EMPTY IS ALL creates each type once")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::EMPTY, ObjectType::ALL, 1);
+    AddRule(game, ObjectType::EMPTY, ObjectType::ALL, 2);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(7, 0).GetInstances().size() == 3);
+}
+
+TEST_CASE("Game - directionless EMPTY transformation is not fixed to RIGHT")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    game.SetRandomSeed(0);
+    AddRule(game, ObjectType::EMPTY, ObjectType::KEKE);
+
+    game.MovePlayer(Direction::NONE);
+
+    const auto positions = game.GetMap().GetPositions(ObjectType::ICON_KEKE);
+    CHECK(positions.size() > 10);
+    CHECK(
+        std::any_of(positions.begin(), positions.end(), [&game](Position pos) {
+            return game.GetMap()
+                       .At(pos.first, pos.second)
+                       .GetInstances()
+                       .front()
+                       .direction != Direction::RIGHT;
+        }));
+}
+
+TEST_CASE("Game - random seed repeats EMPTY transformation directions")
+{
+    Game first(MAPS_DIR "special_transformations.txt");
+    Game second(MAPS_DIR "special_transformations.txt");
+    AddRule(first, ObjectType::EMPTY, ObjectType::KEKE);
+    AddRule(second, ObjectType::EMPTY, ObjectType::KEKE);
+
+    first.SetRandomSeed(12345);
+    second.SetRandomSeed(12345);
+    first.MovePlayer(Direction::NONE);
+    second.MovePlayer(Direction::NONE);
+
+    const auto Directions = [](const Game& game) {
+        std::vector<Direction> result;
+
+        for (std::size_t y = 0; y < game.GetMap().GetHeight(); ++y)
+        {
+            for (std::size_t x = 0; x < game.GetMap().GetWidth(); ++x)
+            {
+                for (const ObjectInstance& instance :
+                     game.GetMap().At(x, y).GetInstances())
+                {
+                    if (instance.type == ObjectType::ICON_KEKE)
+                    {
+                        result.emplace_back(instance.direction);
+                    }
+                }
+            }
+        }
+
+        return result;
+    };
+
+    const auto firstDirections = Directions(first);
+    CHECK_FALSE(firstDirections.empty());
+    CHECK(firstDirections == Directions(second));
+}
+
+TEST_CASE("Game - EMPTY IS ALL gives every object one valid direction")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    game.SetRandomSeed(12345);
+
+    AddRule(game, ObjectType::EMPTY, ObjectType::ALL);
+    game.MovePlayer(Direction::NONE);
+
+    const auto& instances = game.GetMap().At(7, 3).GetInstances();
+    CHECK(instances.size() == 3);
+
+    const Direction direction = instances.front().direction;
+    CHECK(direction != Direction::NONE);
+    CHECK(std::all_of(instances.begin(), instances.end(),
+                      [direction](const ObjectInstance& instance) {
+                          return instance.direction == direction;
+                      }));
+}
+
+TEST_CASE("Game - Special noun ALL to ALL expands every member")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    AddRule(game, ObjectType::ALL, ObjectType::ALL);
+
+    game.MovePlayer(Direction::NONE);
+
+    for (const std::size_t x : { 0u, 2u, 4u })
+    {
+        CHECK(game.GetMap().At(x, 0).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(x, 0).HasType(ObjectType::ICON_ROCK));
+        CHECK(game.GetMap().At(x, 0).HasType(ObjectType::ICON_LOVE));
+        CHECK(game.GetMap().At(x, 0).GetInstances().size() == 3);
+    }
+}
+
+TEST_CASE("Game - Special noun ALL membership persists after removal")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+    game.GetMap().RemoveObject(2, 0, ObjectType::ICON_ROCK);
+    AddRule(game, ObjectType::BABA, ObjectType::ALL);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_ROCK));
+}
+
+TEST_CASE("Game - Transformation timing precedes overlap effects")
+{
+    Game game(MAPS_DIR "transformation_timing.txt");
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(2, 4).HasType(ObjectType::ICON_WATER));
+    CHECK_FALSE(game.GetMap().At(5, 4).HasType(ObjectType::ICON_KEKE));
+    CHECK_FALSE(game.GetMap().At(5, 4).HasType(ObjectType::ICON_LOVE));
+    CHECK_FALSE(game.GetMap().At(5, 4).HasType(ObjectType::ICON_WATER));
+}
+
+TEST_CASE("Game - STOP WEAK allows entry and is destroyed")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.RemoveObject(1, 4, ObjectType::ICON_BABA);
+    map.AddObject(1, 1, ObjectType::ICON_BABA);
+    map.AddObject(2, 1, ObjectType::ICON_WALL);
+
+    AddRule(game, ObjectType::WALL, ObjectType::WEAK, 7);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(2, 1).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(map.At(2, 1).HasType(ObjectType::ICON_WALL));
+}
+
+TEST_CASE("Game - blocked PUSH WEAK is destroyed")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.RemoveObject(1, 4, ObjectType::ICON_BABA);
+    map.AddObject(1, 1, ObjectType::ICON_BABA);
+    map.AddObject(2, 1, ObjectType::ICON_ROCK);
+    map.AddObject(3, 1, ObjectType::ICON_WALL);
+
+    AddRule(game, ObjectType::ROCK, ObjectType::WEAK, 7);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(2, 1).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(map.At(2, 1).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(3, 1).HasType(ObjectType::ICON_WALL));
+}
+
+TEST_CASE("Game - locked PUSH WEAK allows entry without pushing ahead")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.RemoveObject(1, 4, ObjectType::ICON_BABA);
+    map.AddObject(1, 1, ObjectType::ICON_BABA);
+    map.AddObject(2, 1, ObjectType::ICON_ROCK);
+    map.AddObject(3, 1, ObjectType::ICON_LOVE);
+
+    map.AddObject(6, 1, ObjectType::LOVE);
+    map.AddObject(7, 1, ObjectType::IS);
+    map.AddObject(8, 1, ObjectType::PUSH);
+    map.AddObject(0, 7, ObjectType::ROCK);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::WEAK);
+    map.AddObject(3, 7, ObjectType::AND);
+    map.AddObject(4, 7, ObjectType::LOCKED_RIGHT);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(2, 1).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(map.At(2, 1).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(3, 1).HasType(ObjectType::ICON_LOVE));
+    CHECK(map.At(4, 1).HasType(ObjectType::ICON_EMPTY));
+}
+
+TEST_CASE("Game - blocked YOU WEAK is destroyed")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.RemoveObject(1, 4, ObjectType::ICON_BABA);
+    map.AddObject(0, 1, ObjectType::ICON_BABA);
+
+    AddRule(game, ObjectType::BABA, ObjectType::WEAK, 7);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::LEFT);
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+}
+
+TEST_CASE("Game - Affection layout and idle movement")
+{
+    Game game(MAPS_DIR "affection.txt");
+    CHECK(game.GetMap().GetWidth() == 24);
+    CHECK(game.GetMap().GetHeight() == 14);
+    CHECK(game.GetRuleManager().GetNumRules() == 5);
+    CHECK(game.GetMap().At(3, 9).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(16, 7).HasType(ObjectType::ICON_LOVE));
+    CHECK(game.GetMap().At(14, 5).HasType(ObjectType::ICON_ALGAE));
+    CHECK(game.GetMap().At(14, 4).HasType(ObjectType::ICON_TILE));
+
+    const auto right = game.GetMap().At(6, 3).GetInstances().front().id;
+    const auto up = game.GetMap().At(7, 7).GetInstances().front().id;
+    const auto down = game.GetMap().At(12, 10).GetInstances().front().id;
+    CHECK(game.GetMap().GetDirection(right) == Direction::RIGHT);
+    CHECK(game.GetMap().GetDirection(up) == Direction::UP);
+    CHECK(game.GetMap().GetDirection(down) == Direction::DOWN);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(7, 3).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(7, 6).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(12, 11).HasType(ObjectType::ICON_KEKE));
+
+    game.Reset();
+    CHECK(game.GetMap().GetDirection(up) == Direction::UP);
+    CHECK(game.GetMap().GetDirection(down) == Direction::DOWN);
+}
+
+TEST_CASE("Game - Affection MOVE solution")
+{
+    Game game(MAPS_DIR "affection.txt");
+
+    Move(game, "RRRRRUUUUURRRDDDD");
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::NONE);
+
+    Move(game, "DUUUUURRRRRRRRDDD");
+    CHECK(game.GetPlayState() == PlayState::WON);
+}
+
+TEST_CASE("Game - Affection transformation solution")
+{
+    Game game(MAPS_DIR "affection.txt");
+
+    Move(game, "URRRRRRRRDDUULDDUULLDRRDRUUUURUURU");
+    CHECK(game.GetPlayState() == PlayState::WON);
+}
+
 TEST_CASE("Map - Boundary Duplicate Stack")
 {
     Map map(3, 3);
@@ -581,6 +1517,19 @@ TEST_CASE("RuleManager - Basic")
 
     ruleManager.RemoveRule(rule2);
     CHECK(ruleManager.GetNumRules() == 1);
+}
+
+TEST_CASE("RuleCondition - Equality compares every field")
+{
+    const RuleCondition condition{ ObjectType::ON, { ObjectType::LOVE }, true };
+    CHECK(condition ==
+          RuleCondition{ ObjectType::ON, { ObjectType::LOVE }, true });
+    CHECK_FALSE(condition ==
+                RuleCondition{ ObjectType::NEAR, { ObjectType::LOVE }, true });
+    CHECK_FALSE(condition ==
+                RuleCondition{ ObjectType::ON, { ObjectType::ROCK }, true });
+    CHECK_FALSE(condition ==
+                RuleCondition{ ObjectType::ON, { ObjectType::LOVE }, false });
 }
 
 TEST_CASE("Map - Icon Vanishing")

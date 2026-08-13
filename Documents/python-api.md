@@ -20,51 +20,67 @@ Map coordinates are zero-based `(x, y)` pairs.
 
 # Games
 
-| API                                   | Description                                                                                                |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `Game(filename)`                      | Loads `filename`, parses its rules, and starts a game. Raises `RuntimeError` when the map data is invalid. |
-| `Game.Reset()`                        | Restores the loaded map and recalculates its initial rules and play state.                                 |
-| `Game.GetMap()`                       | Returns a copy of the map owned by the game.                                                               |
-| `Game.GetRuleManager()`               | Returns a copy of the rule manager owned by the game.                                                      |
-| `Game.GetPlayState()`                 | Returns the current `PlayState`.                                                                           |
-| `Game.GetPlayerIcon()`                | Returns the icon type selected by the active `YOU` rule.                                                   |
-| `Game.MovePlayer(direction)`          | Moves every object controlled by the active `YOU` rule in `direction`, then rebuilds rules and play state. |
-| `Map()`                               | Creates an empty zero-sized map.                                                                           |
-| `Map(width, height)`                  | Creates an empty map with the given dimensions.                                                            |
-| `Map.Reset()`                         | Restores the objects recorded when the map was loaded.                                                     |
-| `Map.GetWidth()`                      | Returns the map width.                                                                                     |
-| `Map.GetHeight()`                     | Returns the map height.                                                                                    |
-| `Map.Load(filename)`                  | Loads a one-to-three-layer text map. Raises `RuntimeError` when the map data is invalid.                   |
-| `Map.AddObject(x, y, object_type)`    | Adds one `object_type` to the cell at zero-based `(x, y)`.                                                 |
-| `Map.RemoveObject(x, y, object_type)` | Removes one `object_type` from the cell at zero-based `(x, y)`.                                            |
-| `Map.At(x, y)`                        | Returns a copy of the `Object` stored at zero-based `(x, y)`.                                              |
-| `Map.GetPositions(object_type)`       | Returns all zero-based `(x, y)` positions containing `object_type`.                                        |
-| `Object()`                            | Creates an empty cell object.                                                                              |
-| `Object(object_types)`                | Creates a cell object containing the supplied object types.                                                |
-| `Object.__eq__(other)`                | Returns whether two cell objects contain the same types.                                                   |
-| `Object.Add(object_type)`             | Adds one object type to the cell.                                                                          |
-| `Object.Remove(object_type)`          | Removes one matching object type from the cell.                                                            |
-| `Object.GetTypes()`                   | Returns all object types, including duplicate stacked values.                                              |
-| `Object.HasType(object_type)`         | Returns whether the cell contains `object_type`.                                                           |
-| `Object.HasTextType()`                | Returns whether the cell contains any text tile.                                                           |
-| `Object.HasNounType()`                | Returns whether the cell contains any noun text tile.                                                      |
-| `Object.HasVerbType()`                | Returns whether the cell contains any verb text tile.                                                      |
-| `Object.HasPropertyType()`            | Returns whether the cell contains any property text tile.                                                  |
+| API                                           | Description                                                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Game(filename)`                              | Loads `filename`, parses its rules, and starts a game. Raises `RuntimeError` when the map data is invalid. |
+| `Game.Reset()`                                | Restores the loaded map and recalculates its initial rules and play state.                                 |
+| `Game.SetRandomSeed(seed)`                    | Sets the 32-bit random seed used for directionless `EMPTY` behavior.                                       |
+| `Game.GetMap()`                               | Returns a copy of the map owned by the game.                                                               |
+| `Game.GetRuleManager()`                       | Returns a copy of the rule manager owned by the game.                                                      |
+| `Game.GetPlayState()`                         | Returns the current `PlayState`.                                                                           |
+| `Game.GetPlayerIcon()`                        | Returns the icon type selected by the active `YOU` rule.                                                   |
+| `Game.MovePlayer(direction)`                  | Moves every object controlled by the active `YOU` rule in `direction`, then rebuilds rules and play state. |
+| `Map()`                                       | Creates an empty zero-sized map.                                                                           |
+| `Map(width, height)`                          | Creates an empty map with the given dimensions.                                                            |
+| `Map.Reset()`                                 | Restores the objects recorded when the map was loaded.                                                     |
+| `Map.GetWidth()`                              | Returns the map width.                                                                                     |
+| `Map.GetHeight()`                             | Returns the map height.                                                                                    |
+| `Map.Load(filename)`                          | Loads a one-to-three-layer text map. Raises `RuntimeError` when the map data is invalid.                   |
+| `Map.AddObject(x, y, object_type)`            | Adds one `object_type` to the cell at zero-based `(x, y)`.                                                 |
+| `Map.AddObject(x, y, object_type, direction)` | Adds one object with its initial facing direction.                                                         |
+| `Map.RemoveObject(x, y, object_type)`         | Removes one `object_type` from the cell at zero-based `(x, y)`.                                            |
+| `Map.RemoveObject(object_id)`                 | Removes the object with the stable ID and reports whether it was found.                                    |
+| `Map.MoveObject(object_id, x, y)`             | Moves the object while preserving its stable ID and facing direction.                                      |
+| `Map.GetPosition(object_id)`                  | Returns the object's zero-based position, or `None` when absent.                                           |
+| `Map.SetDirection(object_id, direction)`      | Updates an object's facing direction and reports whether it was found.                                     |
+| `Map.GetDirection(object_id)`                 | Returns an object's facing direction, or `None` when absent.                                               |
+| `Map.At(x, y)`                                | Returns a copy of the `Object` stored at zero-based `(x, y)`.                                              |
+| `Map.GetPositions(object_type)`               | Returns all zero-based `(x, y)` positions containing `object_type`.                                        |
+| `ObjectInstance`                              | Stores one object's stable `id`, `type`, and facing `direction`.                                           |
+| `Object()`                                    | Creates an empty cell object.                                                                              |
+| `Object(object_types)`                        | Creates a cell object containing the supplied object types.                                                |
+| `Object.__eq__(other)`                        | Returns whether two cell objects contain the same types.                                                   |
+| `Object.Add(object_type)`                     | Adds one object type to the cell.                                                                          |
+| `Object.Remove(object_type)`                  | Removes one matching object type from the cell.                                                            |
+| `Object.GetTypes()`                           | Returns all object types, including duplicate stacked values.                                              |
+| `Object.GetInstances()`                       | Returns object instances with stable IDs and facing directions.                                            |
+| `Object.HasType(object_type)`                 | Returns whether the cell contains `object_type`.                                                           |
+| `Object.HasTextType()`                        | Returns whether the cell contains any text tile.                                                           |
+| `Object.HasNounType()`                        | Returns whether the cell contains any noun text tile.                                                      |
+| `Object.HasVerbType()`                        | Returns whether the cell contains any verb text tile.                                                      |
+| `Object.HasPropertyType()`                    | Returns whether the cell contains any property text tile.                                                  |
 
 # Rules
 
-| API                                                    | Description                                                           |
-| ------------------------------------------------------ | --------------------------------------------------------------------- |
-| `Rule(subject, operator, predicate)`                   | Creates a three-tile rule.                                            |
-| `Rule.__eq__(other)`                                   | Returns whether two rules contain the same three objects.             |
-| `RuleManager()`                                        | Creates an empty rule manager.                                        |
-| `RuleManager.AddRule(rule)`                            | Adds `rule` to the active rule list.                                  |
-| `RuleManager.RemoveRule(rule)`                         | Removes `rule` when it is present.                                    |
-| `RuleManager.ClearRules()`                             | Removes every active rule.                                            |
-| `RuleManager.GetRules(object_type)`                    | Returns rules containing `object_type` in any of their three objects. |
-| `RuleManager.GetNumRules()`                            | Returns the number of active rules.                                   |
-| `RuleManager.FindPlayer()`                             | Returns the icon type selected by the first active `YOU` rule.        |
-| `RuleManager.HasProperty(object_types, property_type)` | Returns whether any supplied object type has the active property.     |
+| API                                                    | Description                                                              |
+| ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `RuleCondition()`                                      | Creates a condition with an operator, target object types, and negation. |
+| `RuleCondition.op`                                     | Gets or sets the `LONELY`, `ON`, `NEAR`, or `FACING` operator.           |
+| `RuleCondition.targets`                                | Gets or sets the object types required by the condition.                 |
+| `RuleCondition.negated`                                | Gets or sets whether the condition is negated.                           |
+| `RuleCondition.__eq__(other)`                          | Returns whether two conditions contain the same values.                  |
+| `Rule(subject, operator, predicate)`                   | Creates an unconditional three-tile rule.                                |
+| `Rule(subject, operator, predicate, conditions)`       | Creates a three-tile rule restricted by `conditions`.                    |
+| `Rule.conditions`                                      | Returns the conditions restricting matching subject instances.           |
+| `Rule.__eq__(other)`                                   | Returns whether two rules contain the same objects and conditions.       |
+| `RuleManager()`                                        | Creates an empty rule manager.                                           |
+| `RuleManager.AddRule(rule)`                            | Adds `rule` to the active rule list.                                     |
+| `RuleManager.RemoveRule(rule)`                         | Removes `rule` when it is present.                                       |
+| `RuleManager.ClearRules()`                             | Removes every active rule.                                               |
+| `RuleManager.GetRules(object_type)`                    | Returns rules containing `object_type` in any of their three objects.    |
+| `RuleManager.GetNumRules()`                            | Returns the number of active rules.                                      |
+| `RuleManager.FindPlayer()`                             | Returns the icon type selected by the first unconditional `YOU` rule.    |
+| `RuleManager.HasProperty(object_types, property_type)` | Returns whether any supplied object type has the unconditional property. |
 
 # Agents
 
@@ -79,12 +95,12 @@ Map coordinates are zero-based `(x, y)` pairs.
 
 # Enums
 
-| API             | Description                                                                                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ObjectType`    | Identifies text tiles and in-game icons. Values use the exact names in [NounType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/NounType.def), [OpType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/OpType.def), [PropertyType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/PropertyType.def), and [IconType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/IconType.def), plus the four category sentinels. |
-| `PlayState`     | Identifies the current game state: `INVALID`, `PLAYING`, `WON`, or `LOST`.                                                                                                     |
-| `Direction`     | Identifies a movement direction: `NONE`, `UP`, `DOWN`, `LEFT`, or `RIGHT`.                                                                                                     |
-| `RuleDirection` | Identifies a rule orientation: `HORIZONTAL` or `VERTICAL`.                                                                                                                     |
+| API             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ObjectType`    | Identifies text tiles and in-game icons. Values use the exact names in [NounType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/NounType.def), [OpType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/OpType.def), [PropertyType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/PropertyType.def), and [IconType.def](https://github.com/utilForever/baba-is-auto/blob/main/Includes/baba-is-auto/Enums/IconType.def), plus the category sentinels and four directional `LOCKED_*` values. |
+| `PlayState`     | Identifies the current game state: `INVALID`, `PLAYING`, `WON`, or `LOST`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `Direction`     | Identifies a movement direction: `NONE`, `UP`, `DOWN`, `LEFT`, or `RIGHT`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `RuleDirection` | Identifies a rule orientation: `HORIZONTAL` or `VERTICAL`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 # Enum helpers
 
@@ -95,5 +111,7 @@ Map coordinates are zero-based `(x, y)` pairs.
 | `IsOpType(object_type)`          | Returns whether an object type represents operator text.                              |
 | `IsVerbType(object_type)`        | Returns whether an object type represents a supported verb.                           |
 | `IsPropertyType(object_type)`    | Returns whether an object type represents property text.                              |
+| `IsLockedType(object_type)`      | Returns whether an object type is a directional `LOCKED_*` property.                  |
+| `IsIconType(object_type)`        | Returns whether an object type represents an in-game icon.                            |
 | `ConvertIconToText(object_type)` | Converts an icon type to its matching text type; other values are returned unchanged. |
 | `ConvertTextToIcon(object_type)` | Converts a text type to its matching icon type; icon values are returned unchanged.   |

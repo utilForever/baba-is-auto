@@ -28,14 +28,27 @@ enum class ObjectType
 #define X(a) a,
 #include "IconType.def"
 #undef X
+    LOCKED_UP,
+    LOCKED_DOWN,
+    LOCKED_LEFT,
+    LOCKED_RIGHT,
 };
+
+//! Checks \p type is a directional LOCKED property.
+//! \param type The object type.
+//! \return The flag that indicates it is a directional LOCKED property.
+constexpr bool IsLockedType(ObjectType type)
+{
+    return type >= ObjectType::LOCKED_UP &&
+           type <= ObjectType::LOCKED_RIGHT;
+}
 
 //! Checks \p type is text type.
 //! \param type The object type.
 //! \return The flag that indicates it is text type.
 constexpr bool IsTextType(ObjectType type)
 {
-    return type < ObjectType::ICON_TYPE;
+    return type < ObjectType::ICON_TYPE || IsLockedType(type);
 }
 
 //! Checks \p type is noun type.
@@ -68,7 +81,17 @@ constexpr bool IsVerbType(ObjectType type)
 //! \return The flag that indicates it is property type.
 constexpr bool IsPropertyType(ObjectType type)
 {
-    return (type > ObjectType::PROPERTY_TYPE && type < ObjectType::ICON_TYPE);
+    return (type > ObjectType::PROPERTY_TYPE &&
+            type < ObjectType::ICON_TYPE) ||
+           IsLockedType(type);
+}
+
+//! Checks \p type is an in-game icon type.
+//! \param type The object type.
+//! \return The flag that indicates it is an in-game icon type.
+constexpr bool IsIconType(ObjectType type)
+{
+    return type > ObjectType::ICON_TYPE && type <= ObjectType::ICON_WATER;
 }
 
 //! Converts icon type to text type.
@@ -79,7 +102,7 @@ constexpr ObjectType ConvertIconToText(ObjectType type)
     const auto typeVal = static_cast<int>(type);
     const auto iconTypeVal = static_cast<int>(ObjectType::ICON_TYPE);
 
-    if (typeVal <= iconTypeVal)
+    if (!IsIconType(type))
     {
         return type;
     }
@@ -96,7 +119,7 @@ constexpr ObjectType ConvertTextToIcon(ObjectType type)
     const auto typeVal = static_cast<int>(type);
     const auto iconTypeVal = static_cast<int>(ObjectType::ICON_TYPE);
 
-    if (typeVal > iconTypeVal)
+    if (!IsNounType(type))
     {
         return type;
     }

@@ -10,6 +10,7 @@
 #include <baba-is-auto/Enums/GameEnums.hpp>
 #include <baba-is-auto/Games/Object.hpp>
 
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -56,11 +57,58 @@ class Map
     //! \param type An object type to add to the map.
     void AddObject(std::size_t x, std::size_t y, ObjectType type);
 
+    //! Adds an object with an initial facing direction.
+    //! \param x The x position.
+    //! \param y The y position.
+    //! \param type An object type to add to the map.
+    //! \param direction An initial facing direction of the object.
+    void AddObject(std::size_t x, std::size_t y, ObjectType type,
+                   Direction direction);
+
     //! Removes an object from the map.
     //! \param x The x position.
     //! \param y The y position.
     //! \param type An object type to remove from the map.
     void RemoveObject(std::size_t x, std::size_t y, ObjectType type);
+
+    //! Removes an object by stable ID.
+    //! \param id The stable ID of the object to remove.
+    //! \return True if the object was removed successfully, false otherwise.
+    bool RemoveObject(ObjectID id);
+
+    //! Moves an object by stable ID, preserving its state.
+    //! \param id The stable ID of the object to move.
+    //! \param x The new x position.
+    //! \param y The new y position.
+    //! \return True if the object was moved successfully, false otherwise.
+    bool MoveObject(ObjectID id, std::size_t x, std::size_t y);
+
+    //! Gets an object's current position.
+    //! \param id The stable ID of the object.
+    //! \return The current position of the object.
+    std::optional<Position> GetPosition(ObjectID id) const;
+
+    //! Gets an object by stable ID.
+    //! \param id The stable ID of the object.
+    //! \return A pointer to the object instance, or nullptr if not found.
+    ObjectInstance* GetInstance(ObjectID id);
+
+    //! Gets an object by stable ID.
+    //! \param id The stable ID of the object.
+    //! \return A pointer to the object instance, or nullptr if not found.
+    const ObjectInstance* GetInstance(ObjectID id) const;
+
+    //! Updates an object's facing direction.
+    //! \param id The stable ID of the object.
+    //! \param direction The new facing direction of the object.
+    //! \return True if the direction was updated successfully, false otherwise.
+    bool SetDirection(ObjectID id, Direction direction);
+
+    //! Gets an object's facing direction.
+    //! \param id The stable ID of the object.
+    //! \return The facing direction of the object, or std::nullopt if not
+    //! found.
+    std::optional<Direction> GetDirection(ObjectID id) const;
 
     //! Gets a writable object reference from the map.
     //! \param x The x position.
@@ -80,8 +128,26 @@ class Map
     std::vector<Position> GetPositions(ObjectType type) const;
 
  private:
+    friend class Game;
+
+    //! Adds an internally generated object after pending IDs are assigned.
+    //! \param x The x position.
+    //! \param y The y position.
+    //! \param type An object type to add to the map.
+    //! \param direction An initial facing direction of the object.
+    void AddGeneratedObject(std::size_t x, std::size_t y, ObjectType type,
+                            Direction direction);
+
+    //! Assigns missing object IDs to objects.
+    void AssignMissingObjectIDs();
+
     std::size_t m_width = 0;
     std::size_t m_height = 0;
+
+    ObjectID m_initNextObjectID = 1;
+    ObjectID m_nextObjectID = 1;
+
+    bool m_mayHaveMissingObjectIDs = false;
 
     std::vector<Object> m_initObjects;
     std::vector<Object> m_objects;
