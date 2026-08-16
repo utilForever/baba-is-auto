@@ -328,6 +328,42 @@ TEST_CASE("Game - Turns")
     }
 }
 
+TEST_CASE("Game - Pillar Yard")
+{
+    SUBCASE("Loads and resets")
+    {
+        Game game(MAPS_DIR "pillar_yard.txt");
+        CHECK(game.GetMap().GetWidth() == 24);
+        CHECK(game.GetMap().GetHeight() == 14);
+        CHECK(game.GetRuleManager().GetNumRules() == 5);
+        CHECK(game.GetMap().At(6, 7).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(8, 7).HasType(ObjectType::ICON_PILLAR));
+        CHECK(game.GetMap().At(3, 4).HasType(ObjectType::ICON_BRICK));
+        CHECK(game.GetMap().At(15, 7).HasType(ObjectType::ICON_STAR));
+        CHECK(game.GetMap().At(17, 7).HasType(ObjectType::ICON_FLAG));
+
+        game.MovePlayer(Direction::RIGHT);
+        game.Reset();
+        CHECK(game.GetMap().At(6, 7).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(8, 7).HasType(ObjectType::ICON_PILLAR));
+        CHECK(game.GetRuleManager().GetNumRules() == 5);
+        CHECK(game.GetPlayState() == PlayState::PLAYING);
+    }
+
+    SUBCASE("Forms PILLAR IS YOU and wins")
+    {
+        Game game(MAPS_DIR "pillar_yard.txt");
+
+        Move(game,
+             "RRRRRRUUUUUULLDDDDDLDRRRDDDDDLUUUULURRRRUUUUUULLLLLLLLL"
+             "DDLDRRRRURDDDDDDDRDLLLLULD");
+        CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_PILLAR },
+                                                ObjectType::YOU));
+        CHECK(game.GetMap().At(17, 7).HasType(ObjectType::ICON_PILLAR));
+        CHECK(game.GetPlayState() == PlayState::WON);
+    }
+}
+
 TEST_CASE("Game - Editor Smoke Map")
 {
     Game game(MAPS_DIR "editor_smoke.txt");

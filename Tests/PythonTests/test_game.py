@@ -454,6 +454,40 @@ def test_game_turns_rules_multiple_you_and_win():
     assert game.GetPlayState() == pyBaba.PlayState.WON
 
 
+def test_game_pillar_yard_load_and_reset():
+    game = pyBaba.Game("Resources/Maps/pillar_yard.txt")
+    assert game.GetMap().GetWidth() == 24
+    assert game.GetMap().GetHeight() == 14
+    assert game.GetRuleManager().GetNumRules() == 5
+    assert game.GetMap().At(6, 7).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(8, 7).HasType(pyBaba.ObjectType.ICON_PILLAR)
+    assert game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_BRICK)
+    assert game.GetMap().At(15, 7).HasType(pyBaba.ObjectType.ICON_STAR)
+    assert game.GetMap().At(17, 7).HasType(pyBaba.ObjectType.ICON_FLAG)
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    game.Reset()
+    assert game.GetMap().At(6, 7).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(8, 7).HasType(pyBaba.ObjectType.ICON_PILLAR)
+    assert game.GetRuleManager().GetNumRules() == 5
+    assert game.GetPlayState() == pyBaba.PlayState.PLAYING
+
+
+def test_game_pillar_yard_forms_pillar_is_you_and_wins():
+    game = pyBaba.Game("Resources/Maps/pillar_yard.txt")
+    solution = (
+        "RRRRRRUUUUUULLDDDDDLDRRRDDDDDLUUUULURRRRUUUUUULLLLLLLLL"
+        "DDLDRRRRURDDDDDDDRDLLLLULD"
+    )
+
+    _move(game, solution)
+    assert game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_PILLAR], pyBaba.ObjectType.YOU
+    )
+    assert game.GetMap().At(17, 7).HasType(pyBaba.ObjectType.ICON_PILLAR)
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
 def test_game_sink_reparses_destroyed_rule_text():
     game = pyBaba.Game("Resources/Maps/sink_rule_reparse.txt")
 
