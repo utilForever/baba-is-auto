@@ -1,6 +1,8 @@
 """Behavior checks for GUI-owned direction decisions."""
 
+import importlib.util
 from pathlib import Path
+import sys
 
 import pyBaba
 
@@ -81,19 +83,25 @@ def _gif_palette_starts(data):
         position += 1
 
 
-def test_affection_sprite_palettes_keep_colored_pixels_opaque():
+def test_sprite_palettes_keep_colored_pixels_opaque():
     root = Path(__file__).parents[2]
     sprites = {
-        "Extensions/BabaGUI/sprites/text/ALGAE.gif": ((84, 150, 64), 1),
-        "Extensions/BabaGUI/sprites/text/KEKE.gif": ((196, 90, 117), 1),
-        "Extensions/BabaGUI/sprites/text/LOVE.gif": ((241, 120, 242), 1),
-        "Extensions/BabaGUI/sprites/text/MOVE.gif": ((119, 171, 63), 1),
-        "Extensions/BabaGUI/sprites/icon/ALGAE.gif": ((84, 150, 64), 1),
-        "Extensions/BabaGUI/sprites/icon/KEKE.gif": ((196, 90, 117), 2),
-        "Extensions/BabaGUI/sprites/icon/LOVE.gif": ((241, 120, 242), 1),
+        "Extensions/BabaGUI/sprites/text/ALGAE.gif": (((84, 150, 64),), 1),
+        "Extensions/BabaGUI/sprites/text/KEKE.gif": (((196, 90, 117),), 1),
+        "Extensions/BabaGUI/sprites/text/LOVE.gif": (((241, 120, 242),), 1),
+        "Extensions/BabaGUI/sprites/text/MOVE.gif": (((119, 171, 63),), 1),
+        "Extensions/BabaGUI/sprites/icon/ALGAE.gif": (((84, 150, 64),), 1),
+        "Extensions/BabaGUI/sprites/icon/KEKE.gif": (((196, 90, 117),), 2),
+        "Extensions/BabaGUI/sprites/icon/LOVE.gif": (((241, 120, 242),), 1),
+        "Extensions/BabaGUI/sprites/text/PILLAR.gif": (((81, 111, 148),), 1),
+        "Extensions/BabaGUI/sprites/icon/PILLAR.gif": (
+            ((81, 111, 148), (36, 36, 36)),
+            2,
+        ),
+        "Extensions/BabaGUI/sprites/icon/BRICK.gif": (((42, 47, 39),), 1),
     }
 
-    for relative, (color, transparent_index) in sprites.items():
+    for relative, (colors, transparent_index) in sprites.items():
         data = (root / relative).read_bytes()
         assert int.from_bytes(data[6:8], "little") == 24
         assert int.from_bytes(data[8:10], "little") == 24
@@ -111,8 +119,10 @@ def test_affection_sprite_palettes_keep_colored_pixels_opaque():
         assert all(data[index + 6] == transparent_index for index in controls)
 
         for start in palettes:
-            assert tuple(data[start : start + 3]) == color
+            for palette_index, color in enumerate(colors):
+                offset = start + palette_index * 3
+                assert tuple(data[offset : offset + 3]) == color
 
-            for palette_index in range(1, transparent_index + 1):
+            for palette_index in range(len(colors), transparent_index + 1):
                 offset = start + palette_index * 3
                 assert max(data[offset : offset + 3]) <= 8

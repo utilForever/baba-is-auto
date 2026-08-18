@@ -183,6 +183,44 @@ TEST_CASE("Editor - Affection sprite assets")
     }
 }
 
+TEST_CASE("Editor - Pillar Yard round trip and sprite assets")
+{
+    namespace fs = std::filesystem;
+
+    LevelFile pillarYard;
+    REQUIRE(LoadLevelFile(MAPS_DIR "pillar_yard.txt", pillarYard));
+    CHECK(pillarYard.width == 24);
+    CHECK(pillarYard.height == 14);
+    CHECK(pillarYard.tiles[2 * pillarYard.width + 5][0] == ObjectType::PILLAR);
+    CHECK(pillarYard.tiles[7 * pillarYard.width + 8][0] ==
+          ObjectType::ICON_PILLAR);
+    CHECK(pillarYard.tiles[4 * pillarYard.width + 3][0] ==
+          ObjectType::ICON_BRICK);
+
+    const fs::path path =
+        fs::current_path() / "baba-is-auto-pillar-yard-round-trip.txt";
+    std::error_code error;
+    CHECK(SaveLevelFile(path, pillarYard));
+
+    LevelFile loaded;
+    REQUIRE(LoadLevelFile(path, loaded));
+    CHECK(loaded.tiles == pillarYard.tiles);
+    CHECK(loaded.directions == pillarYard.directions);
+
+    fs::remove(path, error);
+
+    const fs::path root = (fs::path(MAPS_DIR) / "../..").lexically_normal();
+
+    for (const char* asset : {
+             "Extensions/BabaGUI/sprites/text/PILLAR.gif",
+             "Extensions/BabaGUI/sprites/icon/PILLAR.gif",
+             "Extensions/BabaGUI/sprites/icon/BRICK.gif",
+         })
+    {
+        CHECK(fs::is_regular_file(root / asset));
+    }
+}
+
 TEST_CASE("Editor - Layer tile direction updates")
 {
     LevelFile::LayerTile tiles{ ObjectType::ICON_EMPTY, ObjectType::ICON_EMPTY,
