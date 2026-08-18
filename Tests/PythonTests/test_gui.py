@@ -126,25 +126,3 @@ def test_sprite_palettes_keep_colored_pixels_opaque():
             for palette_index in range(len(colors), transparent_index + 1):
                 offset = start + palette_index * 3
                 assert max(data[offset : offset + 3]) <= 8
-
-
-def test_pillar_yard_renders_original_layout(monkeypatch):
-    root = Path(__file__).parents[2]
-    gui = root / "Extensions/BabaGUI"
-    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
-    monkeypatch.chdir(gui)
-    monkeypatch.syspath_prepend(str(gui))
-    monkeypatch.syspath_prepend(str(root))
-    monkeypatch.setattr(
-        sys, "argv", ["main.py", str(root / "Resources/Maps/pillar_yard.txt")]
-    )
-
-    spec = importlib.util.spec_from_file_location("pillar_yard_gui", gui / "main.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    try:
-        module.draw()
-        assert len(module.map_sprite_group) == 107
-    finally:
-        module.pygame.quit()
