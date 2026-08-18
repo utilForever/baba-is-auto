@@ -221,6 +221,44 @@ TEST_CASE("Editor - Pillar Yard round trip and sprite assets")
     }
 }
 
+TEST_CASE("Editor - Brick Wall round trip and sprite assets")
+{
+    namespace fs = std::filesystem;
+
+    LevelFile brickWall;
+    REQUIRE(LoadLevelFile(MAPS_DIR "brick_wall.txt", brickWall));
+    CHECK(brickWall.width == 15);
+    CHECK(brickWall.height == 8);
+    CHECK(brickWall.tiles[4 * brickWall.width + 10][0] ==
+          ObjectType::ICON_BRICK);
+    CHECK(brickWall.tiles[4 * brickWall.width + 11][0] ==
+          ObjectType::ICON_FLAG);
+    CHECK(brickWall.tiles[4 * brickWall.width + 11][1] ==
+          ObjectType::ICON_EMPTY);
+
+    const fs::path path =
+        fs::current_path() / "baba-is-auto-brick-wall-round-trip.txt";
+    std::error_code error;
+    CHECK(SaveLevelFile(path, brickWall));
+
+    LevelFile loaded;
+    REQUIRE(LoadLevelFile(path, loaded));
+    CHECK(loaded.tiles == brickWall.tiles);
+    CHECK(loaded.directions == brickWall.directions);
+
+    fs::remove(path, error);
+
+    const fs::path root = (fs::path(MAPS_DIR) / "../..").lexically_normal();
+
+    for (const char* asset : {
+             "Extensions/BabaGUI/sprites/text/BRICK.gif",
+             "Extensions/BabaGUI/sprites/icon/BRICK.gif",
+         })
+    {
+        CHECK(fs::is_regular_file(root / asset));
+    }
+}
+
 TEST_CASE("Editor - Layer tile direction updates")
 {
     LevelFile::LayerTile tiles{ ObjectType::ICON_EMPTY, ObjectType::ICON_EMPTY,
