@@ -488,6 +488,45 @@ def test_game_pillar_yard_forms_pillar_is_you_and_wins():
     assert game.GetPlayState() == pyBaba.PlayState.WON
 
 
+def test_game_brick_wall_load_and_reset_preserves_bricks():
+    game = pyBaba.Game("Resources/Maps/brick_wall.txt")
+    bricks = [
+        (10, 3),
+        (11, 3),
+        (12, 3),
+        (10, 4),
+        (12, 4),
+        (10, 5),
+        (11, 5),
+        (12, 5),
+    ]
+    assert game.GetMap().GetWidth() == 15
+    assert game.GetMap().GetHeight() == 8
+    assert game.GetRuleManager().GetNumRules() == 3
+    assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(5, 4).HasType(pyBaba.ObjectType.ICON_TILE)
+    assert game.GetMap().At(11, 4).HasType(pyBaba.ObjectType.ICON_FLAG)
+    assert not game.GetMap().At(11, 4).HasType(pyBaba.ObjectType.ICON_BRICK)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_BRICK) == bricks
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    game.Reset()
+    assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_BRICK) == bricks
+    assert game.GetRuleManager().GetNumRules() == 3
+    assert game.GetPlayState() == pyBaba.PlayState.PLAYING
+
+
+def test_game_brick_wall_forms_baba_is_win_and_wins():
+    game = pyBaba.Game("Resources/Maps/brick_wall.txt")
+
+    _move(game, "RRRRRRDDLULDLUUDRRRULL")
+    assert game.GetRuleManager().HasProperty(
+        [pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.WIN
+    )
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
 def test_game_sink_reparses_destroyed_rule_text():
     game = pyBaba.Game("Resources/Maps/sink_rule_reparse.txt")
 
