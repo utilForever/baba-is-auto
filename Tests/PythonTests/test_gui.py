@@ -90,6 +90,7 @@ def test_sprite_palettes_keep_colored_pixels_opaque():
         "Extensions/BabaGUI/sprites/text/KEKE.gif": (((196, 90, 117),), 1),
         "Extensions/BabaGUI/sprites/text/LOVE.gif": (((241, 120, 242),), 1),
         "Extensions/BabaGUI/sprites/text/MOVE.gif": (((119, 171, 63),), 1),
+        "Extensions/BabaGUI/sprites/text/BRICK.gif": (((144, 103, 62),), 1),
         "Extensions/BabaGUI/sprites/icon/ALGAE.gif": (((84, 150, 64),), 1),
         "Extensions/BabaGUI/sprites/icon/KEKE.gif": (((196, 90, 117),), 2),
         "Extensions/BabaGUI/sprites/icon/LOVE.gif": (((241, 120, 242),), 1),
