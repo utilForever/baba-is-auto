@@ -32,6 +32,7 @@ icon_images = {
 text_images = {
     pyBaba.ObjectType.ALGAE: "ALGAE",
     pyBaba.ObjectType.BABA: "BABA",
+    pyBaba.ObjectType.BRICK: "BRICK",
     pyBaba.ObjectType.CRAB: "CRAB",
     pyBaba.ObjectType.ICE: "ICE",
     pyBaba.ObjectType.JELLY: "JELLY",

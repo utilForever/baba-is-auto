@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <array>
 #include <string_view>
+#include <vector>
 
 using namespace baba_is_auto;
 
@@ -360,6 +361,43 @@ TEST_CASE("Game - Pillar Yard")
         CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_PILLAR },
                                                 ObjectType::YOU));
         CHECK(game.GetMap().At(17, 7).HasType(ObjectType::ICON_PILLAR));
+        CHECK(game.GetPlayState() == PlayState::WON);
+    }
+}
+
+TEST_CASE("Game - Brick Wall")
+{
+    SUBCASE("Loads and resets the brick layout")
+    {
+        Game game(MAPS_DIR "brick_wall.txt");
+        const std::vector<Position> bricks = {
+            { 10, 3 }, { 11, 3 }, { 12, 3 }, { 10, 4 },
+            { 12, 4 }, { 10, 5 }, { 11, 5 }, { 12, 5 },
+        };
+        CHECK(game.GetMap().GetWidth() == 15);
+        CHECK(game.GetMap().GetHeight() == 8);
+        CHECK(game.GetRuleManager().GetNumRules() == 3);
+        CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(5, 4).HasType(ObjectType::ICON_TILE));
+        CHECK(game.GetMap().At(11, 4).HasType(ObjectType::ICON_FLAG));
+        CHECK_FALSE(game.GetMap().At(11, 4).HasType(ObjectType::ICON_BRICK));
+        CHECK(game.GetMap().GetPositions(ObjectType::ICON_BRICK) == bricks);
+
+        game.MovePlayer(Direction::RIGHT);
+        game.Reset();
+        CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().GetPositions(ObjectType::ICON_BRICK) == bricks);
+        CHECK(game.GetRuleManager().GetNumRules() == 3);
+        CHECK(game.GetPlayState() == PlayState::PLAYING);
+    }
+
+    SUBCASE("Forms BABA IS WIN and wins")
+    {
+        Game game(MAPS_DIR "brick_wall.txt");
+
+        Move(game, "RRRRRRDDLULDLUUDRRRULL");
+        CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_BABA },
+                                                ObjectType::WIN));
         CHECK(game.GetPlayState() == PlayState::WON);
     }
 }
