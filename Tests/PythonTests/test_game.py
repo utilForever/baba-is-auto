@@ -23,15 +23,24 @@ def _move(game, actions):
         game.MovePlayer(directions[action])
 
 
-def _write_level(source, destination, replacements):
+def _write_level(source, destination, replacements, stacked=()):
     values = source.read_text().split()
     width, height = map(int, values[:2])
-    tiles = values[2:]
+    tiles = values[2 : 2 + width * height]
 
     for x, y, object_type in replacements:
         tiles[y * width + x] = str(object_type.value)
 
-    rows = (" ".join(tiles[y * width : (y + 1) * width]) for y in range(height))
+    if stacked:
+        tiles.extend([str(pyBaba.ObjectType.ICON_EMPTY.value)] * width * height)
+
+        for x, y, object_type in stacked:
+            tiles[width * height + y * width + x] = str(object_type.value)
+
+    rows = (
+        " ".join(tiles[y * width : (y + 1) * width])
+        for y in range(len(tiles) // width)
+    )
 
     destination.write_text(f"{width} {height}\n" + "\n".join(rows))
     return destination
@@ -83,6 +92,131 @@ def test_game_basic():
     assert game.GetRuleManager().GetNumRules() == 4
     assert game.GetPlayerIcon() == pyBaba.ObjectType.ICON_BABA
     assert game.GetPlayState() == pyBaba.PlayState.PLAYING
+
+
+def test_game_open_and_shut_destroy_each_other(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/baba_is_you.txt"),
+        tmp_path / "open_shut.txt",
+        [
+            (2, 4, pyBaba.ObjectType.ICON_DOOR),
+            (0, 1, pyBaba.ObjectType.BABA),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.OPEN),
+            (0, 7, pyBaba.ObjectType.DOOR),
+            (1, 7, pyBaba.ObjectType.IS),
+            (2, 7, pyBaba.ObjectType.SHUT),
+        ],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_BABA) == []
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_DOOR) == []
+
+
+def test_game_destroyed_open_pusher_finishes_push_chain(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/baba_is_you.txt"),
+        tmp_path / "open_shut_push_chain.txt",
+        [
+            (2, 4, pyBaba.ObjectType.ICON_DOOR),
+            (3, 4, pyBaba.ObjectType.ICON_DOOR),
+            (0, 1, pyBaba.ObjectType.DOOR),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.SHUT),
+            (4, 1, pyBaba.ObjectType.ROCK),
+            (5, 1, pyBaba.ObjectType.IS),
+            (6, 1, pyBaba.ObjectType.OPEN),
+            (0, 7, pyBaba.ObjectType.BABA),
+            (1, 7, pyBaba.ObjectType.IS),
+            (2, 7, pyBaba.ObjectType.OPEN),
+        ],
+        stacked=[(2, 4, pyBaba.ObjectType.ICON_ROCK)],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_BABA) == []
+    assert not game.GetMap().At(2, 4).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert not game.GetMap().At(3, 4).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_DOOR) == []
+
+
+def test_game_movement_open_shut_has_result_transforms_next_turn(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/baba_is_you.txt"),
+        tmp_path / "open_shut_has_timing.txt",
+        [
+            (2, 4, pyBaba.ObjectType.ICON_DOOR),
+            (0, 1, pyBaba.ObjectType.DOOR),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.SHUT),
+            (0, 5, pyBaba.ObjectType.BABA),
+            (1, 5, pyBaba.ObjectType.HAS),
+            (2, 5, pyBaba.ObjectType.ROCK),
+            (0, 7, pyBaba.ObjectType.BABA),
+            (1, 7, pyBaba.ObjectType.IS),
+            (2, 7, pyBaba.ObjectType.OPEN),
+            (4, 7, pyBaba.ObjectType.ROCK),
+            (5, 7, pyBaba.ObjectType.IS),
+            (6, 7, pyBaba.ObjectType.FLAG),
+        ],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert not game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_FLAG)
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert not game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_FLAG)
+
+
+def test_game_moving_open_and_shut_uses_open_priority(tmp_path):
+    level = _write_level(
+        Path("Resources/Maps/baba_is_you.txt"),
+        tmp_path / "open_priority.txt",
+        [
+            (2, 4, pyBaba.ObjectType.ICON_DOOR),
+            (0, 1, pyBaba.ObjectType.DOOR),
+            (1, 1, pyBaba.ObjectType.IS),
+            (2, 1, pyBaba.ObjectType.OPEN),
+            (4, 1, pyBaba.ObjectType.DOOR),
+            (5, 1, pyBaba.ObjectType.IS),
+            (6, 1, pyBaba.ObjectType.STOP),
+            (0, 5, pyBaba.ObjectType.BABA),
+            (1, 5, pyBaba.ObjectType.IS),
+            (2, 5, pyBaba.ObjectType.SAFE),
+            (0, 7, pyBaba.ObjectType.BABA),
+            (1, 7, pyBaba.ObjectType.IS),
+            (2, 7, pyBaba.ObjectType.OPEN),
+            (4, 7, pyBaba.ObjectType.BABA),
+            (5, 7, pyBaba.ObjectType.IS),
+            (6, 7, pyBaba.ObjectType.SHUT),
+        ],
+    )
+    game = pyBaba.Game(str(level))
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_BABA)
+    assert game.GetMap().At(2, 4).HasType(pyBaba.ObjectType.ICON_DOOR)
+
+
+def test_game_lock_follows_the_original_solution_path():
+    game = pyBaba.Game("Resources/Maps/lock.txt")
+    solution = (
+        "ULLLDRRRRRRRRRDDDLLLLLLDLDRLDRLDR"
+        "UUUURRRUUURRRRRURRRDLLLLLULDDDDRDLLULDRDLLLRDDDLULUUDDRR"
+        "UULRDLRURUUUUURRRRRRURDDDDD"
+    )
+
+    _move(game, solution)
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_DOOR) == []
 
 
 def test_game_random_seed_repeats_empty_directions(tmp_path):

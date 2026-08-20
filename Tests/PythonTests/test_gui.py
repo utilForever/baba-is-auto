@@ -100,6 +100,15 @@ def test_sprite_palettes_keep_colored_pixels_opaque():
             2,
         ),
         "Extensions/BabaGUI/sprites/icon/BRICK.gif": (((42, 47, 39),), 1),
+        "Extensions/BabaGUI/sprites/text/KEY.gif": (((224, 240, 157),), 1),
+        "Extensions/BabaGUI/sprites/text/DOOR.gif": (((196, 90, 117),), 1),
+        "Extensions/BabaGUI/sprites/text/OPEN.gif": (((224, 240, 157),), 1),
+        "Extensions/BabaGUI/sprites/text/SHUT.gif": (((196, 90, 117),), 1),
+        "Extensions/BabaGUI/sprites/icon/KEY.gif": (((224, 240, 157),), 1),
+        "Extensions/BabaGUI/sprites/icon/DOOR.gif": (
+            ((196, 90, 117), (36, 36, 36)),
+            2,
+        ),
     }
 
     for relative, (colors, transparent_index) in sprites.items():

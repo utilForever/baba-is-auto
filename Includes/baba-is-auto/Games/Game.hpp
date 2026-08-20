@@ -75,8 +75,10 @@ class Game
     //! \param x The x position.
     //! \param y The y position.
     //! \param dir The direction to move.
+    //! \param movingIDs The object IDs to move together.
     //! \return The flag indicates that an object can move.
-    bool CanMove(std::size_t x, std::size_t y, Direction dir);
+    bool CanMove(std::size_t x, std::size_t y, Direction dir,
+                 const std::vector<ObjectID>& movingIDs = {});
 
     //! Moves objects with the active YOU property.
     //! \param dir The direction to move.
@@ -354,6 +356,30 @@ class Game
                             const Position& position,
                             const RuleCondition& condition) const;
 
+    //! Tracks matched and destroyed IDs at one OPEN/SHUT movement boundary.
+    struct OpenShutInteraction
+    {
+        //! The object IDs that matched the OPEN/SHUT interaction.
+        std::vector<ObjectID> matchedIDs;
+        //! The object IDs that were destroyed by the OPEN/SHUT interaction.
+        std::vector<ObjectID> destroyedIDs;
+    };
+
+    //! Gets the OPEN/SHUT interaction at one movement boundary.
+    //! \param source The source position of the moving objects.
+    //! \param movingIDs The object IDs that are moving.
+    //! \param destination The destination position of the moving objects.
+    //! \return The OPEN/SHUT interaction at the movement boundary.
+    OpenShutInteraction GetOpenShutInteraction(
+        const Position& source, const std::vector<ObjectID>& movingIDs,
+        const Position& destination) const;
+
+    //! Destroys objects and spawns their active HAS results in place.
+    //! \param ids The object IDs to destroy.
+    //! \return The IDs of the generated HAS objects.
+    std::vector<ObjectID> DestroyOpenShutObjects(
+        const std::vector<ObjectID>& ids);
+
     //! Processes the move of the player.
     //! \param x The x position.
     //! \param y The y position.
@@ -366,7 +392,12 @@ class Game
     //! \param x The x position.
     //! \param y The y position.
     //! \param dir The direction to move.
-    void ProcessPush(std::size_t x, std::size_t y, Direction dir);
+    //! \param ids The object instances selected before collision effects.
+    void ProcessPush(std::size_t x, std::size_t y, Direction dir,
+                     const std::vector<ObjectID>& ids);
+
+    //! Resolves OPEN and SHUT objects that already overlap.
+    void ProcessOpenShut();
 
     //! Removes all objects where a SINK object overlaps another object.
     void ProcessSink();
@@ -391,6 +422,7 @@ class Game
 
     std::vector<ObjectType> m_playerIcons;
     std::vector<ObjectType> m_allNouns;
+    std::vector<ObjectID> m_movementGeneratedIDs;
     std::mt19937 m_randomEngine{ std::random_device{}() };
 };
 }  // namespace baba_is_auto

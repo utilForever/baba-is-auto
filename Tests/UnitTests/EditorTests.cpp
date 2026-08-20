@@ -259,6 +259,45 @@ TEST_CASE("Editor - Brick Wall round trip and sprite assets")
     }
 }
 
+TEST_CASE("Editor - Lock round trip and sprite assets")
+{
+    namespace fs = std::filesystem;
+
+    LevelFile lock;
+    REQUIRE(LoadLevelFile(MAPS_DIR "lock.txt", lock));
+    CHECK(lock.width == 28);
+    CHECK(lock.height == 16);
+    CHECK(lock.tiles[7 * lock.width + 7][0] == ObjectType::ICON_KEY);
+    CHECK(lock.tiles[7 * lock.width + 11][0] == ObjectType::ICON_DOOR);
+    CHECK(lock.tiles[11 * lock.width + 11][0] == ObjectType::OPEN);
+
+    const fs::path path =
+        fs::current_path() / "baba-is-auto-lock-round-trip.txt";
+    std::error_code error;
+    CHECK(SaveLevelFile(path, lock));
+
+    LevelFile loaded;
+    REQUIRE(LoadLevelFile(path, loaded));
+    CHECK(loaded.tiles == lock.tiles);
+    CHECK(loaded.directions == lock.directions);
+
+    fs::remove(path, error);
+
+    const fs::path root = (fs::path(MAPS_DIR) / "../..").lexically_normal();
+
+    for (const char* asset : {
+             "Extensions/BabaGUI/sprites/text/KEY.gif",
+             "Extensions/BabaGUI/sprites/text/DOOR.gif",
+             "Extensions/BabaGUI/sprites/text/OPEN.gif",
+             "Extensions/BabaGUI/sprites/text/SHUT.gif",
+             "Extensions/BabaGUI/sprites/icon/KEY.gif",
+             "Extensions/BabaGUI/sprites/icon/DOOR.gif",
+         })
+    {
+        CHECK(fs::is_regular_file(root / asset));
+    }
+}
+
 TEST_CASE("Editor - Layer tile direction updates")
 {
     LevelFile::LayerTile tiles{ ObjectType::ICON_EMPTY, ObjectType::ICON_EMPTY,
