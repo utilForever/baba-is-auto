@@ -47,6 +47,22 @@ void AddRule(Game& game, ObjectType subject, ObjectType predicate,
     game.GetMap().AddObject(1, y, ObjectType::IS);
     game.GetMap().AddObject(2, y, predicate);
 }
+
+void AddBinaryRule(Game& game, ObjectType subject, ObjectType op,
+                   ObjectType predicate, std::size_t y)
+{
+    game.GetMap().AddObject(0, y, subject);
+    game.GetMap().AddObject(1, y, op);
+    game.GetMap().AddObject(2, y, predicate);
+}
+
+void AddRuleAt(Game& game, ObjectType subject, ObjectType predicate,
+               std::size_t x, std::size_t y)
+{
+    game.GetMap().AddObject(x, y, subject);
+    game.GetMap().AddObject(x + 1, y, ObjectType::IS);
+    game.GetMap().AddObject(x + 2, y, predicate);
+}
 }  // namespace
 
 TEST_CASE("Game - Basic")
@@ -400,6 +416,63 @@ TEST_CASE("Game - Brick Wall")
                                                 ObjectType::WIN));
         CHECK(game.GetPlayState() == PlayState::WON);
     }
+}
+
+TEST_CASE("Game - Lock loads and resets the official layout")
+{
+    Game game(MAPS_DIR "lock.txt");
+    const std::vector<Position> keys = { { 7, 7 }, { 14, 7 } };
+    const std::vector<Position> doors = {
+        { 11, 7 },
+        { 16, 7 },
+        { 19, 9 },
+    };
+    CHECK(game.GetMap().GetWidth() == 28);
+    CHECK(game.GetMap().GetHeight() == 16);
+    CHECK(game.GetRuleManager().GetNumRules() == 7);
+    CHECK(game.GetMap().At(9, 7).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(13, 7).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(19, 11).HasType(ObjectType::ICON_FLAG));
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_KEY) == keys);
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR) == doors);
+
+    game.MovePlayer(Direction::LEFT);
+    game.Reset();
+    CHECK(game.GetMap().At(9, 7).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_KEY) == keys);
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR) == doors);
+    CHECK(game.GetRuleManager().GetNumRules() == 7);
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - Lock follows the original solution path")
+{
+    Game game(MAPS_DIR "lock.txt");
+    constexpr std::string_view solution =
+        "ULLLDRRRRRRRRRDDDLLLLLLDLDRLDRLDR"
+        "UUUURRRUUURRRRRURRRDLLLLLULDDDDRDLLULDRDLLLRDDDLULUUDDRR"
+        "UULRDLRURUUUUURRRRRRURDDDDD";
+
+    Move(game, solution);
+    CHECK(game.GetPlayState() == PlayState::WON);
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_KEY).empty());
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR).empty());
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_ROCK).empty());
+    CHECK(game.GetMap().At(9, 11).HasType(ObjectType::ROCK));
+    CHECK(game.GetMap().At(9, 12).HasType(ObjectType::IS));
+    CHECK(game.GetMap().At(9, 13).HasType(ObjectType::PUSH));
+}
+
+TEST_CASE("Game - Lock keys open the first two doors")
+{
+    Game game(MAPS_DIR "lock.txt");
+
+    Move(game, "ULLLDRRRRRRRRR");
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_KEY).empty());
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR) ==
+          std::vector<Position>{ { 19, 9 } });
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_BABA) ==
+          std::vector<Position>{ { 15, 7 } });
 }
 
 TEST_CASE("Game - Editor Smoke Map")
@@ -1491,6 +1564,624 @@ TEST_CASE("Game - blocked YOU WEAK is destroyed")
     game.MovePlayer(Direction::NONE);
     game.MovePlayer(Direction::LEFT);
     CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+}
+
+TEST_CASE("Game - OPEN and SHUT destroy each other during movement")
+{
+    for (const auto [movingProperty, targetProperty] : {
+             std::pair{ ObjectType::OPEN, ObjectType::SHUT },
+             std::pair{ ObjectType::SHUT, ObjectType::OPEN },
+         })
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRule(game, ObjectType::BABA, movingProperty, 7);
+        AddRule(game, ObjectType::DOOR, targetProperty, 1);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+        CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+    }
+}
+
+TEST_CASE("Game - moving OPEN and SHUT uses OPEN priority")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+    AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 7);
+    AddRuleAt(game, ObjectType::BABA, ObjectType::SHUT, 4, 7);
+    AddRuleAt(game, ObjectType::BABA, ObjectType::SAFE, 0, 5);
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::OPEN, 0, 1);
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::STOP, 4, 1);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+}
+
+TEST_CASE("Game - OPEN and SHUT movement respects other blockers")
+{
+    SUBCASE("A matched PUSH object is destroyed before it can block")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+        map.AddObject(3, 4, ObjectType::ICON_WALL);
+
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 1);
+        AddRule(game, ObjectType::DOOR, ObjectType::PUSH, 5);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+        CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+        CHECK(map.At(3, 4).HasType(ObjectType::ICON_WALL));
+    }
+
+    SUBCASE("An unmatched STOP cancels movement and destruction")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+        map.AddObject(2, 4, ObjectType::ICON_WALL);
+
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 1);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.At(1, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_WALL));
+    }
+}
+
+TEST_CASE("Game - unmatched OPEN and SHUT keep ordinary movement rules")
+{
+    SUBCASE("OPEN alone does not bypass STOP")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_WALL);
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+
+        CHECK(map.At(1, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_WALL));
+    }
+
+    SUBCASE("SHUT alone does not block movement")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 7);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+    }
+}
+
+TEST_CASE("Game - OPEN and SHUT require matching FLOAT layers")
+{
+    for (const bool doorFloats : { false, true })
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::BABA, ObjectType::FLOAT, 1);
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 5);
+
+        if (doorFloats)
+        {
+            AddRule(game, ObjectType::DOOR, ObjectType::FLOAT, 3);
+        }
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.GetPositions(ObjectType::ICON_BABA).empty() == doorFloats);
+        CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty() == doorFloats);
+    }
+}
+
+TEST_CASE("Game - SAFE OPEN and SHUT objects survive movement interactions")
+{
+    SUBCASE("A SAFE mover destroys every unsafe opposing object")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::BABA, ObjectType::SAFE, 1);
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 5);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+    }
+
+    SUBCASE("A SAFE target destroys every unsafe moving object")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(1, 4, ObjectType::ICON_BABA);
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::DOOR, ObjectType::SAFE, 1);
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 5);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+    }
+
+    SUBCASE("A matched SAFE target does not STOP or get PUSHed")
+    {
+        for (const ObjectType ordinaryProperty :
+             { ObjectType::STOP, ObjectType::PUSH })
+        {
+            Game game(MAPS_DIR "baba_is_you.txt");
+
+            Map& map = game.GetMap();
+            map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+            AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+            AddRule(game, ObjectType::DOOR, ObjectType::SAFE, 1);
+            AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 5);
+            AddRule(game, ObjectType::DOOR, ordinaryProperty, 3);
+
+            game.MovePlayer(Direction::NONE);
+            game.MovePlayer(Direction::RIGHT);
+            CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+            CHECK(map.GetPositions(ObjectType::ICON_DOOR) ==
+                  std::vector<Position>{ { 2, 4 } });
+        }
+    }
+
+    SUBCASE("Two SAFE sides do not interact")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::BABA, ObjectType::SAFE, 1);
+        AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 5);
+        AddRule(game, ObjectType::DOOR, ObjectType::SAFE, 3);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA));
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+    }
+}
+
+TEST_CASE("Game - moving OPEN stacks consume one SHUT per unsafe mover")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(1, 4, ObjectType::ICON_BABA);
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+    AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+    AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 1);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+    CHECK(std::count_if(map.At(2, 4).GetInstances().begin(),
+                        map.At(2, 4).GetInstances().end(),
+                        [](const ObjectInstance& instance) {
+                            return instance.type == ObjectType::ICON_DOOR;
+                        }) == 1);
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+}
+
+TEST_CASE("Game - mixed SAFE movement stacks follow object order")
+{
+    for (const bool firstMoverIsSafe : { false, true })
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(1, 4, ObjectType::ICON_ROCK);
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+        map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+        AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 1);
+        AddRuleAt(game, ObjectType::ROCK, ObjectType::OPEN, 4, 1);
+        AddRuleAt(game, ObjectType::ROCK, ObjectType::YOU, 0, 3);
+        AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 0, 5);
+        AddRuleAt(game, firstMoverIsSafe ? ObjectType::BABA : ObjectType::ROCK,
+                  ObjectType::SAFE, 0, 7);
+
+        game.MovePlayer(Direction::NONE);
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA) == firstMoverIsSafe);
+        CHECK(map.At(2, 4).HasType(ObjectType::ICON_ROCK));
+        CHECK_FALSE(map.At(2, 4).HasType(ObjectType::ICON_DOOR));
+    }
+}
+
+TEST_CASE("Game - existing OPEN and SHUT overlaps use opener priority")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(4, 4, ObjectType::ICON_ROCK);
+    map.AddObject(4, 4, ObjectType::ICON_ROCK);
+    map.AddObject(4, 4, ObjectType::ICON_WALL);
+    map.AddObject(4, 4, ObjectType::ICON_WALL);
+    map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+    AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+    AddRule(game, ObjectType::WALL, ObjectType::SHUT, 1);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(std::count_if(map.At(4, 4).GetInstances().begin(),
+                        map.At(4, 4).GetInstances().end(),
+                        [](const ObjectInstance& instance) {
+                            return instance.type == ObjectType::ICON_ROCK;
+                        }) == 1);
+    CHECK(map.At(4, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+}
+
+TEST_CASE("Game - existing OPEN and SHUT overlaps respect FLOAT and SAFE")
+{
+    SUBCASE("Different FLOAT layers do not interact")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+        map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+        AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::ROCK, ObjectType::FLOAT, 1);
+        AddRule(game, ObjectType::WALL, ObjectType::SHUT, 5);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_ROCK));
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+    }
+
+    SUBCASE("A SAFE opener removes every unsafe closer")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+        map.AddObject(4, 4, ObjectType::ICON_WALL);
+        map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+        AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::ROCK, ObjectType::SAFE, 1);
+        AddRule(game, ObjectType::WALL, ObjectType::SHUT, 5);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_ROCK));
+        CHECK_FALSE(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+    }
+
+    SUBCASE("A SAFE closer removes the first unsafe opener")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+        map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+        AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::WALL, ObjectType::SAFE, 1);
+        AddRule(game, ObjectType::WALL, ObjectType::SHUT, 5);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(std::count_if(map.At(4, 4).GetInstances().begin(),
+                            map.At(4, 4).GetInstances().end(),
+                            [](const ObjectInstance& instance) {
+                                return instance.type == ObjectType::ICON_ROCK;
+                            }) == 1);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+    }
+
+    SUBCASE("Two SAFE sides remain overlapped")
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+        map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+        AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::ROCK, ObjectType::SAFE, 1);
+        AddRule(game, ObjectType::WALL, ObjectType::SHUT, 5);
+        AddRule(game, ObjectType::WALL, ObjectType::SAFE, 3);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_ROCK));
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+    }
+}
+
+TEST_CASE("Game - mixed SAFE overlap stacks follow opener order")
+{
+    for (const bool firstOpenerIsSafe : { false, true })
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(4, 4, ObjectType::ICON_BABA);
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+        map.AddObject(4, 4, ObjectType::ICON_DOOR);
+        map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+        AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 1);
+        AddRuleAt(game, ObjectType::ROCK, ObjectType::OPEN, 4, 1);
+        AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 0, 3);
+        AddRuleAt(game, ObjectType::WALL, ObjectType::SHUT, 0, 5);
+        AddRuleAt(game, firstOpenerIsSafe ? ObjectType::BABA : ObjectType::ROCK,
+                  ObjectType::SAFE, 0, 7);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_BABA) == firstOpenerIsSafe);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_ROCK) ==
+              !firstOpenerIsSafe);
+        CHECK_FALSE(map.At(4, 4).HasType(ObjectType::ICON_DOOR));
+        CHECK_FALSE(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+    }
+}
+
+TEST_CASE("Game - WEAK resolves before existing OPEN and SHUT overlaps")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(4, 4, ObjectType::ICON_ROCK);
+    map.AddObject(4, 4, ObjectType::ICON_WALL);
+
+    AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+    AddRule(game, ObjectType::ROCK, ObjectType::WEAK, 1);
+    AddRule(game, ObjectType::WALL, ObjectType::SHUT, 5);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK_FALSE(map.At(4, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(4, 4).HasType(ObjectType::ICON_WALL));
+}
+
+TEST_CASE("Game - OPEN and SHUT destruction spawns HAS before movement")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+    AddRule(game, ObjectType::BABA, ObjectType::OPEN, 7);
+    AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 1);
+    AddBinaryRule(game, ObjectType::BABA, ObjectType::HAS, ObjectType::ROCK, 5);
+    AddBinaryRule(game, ObjectType::DOOR, ObjectType::HAS, ObjectType::FLAG, 3);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_FLAG));
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+    CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+}
+
+TEST_CASE("Game - movement OPEN and SHUT HAS results transform next turn")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+    AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 7);
+    AddRuleAt(game, ObjectType::ROCK, ObjectType::FLAG, 4, 7);
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 0, 1);
+    AddBinaryRule(game, ObjectType::BABA, ObjectType::HAS, ObjectType::ROCK, 5);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(map.At(1, 4).HasType(ObjectType::ICON_FLAG));
+
+    game.MovePlayer(Direction::NONE);
+    CHECK_FALSE(map.At(1, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_FLAG));
+}
+
+TEST_CASE("Game - movement OPEN and SHUT HAS results become WEAK next turn")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(1, 4, ObjectType::ICON_TILE);
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+    AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 7);
+    AddRuleAt(game, ObjectType::ROCK, ObjectType::WEAK, 4, 7);
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 0, 1);
+    AddBinaryRule(game, ObjectType::BABA, ObjectType::HAS, ObjectType::ROCK, 5);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_TILE));
+
+    game.MovePlayer(Direction::NONE);
+    CHECK_FALSE(map.At(1, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.At(1, 4).HasType(ObjectType::ICON_TILE));
+}
+
+TEST_CASE("Game - OPEN and SHUT do not push new HAS results")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+
+    AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 7);
+    AddRuleAt(game, ObjectType::ROCK, ObjectType::PUSH, 4, 7);
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 0, 1);
+    AddBinaryRule(game, ObjectType::DOOR, ObjectType::HAS, ObjectType::ROCK, 5);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+    CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(map.At(3, 4).HasType(ObjectType::ICON_ROCK));
+}
+
+TEST_CASE("Game - pushed OPEN objects resolve before entering SHUT cells")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(2, 4, ObjectType::ICON_ROCK);
+    map.AddObject(3, 4, ObjectType::ICON_DOOR);
+
+    AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+    AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 1);
+    AddBinaryRule(game, ObjectType::ROCK, ObjectType::HAS, ObjectType::FLAG, 5);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_FLAG));
+    CHECK_FALSE(map.At(3, 4).HasType(ObjectType::ICON_FLAG));
+    CHECK_FALSE(map.At(2, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(map.At(3, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+}
+
+TEST_CASE("Game - OPEN and SHUT push chains use their validated state")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(0, 1, ObjectType::DOOR);
+    map.AddObject(1, 1, ObjectType::IS);
+    map.AddObject(2, 1, ObjectType::SHUT);
+    map.AddObject(3, 1, ObjectType::AND);
+    map.AddObject(4, 1, ObjectType::STOP);
+
+    map.AddObject(0, 3, ObjectType::ROCK);
+    map.AddObject(1, 3, ObjectType::ON);
+    map.AddObject(2, 3, ObjectType::FLAG);
+    map.AddObject(3, 3, ObjectType::IS);
+    map.AddObject(4, 3, ObjectType::FLOAT);
+
+    AddBinaryRule(game, ObjectType::DOOR, ObjectType::HAS, ObjectType::FLAG, 5);
+    AddRuleAt(game, ObjectType::ROCK, ObjectType::OPEN, 4, 5);
+    AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 7);
+    AddRuleAt(game, ObjectType::BABA, ObjectType::SAFE, 4, 7);
+
+    game.MovePlayer(Direction::NONE);
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+    map.AddObject(2, 4, ObjectType::ICON_ROCK);
+    map.AddObject(3, 4, ObjectType::ICON_DOOR);
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA));
+    CHECK_FALSE(map.At(2, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(map.At(3, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_FLAG));
+    CHECK(map.At(3, 4).HasType(ObjectType::ICON_FLAG));
+}
+
+TEST_CASE("Game - a destroyed OPEN pusher still resolves its push chain")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 0, 1);
+    AddRuleAt(game, ObjectType::ROCK, ObjectType::OPEN, 4, 1);
+    AddRuleAt(game, ObjectType::BABA, ObjectType::OPEN, 0, 7);
+
+    game.MovePlayer(Direction::NONE);
+    map.AddObject(2, 4, ObjectType::ICON_DOOR);
+    map.AddObject(2, 4, ObjectType::ICON_ROCK);
+    map.AddObject(3, 4, ObjectType::ICON_DOOR);
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(map.GetPositions(ObjectType::ICON_BABA).empty());
+    CHECK_FALSE(map.At(2, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK_FALSE(map.At(3, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+}
+
+TEST_CASE("Game - MOVE resolves OPEN and SHUT during movement")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    Map& map = game.GetMap();
+    map.AddObject(3, 1, ObjectType::ICON_KEY, Direction::RIGHT);
+    map.AddObject(4, 1, ObjectType::ICON_DOOR);
+
+    AddRule(game, ObjectType::KEY, ObjectType::MOVE, 7);
+    AddRule(game, ObjectType::KEY, ObjectType::OPEN, 5);
+    AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 3);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.GetPositions(ObjectType::ICON_KEY).empty());
+    CHECK(map.GetPositions(ObjectType::ICON_DOOR).empty());
+}
+
+TEST_CASE("Game - an OPEN and SHUT object destroys itself unless SAFE")
+{
+    for (const bool safe : { false, true })
+    {
+        Game game(MAPS_DIR "baba_is_you.txt");
+
+        Map& map = game.GetMap();
+        map.AddObject(4, 4, ObjectType::ICON_ROCK);
+
+        AddRule(game, ObjectType::ROCK, ObjectType::OPEN, 7);
+        AddRule(game, ObjectType::ROCK, ObjectType::SHUT, 1);
+
+        if (safe)
+        {
+            AddRule(game, ObjectType::ROCK, ObjectType::SAFE, 5);
+        }
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(4, 4).HasType(ObjectType::ICON_ROCK) == safe);
+    }
 }
 
 TEST_CASE("Game - Affection layout and idle movement")

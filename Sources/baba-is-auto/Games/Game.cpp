@@ -495,6 +495,7 @@ ObjectType Game::GetPlayerIcon() const
 void Game::MovePlayer(Direction dir)
 {
     m_map.AssignMissingObjectIDs();
+    m_movementGeneratedIDs.clear();
 
     if (dir != Direction::NONE)
     {
@@ -512,6 +513,7 @@ void Game::MovePlayer(Direction dir)
     ProcessWeak();
     ProcessHotMelt();
     ProcessDefeat();
+    ProcessOpenShut();
 
     CheckPlayState();
     ParseRules();
@@ -587,7 +589,7 @@ void Game::ProcessPlayerStack(const Position& position,
         return;
     }
 
-    if (CanMove(position.first, position.second, dir))
+    if (CanMove(position.first, position.second, dir, movableIDs))
     {
         ProcessMove(position.first, position.second, dir, movableIDs);
         return;
@@ -1267,7 +1269,7 @@ void Game::ProcessObjectMoveState(MoveState& state)
         return;
     }
 
-    if (CanMove(position->first, position->second, direction))
+    if (CanMove(position->first, position->second, direction, { state.id }))
     {
         ProcessMove(position->first, position->second, direction, { state.id });
         return;
@@ -1449,7 +1451,10 @@ void Game::AppendTransformationInstancesAt(
     for (const ObjectInstance& instance :
          m_map.At(position.first, position.second).GetInstances())
     {
-        if (instance.type != ObjectType::ICON_EMPTY)
+        if (instance.type != ObjectType::ICON_EMPTY &&
+            std::find(m_movementGeneratedIDs.begin(),
+                      m_movementGeneratedIDs.end(),
+                      instance.id) == m_movementGeneratedIDs.end())
         {
             instances.push_back({ instance, position });
         }
@@ -1588,7 +1593,168 @@ Direction Game::RandomDirection()
     return directions[m_randomEngine() % directions.size()];
 }
 
-bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
+Game::OpenShutInteraction Game::GetOpenShutInteraction(
+    const Position& source, const std::vector<ObjectID>& movingIDs,
+    const Position& destination) const
+{
+    OpenShutInteraction interaction;
+    const std::vector<ObjectInstance> targets =
+        m_map.At(destination.first, destination.second).GetInstances();
+
+    const auto AddUnique = [](std::vector<ObjectID>& ids, ObjectID id) {
+        if (std::find(ids.begin(), ids.end(), id) == ids.end())
+        {
+            ids.emplace_back(id);
+        }
+    };
+
+    for (const ObjectID movingID : movingIDs)
+    {
+        const ObjectInstance* moving =
+            m_map.At(source.first, source.second).GetInstance(movingID);
+
+        if (moving == nullptr)
+        {
+            continue;
+        }
+
+        const bool movingFloats =
+            HasPropertyAtPosition(*moving, source, ObjectType::FLOAT);
+        const bool movingIsSafe =
+            HasPropertyAtPosition(*moving, source, ObjectType::SAFE);
+        const bool movingIsOpen =
+            HasPropertyAtPosition(*moving, source, ObjectType::OPEN);
+        const bool movingIsShut =
+            !movingIsOpen &&
+            HasPropertyAtPosition(*moving, source, ObjectType::SHUT);
+
+        for (const ObjectInstance& target : targets)
+        {
+            if (std::find(interaction.destroyedIDs.begin(),
+                          interaction.destroyedIDs.end(),
+                          target.id) != interaction.destroyedIDs.end() ||
+                movingFloats != HasPropertyAtPosition(target, destination,
+                                                      ObjectType::FLOAT) ||
+                !((movingIsOpen && HasPropertyAtPosition(target, destination,
+                                                         ObjectType::SHUT)) ||
+                  (movingIsShut && HasPropertyAtPosition(target, destination,
+                                                         ObjectType::OPEN))))
+            {
+                continue;
+            }
+
+            const bool targetIsSafe =
+                HasPropertyAtPosition(target, destination, ObjectType::SAFE);
+
+            if (movingIsSafe && targetIsSafe)
+            {
+                continue;
+            }
+
+            AddUnique(interaction.matchedIDs, movingID);
+            AddUnique(interaction.matchedIDs, target.id);
+
+            if (!movingIsSafe)
+            {
+                AddUnique(interaction.destroyedIDs, movingID);
+            }
+
+            if (!targetIsSafe)
+            {
+                AddUnique(interaction.destroyedIDs, target.id);
+            }
+
+            if (!movingIsSafe)
+            {
+                break;
+            }
+        }
+    }
+
+    return interaction;
+}
+
+std::vector<ObjectID> Game::DestroyOpenShutObjects(
+    const std::vector<ObjectID>& ids)
+{
+    struct Spawn
+    {
+        Position position;
+        ObjectType type;
+        Direction direction;
+    };
+
+    std::vector<Spawn> spawns;
+    const auto hasRules = m_ruleManager.GetRules(ObjectType::HAS);
+
+    for (const ObjectID id : ids)
+    {
+        const auto position = m_map.GetPosition(id);
+        const ObjectInstance* instance = m_map.GetInstance(id);
+
+        if (!position.has_value() || instance == nullptr)
+        {
+            continue;
+        }
+
+        for (const Rule& rule : hasRules)
+        {
+            if (!std::get<1>(rule.objects).HasType(ObjectType::HAS) ||
+                !MatchesConditionsAt(*instance, *position, rule.conditions))
+            {
+                continue;
+            }
+
+            for (const ObjectType subject :
+                 std::get<0>(rule.objects).GetTypes())
+            {
+                if (!SubjectMatches(subject, instance->type))
+                {
+                    continue;
+                }
+
+                for (const ObjectType predicate :
+                     std::get<2>(rule.objects).GetTypes())
+                {
+                    if (IsNounType(predicate))
+                    {
+                        const ObjectType target = ResolveTransformationTarget(
+                            instance->type, predicate);
+
+                        if (target != ObjectType::ICON_EMPTY)
+                        {
+                            spawns.push_back(
+                                { *position, target, instance->direction });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (const ObjectID id : ids)
+    {
+        m_map.RemoveObject(id);
+    }
+
+    std::vector<ObjectID> generatedIDs;
+
+    for (const Spawn& spawn : spawns)
+    {
+        m_map.AddGeneratedObject(spawn.position.first, spawn.position.second,
+                                 spawn.type, spawn.direction);
+        generatedIDs.emplace_back(
+            m_map.At(spawn.position.first, spawn.position.second)
+                .GetInstances()
+                .back()
+                .id);
+    }
+
+    return generatedIDs;
+}
+
+bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
+                   const std::vector<ObjectID>& movingIDs)
 {
     if (dir == Direction::NONE)
     {
@@ -1610,12 +1776,21 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
     const auto& instances = destination.GetInstances();
     const Position destinationPosition{ static_cast<std::size_t>(_x),
                                         static_cast<std::size_t>(_y) };
+    const auto interaction =
+        GetOpenShutInteraction({ x, y }, movingIDs, destinationPosition);
+
+    const auto IsMatched = [&interaction](ObjectID id) {
+        return std::find(interaction.matchedIDs.begin(),
+                         interaction.matchedIDs.end(),
+                         id) != interaction.matchedIDs.end();
+    };
 
     // Check the icon has property 'STOP'.
     if (std::any_of(
             instances.begin(), instances.end(),
-            [this, &destinationPosition](const ObjectInstance& instance) {
-                return !IsTextType(instance.type) &&
+            [this, &destinationPosition,
+             &IsMatched](const ObjectInstance& instance) {
+                return !IsMatched(instance.id) && !IsTextType(instance.type) &&
                        HasPropertyAtPosition(instance, destinationPosition,
                                              ObjectType::STOP) &&
                        !HasPropertyAtPosition(instance, destinationPosition,
@@ -1629,7 +1804,8 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
 
     for (const ObjectInstance& instance : instances)
     {
-        if ((IsTextType(instance.type) ||
+        if (!IsMatched(instance.id) &&
+            (IsTextType(instance.type) ||
              HasPropertyAtPosition(instance, destinationPosition,
                                    ObjectType::PUSH)) &&
             HasPropertyAtPosition(instance, destinationPosition,
@@ -1641,20 +1817,39 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir)
         }
     }
 
-    if (std::any_of(
-            instances.begin(), instances.end(),
-            [this, &destinationPosition](const ObjectInstance& instance) {
-                return IsTextType(instance.type) ||
-                       HasPropertyAtPosition(instance, destinationPosition,
-                                             ObjectType::PUSH);
-            }))
+    if (std::any_of(instances.begin(), instances.end(),
+                    [this, &destinationPosition,
+                     &IsMatched](const ObjectInstance& instance) {
+                        return !IsMatched(instance.id) &&
+                               (IsTextType(instance.type) ||
+                                HasPropertyAtPosition(instance,
+                                                      destinationPosition,
+                                                      ObjectType::PUSH));
+                    }))
     {
-        if (!CanMove(_x, _y, dir))
+        std::vector<ObjectID> pushedIDs;
+
+        for (const ObjectInstance& instance : instances)
+        {
+            if (!IsMatched(instance.id) &&
+                (IsTextType(instance.type) ||
+                 HasPropertyAtPosition(instance, destinationPosition,
+                                       ObjectType::PUSH)) &&
+                !HasPropertyAtPosition(instance, destinationPosition,
+                                       LockedProperty(dir)))
+            {
+                pushedIDs.emplace_back(instance.id);
+            }
+        }
+
+        if (!CanMove(_x, _y, dir, pushedIDs))
         {
             return std::all_of(
                 instances.begin(), instances.end(),
-                [this, &destinationPosition](const ObjectInstance& instance) {
-                    return (!IsTextType(instance.type) &&
+                [this, &destinationPosition,
+                 &IsMatched](const ObjectInstance& instance) {
+                    return IsMatched(instance.id) ||
+                           (!IsTextType(instance.type) &&
                             !HasPropertyAtPosition(instance,
                                                    destinationPosition,
                                                    ObjectType::PUSH)) ||
@@ -1674,17 +1869,36 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
     const Position destination{ static_cast<std::size_t>(_x),
                                 static_cast<std::size_t>(_y) };
 
-    if (const auto& instances =
-            m_map.At(destination.first, destination.second).GetInstances();
-        std::any_of(instances.begin(), instances.end(),
-                    [this, &destination](const ObjectInstance& instance) {
-                        return IsTextType(instance.type) ||
-                               HasPropertyAtPosition(instance, destination,
-                                                     ObjectType::PUSH);
-                    }))
+    const auto interaction =
+        GetOpenShutInteraction({ x, y }, movingIDs, destination);
+    std::vector<ObjectID> pushedIDs;
+
+    const auto IsMatched = [&interaction](ObjectID id) {
+        return std::find(interaction.matchedIDs.begin(),
+                         interaction.matchedIDs.end(),
+                         id) != interaction.matchedIDs.end();
+    };
+
+    for (const ObjectInstance& instance :
+         m_map.At(destination.first, destination.second).GetInstances())
     {
-        ProcessPush(destination.first, destination.second, dir);
+        if (!IsMatched(instance.id) &&
+            (IsTextType(instance.type) ||
+             HasPropertyAtPosition(instance, destination, ObjectType::PUSH)) &&
+            !HasPropertyAtPosition(instance, destination, LockedProperty(dir)))
+        {
+            pushedIDs.emplace_back(instance.id);
+        }
     }
+
+    if (!pushedIDs.empty())
+    {
+        ProcessPush(destination.first, destination.second, dir, pushedIDs);
+    }
+
+    const auto generatedIDs = DestroyOpenShutObjects(interaction.destroyedIDs);
+    m_movementGeneratedIDs.insert(m_movementGeneratedIDs.end(),
+                                  generatedIDs.begin(), generatedIDs.end());
 
     for (const ObjectID id : movingIDs)
     {
@@ -1693,27 +1907,12 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
     }
 }
 
-void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
+void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir,
+                       const std::vector<ObjectID>& pushedIDs)
 {
-    std::vector<ObjectID> pushedIDs;
     const Position position{ x, y };
 
-    for (const ObjectInstance& instance : m_map.At(x, y).GetInstances())
-    {
-        if ((IsTextType(instance.type) ||
-             HasPropertyAtPosition(instance, position, ObjectType::PUSH)) &&
-            !HasPropertyAtPosition(instance, position, LockedProperty(dir)))
-        {
-            pushedIDs.emplace_back(instance.id);
-        }
-    }
-
-    if (pushedIDs.empty())
-    {
-        return;
-    }
-
-    if (!CanMove(x, y, dir))
+    if (!CanMove(x, y, dir, pushedIDs))
     {
         std::vector<ObjectID> weakIDs;
 
@@ -1736,29 +1935,96 @@ void Game::ProcessPush(std::size_t x, std::size_t y, Direction dir)
         return;
     }
 
-    const auto [targetX, targetY] = MovedPosition(x, y, dir);
-    const Position targetPosition{ static_cast<std::size_t>(targetX),
-                                   static_cast<std::size_t>(targetY) };
-    const auto& targetInstances =
-        m_map.At(targetPosition.first, targetPosition.second).GetInstances();
+    ProcessMove(x, y, dir, pushedIDs);
+}
 
-    if (const bool pushesNext = std::any_of(
-            targetInstances.begin(), targetInstances.end(),
-            [this, &targetPosition](const ObjectInstance& instance) {
-                return IsTextType(instance.type) ||
-                       HasPropertyAtPosition(instance, targetPosition,
-                                             ObjectType::PUSH);
-            });
-        pushesNext)
+void Game::ProcessOpenShut()
+{
+    std::vector<ObjectID> destroyedIDs;
+    const auto openRules = m_ruleManager.GetRules(ObjectType::OPEN);
+
+    const auto AddUnique = [&destroyedIDs](ObjectID id) {
+        if (std::find(destroyedIDs.begin(), destroyedIDs.end(), id) ==
+            destroyedIDs.end())
+        {
+            destroyedIDs.emplace_back(id);
+        }
+    };
+
+    for (std::size_t y = 0; y < m_map.GetHeight(); ++y)
     {
-        ProcessPush(targetPosition.first, targetPosition.second, dir);
+        for (std::size_t x = 0; x < m_map.GetWidth(); ++x)
+        {
+            const Position position{ x, y };
+            const std::vector<ObjectInstance> instances =
+                m_map.At(x, y).GetInstances();
+
+            for (const ObjectInstance& closer : instances)
+            {
+                if (!HasPropertyAtPosition(closer, position, ObjectType::SHUT))
+                {
+                    continue;
+                }
+
+                const bool closerFloats =
+                    HasPropertyAtPosition(closer, position, ObjectType::FLOAT);
+                const bool closerIsSafe =
+                    HasPropertyAtPosition(closer, position, ObjectType::SAFE);
+
+                for (const Rule& rule : openRules)
+                {
+                    if (!std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+                        !std::get<2>(rule.objects).HasType(ObjectType::OPEN))
+                    {
+                        continue;
+                    }
+
+                    const auto& subjects = std::get<0>(rule.objects).GetTypes();
+                    const auto opener = std::find_if(
+                        instances.begin(), instances.end(),
+                        [this, &position, &rule, &subjects,
+                         closerFloats](const ObjectInstance& candidate) {
+                            return closerFloats == HasPropertyAtPosition(
+                                                       candidate, position,
+                                                       ObjectType::FLOAT) &&
+                                   std::any_of(
+                                       subjects.begin(), subjects.end(),
+                                       [&candidate](ObjectType subject) {
+                                           return SubjectMatches(
+                                               subject, candidate.type);
+                                       }) &&
+                                   MatchesConditionsAt(candidate, position,
+                                                       rule.conditions);
+                        });
+
+                    if (opener == instances.end())
+                    {
+                        continue;
+                    }
+
+                    const bool openerIsSafe = HasPropertyAtPosition(
+                        *opener, position, ObjectType::SAFE);
+
+                    if (closerIsSafe && openerIsSafe)
+                    {
+                        continue;
+                    }
+
+                    if (!closerIsSafe)
+                    {
+                        AddUnique(closer.id);
+                    }
+
+                    if (opener->id != closer.id && !openerIsSafe)
+                    {
+                        AddUnique(opener->id);
+                    }
+                }
+            }
+        }
     }
 
-    for (const ObjectID id : pushedIDs)
-    {
-        m_map.SetDirection(id, dir);
-        m_map.MoveObject(id, targetPosition.first, targetPosition.second);
-    }
+    DestroyOpenShutObjects(destroyedIDs);
 }
 
 void Game::ProcessSink()
@@ -1806,7 +2072,10 @@ void Game::ProcessWeak()
 
             for (const ObjectInstance& instance : instances)
             {
-                if (HasPropertyAtPosition(instance, { x, y }, ObjectType::WEAK))
+                if (std::find(m_movementGeneratedIDs.begin(),
+                              m_movementGeneratedIDs.end(),
+                              instance.id) == m_movementGeneratedIDs.end() &&
+                    HasPropertyAtPosition(instance, { x, y }, ObjectType::WEAK))
                 {
                     weakIDs.emplace_back(instance.id);
                 }
