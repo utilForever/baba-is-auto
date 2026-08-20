@@ -1568,7 +1568,7 @@ TEST_CASE("Game - blocked YOU WEAK is destroyed")
 
 TEST_CASE("Game - OPEN and SHUT destroy each other during movement")
 {
-    for (const auto [movingProperty, targetProperty] : {
+    for (const auto& [movingProperty, targetProperty] : {
              std::pair{ ObjectType::OPEN, ObjectType::SHUT },
              std::pair{ ObjectType::SHUT, ObjectType::OPEN },
          })
