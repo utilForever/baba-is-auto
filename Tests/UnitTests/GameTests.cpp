@@ -475,6 +475,40 @@ TEST_CASE("Game - Lock keys open the first two doors")
           std::vector<Position>{ { 15, 7 } });
 }
 
+TEST_CASE("Game - Novice Locksmith loads and resets the official layout")
+{
+    Game game(MAPS_DIR "novice_locksmith.txt");
+    const std::vector<Position> doors = { { 12, 9 }, { 17, 11 } };
+    CHECK(game.GetMap().GetWidth() == 28);
+    CHECK(game.GetMap().GetHeight() == 16);
+    CHECK(game.GetRuleManager().GetNumRules() == 5);
+    CHECK(game.GetMap().At(9, 12).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(8, 10).HasType(ObjectType::ICON_KEY));
+    CHECK(game.GetMap().At(17, 13).HasType(ObjectType::ICON_FLAG));
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR) == doors);
+
+    game.MovePlayer(Direction::UP);
+    game.Reset();
+    CHECK(game.GetMap().At(9, 12).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(8, 10).HasType(ObjectType::ICON_KEY));
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR) == doors);
+    CHECK(game.GetRuleManager().GetNumRules() == 5);
+    CHECK(game.GetPlayState() == PlayState::PLAYING);
+}
+
+TEST_CASE("Game - Novice Locksmith follows the original solution path")
+{
+    Game game(MAPS_DIR "novice_locksmith.txt");
+    constexpr std::string_view solution =
+        "RUUURULRUUULDDUULLDLDRRLLDRLDDRRRDRULLURRRRRRRRDRUULDDDDD";
+
+    Move(game, solution);
+    CHECK(game.GetPlayState() == PlayState::WON);
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_KEY).empty());
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR) ==
+          std::vector<Position>{ { 17, 14 } });
+}
+
 TEST_CASE("Game - Editor Smoke Map")
 {
     Game game(MAPS_DIR "editor_smoke.txt");

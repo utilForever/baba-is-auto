@@ -219,6 +219,16 @@ def test_game_lock_follows_the_original_solution_path():
     assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_DOOR) == []
 
 
+def test_game_novice_locksmith_follows_the_original_solution_path():
+    game = pyBaba.Game("Resources/Maps/novice_locksmith.txt")
+    solution = "RUUURULRUUULDDUULLDLDRRLLDRLDDRRRDRULLURRRRRRRRDRUULDDDDD"
+
+    _move(game, solution)
+    assert game.GetPlayState() == pyBaba.PlayState.WON
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_KEY) == []
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_DOOR) == [(17, 14)]
+
+
 def test_game_random_seed_repeats_empty_directions(tmp_path):
     level = _write_level(
         Path("Resources/Maps/special_transformations.txt"),
