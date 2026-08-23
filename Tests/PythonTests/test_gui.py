@@ -109,6 +109,8 @@ def test_sprite_palettes_keep_colored_pixels_opaque():
             ((196, 90, 117), (36, 36, 36)),
             2,
         ),
+        "Extensions/BabaGUI/sprites/icon/FRUIT.gif": (((196, 90, 117),), 1),
+        "Extensions/BabaGUI/sprites/icon/TREE.gif": (((84, 150, 64),), 1),
     }
 
     for relative, (colors, transparent_index) in sprites.items():
