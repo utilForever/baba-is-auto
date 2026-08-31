@@ -4,5 +4,6 @@
 
 - [C++ API reference](namespacebaba__is__auto.html)
 - [Python API reference](python_api.html)
+- [Rule-language capability matrix](rule_language.html)
 - [Project README](https://github.com/utilForever/baba-is-auto#readme)
 - [Architecture](https://github.com/utilForever/baba-is-auto/blob/main/ARCHITECTURE.md)

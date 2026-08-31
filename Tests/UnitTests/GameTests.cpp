@@ -2402,3 +2402,113 @@ TEST_CASE("RandomAgent - Basic")
     const Direction action = agent.GetAction(game);
     CHECK_NE(std::find(begin(actions), end(actions), action), end(actions));
 }
+
+TEST_CASE("Game - Valid rule prefix ignores trailing token")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+
+    AddRuleAt(game, ObjectType::KEKE, ObjectType::MOVE, 3, 1);
+    game.GetMap().AddObject(6, 1, ObjectType::NOT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetRuleManager().HasProperty({ ObjectType::ICON_KEKE },
+                                            ObjectType::MOVE));
+    CHECK_FALSE(game.GetMap().At(6, 1).isRule);
+}
+
+TEST_CASE("Game - Text is push without an explicit rule")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    game.GetMap().AddObject(2, 4, ObjectType::KEKE);
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(2, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(3, 4).HasType(ObjectType::KEKE));
+}
+
+TEST_CASE("Game - NOT NEAR condition moves a distant object")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+
+    map.AddObject(0, 7, ObjectType::KEKE);
+    map.AddObject(1, 7, ObjectType::NOT);
+    map.AddObject(2, 7, ObjectType::NEAR);
+    map.AddObject(3, 7, ObjectType::LOVE);
+    map.AddObject(4, 7, ObjectType::IS);
+    map.AddObject(5, 7, ObjectType::MOVE);
+    map.AddObject(1, 5, ObjectType::ICON_KEKE);
+    map.AddObject(7, 5, ObjectType::ICON_KEKE);
+    map.AddObject(8, 5, ObjectType::ICON_LOVE);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(2, 5).HasType(ObjectType::ICON_KEKE));
+    CHECK(map.At(7, 5).HasType(ObjectType::ICON_KEKE));
+}
+
+TEST_CASE("Game - NOT FACING condition moves an object facing away")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+
+    map.AddObject(0, 7, ObjectType::KEKE);
+    map.AddObject(1, 7, ObjectType::NOT);
+    map.AddObject(2, 7, ObjectType::FACING);
+    map.AddObject(3, 7, ObjectType::LOVE);
+    map.AddObject(4, 7, ObjectType::IS);
+    map.AddObject(5, 7, ObjectType::MOVE);
+    map.AddObject(1, 5, ObjectType::ICON_KEKE);
+    map.AddObject(1, 6, ObjectType::ICON_LOVE);
+    map.AddObject(7, 5, ObjectType::ICON_KEKE);
+    map.AddObject(8, 5, ObjectType::ICON_LOVE);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(2, 5).HasType(ObjectType::ICON_KEKE));
+    CHECK(map.At(7, 5).HasType(ObjectType::ICON_KEKE));
+}
+
+TEST_CASE("Game - directionless EMPTY MOVE uses a random direction")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+
+    map.AddObject(0, 1, ObjectType::EMPTY);
+    map.AddObject(1, 1, ObjectType::NEAR);
+    map.AddObject(2, 1, ObjectType::LOVE);
+    map.AddObject(3, 1, ObjectType::IS);
+    map.AddObject(4, 1, ObjectType::MOVE);
+    map.AddObject(3, 7, ObjectType::ICON_LOVE);
+    map.AddObject(2, 7, ObjectType::ICON_WALL);
+    map.AddObject(3, 8, ObjectType::ICON_WALL);
+    map.AddObject(4, 8, ObjectType::ICON_WALL);
+
+    SUBCASE("seed 0 selects UP")
+    {
+        game.SetRandomSeed(0);
+        map.RemoveObject(4, 6, ObjectType::ICON_WALL);
+        map.AddObject(4, 6, ObjectType::BABA);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(4, 5).HasType(ObjectType::BABA));
+    }
+
+    SUBCASE("seed 1 selects RIGHT")
+    {
+        game.SetRandomSeed(1);
+        map.AddObject(5, 7, ObjectType::BABA);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(map.At(6, 7).HasType(ObjectType::BABA));
+    }
+}
+
+TEST_CASE("Game - Special noun ALL learns nouns added after load")
+{
+    Game game(MAPS_DIR "special_transformations.txt");
+
+    game.GetMap().AddObject(7, 0, ObjectType::ICON_KEKE);
+    AddRule(game, ObjectType::BABA, ObjectType::ALL);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_KEKE));
+}

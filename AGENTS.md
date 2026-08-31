@@ -27,6 +27,10 @@ Upstream lives at <https://github.com/utilForever/baba-is-auto.git>.
 
 ## The most common task: changing simulator behavior
 
+Before changing rule semantics, read the
+[rule-language capability matrix](Documents/rule-language.md) and update it
+when the supported boundary changes.
+
 1. Find the domain in `Sources/baba-is-auto/` and the matching public headers in `Includes/baba-is-auto/`.
 2. Check for mirrored binding code in `Extensions/BabaPython/Includes/` and `Extensions/BabaPython/Sources/`.
 3. Update or add doctest coverage in `Tests/UnitTests/` when the C++ behavior changes.
