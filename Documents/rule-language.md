@@ -20,6 +20,17 @@ Map links point to repository-authored fixtures. The
 rule gallery records original, representative layouts for slices whose focused
 tests construct executable scenarios in code.
 
+## Rule references
+
+External references are comparison aids; repository code, focused tests, and
+maps define the simulator's behavior.
+
+- [Official Baba Is You version 481d announcement](https://steamcommunity.com/games/736260/announcements/detail/500593045099514416)
+- Unofficial Baba Is You Wiki references for
+  [conditions](https://babaiswiki.fandom.com/wiki/Category%3AConditions),
+  [special nouns](https://babaiswiki.fandom.com/wiki/Category%3ASpecial_Nouns),
+  and [order of operations](https://babaiswiki.fandom.com/wiki/Order_of_Operations)
+
 ## Grammar
 
 | Surface                               | Status      | Current behavior                                                                                                                                                                                                                           | Executable evidence                                                                                                                                                                                                                                                                                                                                                                                                                  | Representative map                                                                                                                                                                                                                                                 |
