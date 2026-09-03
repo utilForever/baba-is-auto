@@ -62,25 +62,27 @@ Map coordinates are zero-based `(x, y)` pairs.
 
 # Rules
 
-| API                                                    | Description                                                              |
-| ------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `RuleCondition()`                                      | Creates a condition with an operator, target object types, and negation. |
-| `RuleCondition.op`                                     | Gets or sets the `LONELY`, `ON`, `NEAR`, or `FACING` operator.           |
-| `RuleCondition.targets`                                | Gets or sets the object types required by the condition.                 |
-| `RuleCondition.negated`                                | Gets or sets whether the condition is negated.                           |
-| `RuleCondition.__eq__(other)`                          | Returns whether two conditions contain the same values.                  |
-| `Rule(subject, operator, predicate)`                   | Creates an unconditional three-tile rule.                                |
-| `Rule(subject, operator, predicate, conditions)`       | Creates a three-tile rule restricted by `conditions`.                    |
-| `Rule.conditions`                                      | Returns the conditions restricting matching subject instances.           |
-| `Rule.__eq__(other)`                                   | Returns whether two rules contain the same objects and conditions.       |
-| `RuleManager()`                                        | Creates an empty rule manager.                                           |
-| `RuleManager.AddRule(rule)`                            | Adds `rule` to the active rule list.                                     |
-| `RuleManager.RemoveRule(rule)`                         | Removes `rule` when it is present.                                       |
-| `RuleManager.ClearRules()`                             | Removes every active rule.                                               |
-| `RuleManager.GetRules(object_type)`                    | Returns rules containing `object_type` in any of their three objects.    |
-| `RuleManager.GetNumRules()`                            | Returns the number of active rules.                                      |
-| `RuleManager.FindPlayer()`                             | Returns the icon type selected by the first unconditional `YOU` rule.    |
-| `RuleManager.HasProperty(object_types, property_type)` | Returns whether any supplied object type has the unconditional property. |
+| API                                                       | Description                                                                   |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `RuleCondition()`                                         | Creates a condition with an operator, target object types, and negation.      |
+| `RuleCondition.op`                                        | Gets or sets the `LONELY`, `ON`, `NEAR`, or `FACING` operator.                |
+| `RuleCondition.targets`                                   | Gets or sets the object types required by the condition.                      |
+| `RuleCondition.negated`                                   | Gets or sets whether the condition is negated.                                |
+| `RuleCondition.__eq__(other)`                             | Returns whether two conditions contain the same values.                       |
+| `Rule(subject, operator, predicate)`                      | Creates an unconditional rule.                                                |
+| `Rule(subject, operator, predicate, conditions)`          | Creates a rule restricted by `conditions`.                                    |
+| `Rule(subject, operator, predicate, conditions, negated)` | Creates a rule with conditions and predicate negation.                        |
+| `Rule.conditions`                                         | Returns the conditions restricting matching subject instances.                |
+| `Rule.negated`                                            | Returns whether the predicate is negated.                                     |
+| `Rule.__eq__(other)`                                      | Returns whether two rules contain the same objects, conditions, and negation. |
+| `RuleManager()`                                           | Creates an empty rule manager.                                                |
+| `RuleManager.AddRule(rule)`                               | Adds `rule` to the active rule list.                                          |
+| `RuleManager.RemoveRule(rule)`                            | Removes `rule` when it is present.                                            |
+| `RuleManager.ClearRules()`                                | Removes every active rule.                                                    |
+| `RuleManager.GetRules(object_type)`                       | Returns rules containing `object_type` in any of their three objects.         |
+| `RuleManager.GetNumRules()`                               | Returns the number of active rules.                                           |
+| `RuleManager.FindPlayer()`                                | Returns the icon type selected by the first unconditional `YOU` rule.         |
+| `RuleManager.HasProperty(object_types, property_type)`    | Returns whether any supplied object type has the unconditional property.      |
 
 # Agents
 

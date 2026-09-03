@@ -146,33 +146,11 @@ constexpr ObjectType LockedProperty(Direction direction)
     return ObjectType::ICON_EMPTY;
 }
 
-constexpr bool IsAllNoun(ObjectType type)
-{
-    const ObjectType noun = ConvertIconToText(type);
-    return IsNounType(noun) && noun != ObjectType::TEXT &&
-           noun != ObjectType::EMPTY && noun != ObjectType::LEVEL;
-}
-
 constexpr bool IsSpawnableAllNoun(ObjectType type)
 {
     const ObjectType noun = ConvertIconToText(type);
     return IsAllNoun(noun) && noun != ObjectType::ALL &&
            noun != ObjectType::GROUP;
-}
-
-constexpr bool SubjectMatches(ObjectType subject, ObjectType type)
-{
-    if (subject == ObjectType::TEXT)
-    {
-        return IsTextType(type);
-    }
-
-    if (subject == ObjectType::ALL)
-    {
-        return IsIconType(type) && IsAllNoun(type);
-    }
-
-    return ConvertTextToIcon(subject) == type;
 }
 
 template <typename Predicate>
@@ -187,17 +165,23 @@ void RetainTypes(std::vector<ObjectType>& types, Predicate predicate)
 void AddRuleCombinations(RuleManager& rules,
                          const std::vector<ObjectType>& subjects,
                          const std::vector<ObjectType>& verbs,
-                         const std::vector<ObjectType>& predicates,
+                         const std::vector<std::pair<ObjectType, bool>>&
+                             predicates,
                          const std::vector<RuleCondition>& conditions)
 {
     for (const ObjectType subject : subjects)
     {
         for (const ObjectType verb : verbs)
         {
-            for (const ObjectType predicate : predicates)
+            for (const auto& [predicate, negated] : predicates)
             {
+                if (negated && verb != ObjectType::IS)
+                {
+                    continue;
+                }
+
                 rules.AddRule({ Object({ subject }), Object({ verb }),
-                                Object({ predicate }), conditions });
+                                Object({ predicate }), conditions, negated });
             }
         }
     }
@@ -414,28 +398,101 @@ bool ReadRuleConditions(const RuleLine& line, std::size_t& offset,
     return true;
 }
 
-bool ReadRulePredicates(const RuleLine& line, std::size_t& offset,
-                        std::vector<ObjectType>& predicates)
+struct ParsedPredicates
 {
-    if (offset >= line.Remaining() ||
-        (!line.At(offset).HasNounType() && !line.At(offset).HasPropertyType()))
+    std::size_t offset;
+    std::vector<std::pair<ObjectType, bool>> values;
+};
+
+std::vector<ParsedPredicates> ReadRulePredicateOptions(const RuleLine& line,
+                                                       std::size_t offset,
+                                                       bool allowNegated)
+{
+    std::vector<ParsedPredicates> options;
+    if (offset >= line.Remaining())
     {
-        return false;
+        return options;
     }
 
-    predicates = line.At(offset++).GetTypes();
-
-    while (offset + 1 < line.Remaining() &&
-           line.At(offset).HasType(ObjectType::AND) &&
-           (line.At(offset + 1).HasNounType() ||
-            line.At(offset + 1).HasPropertyType()))
+    std::vector<std::pair<ObjectType, bool>> positive;
+    for (const ObjectType type : line.At(offset).GetTypes())
     {
-        const auto types = line.At(offset + 1).GetTypes();
-        predicates.insert(predicates.end(), types.begin(), types.end());
-        offset += 2;
+        if (IsRulePredicate(type))
+        {
+            positive.emplace_back(type, false);
+        }
     }
 
-    return true;
+    if (!positive.empty())
+    {
+        options.push_back({ offset + 1, std::move(positive) });
+    }
+
+    if (!allowNegated || !line.At(offset).HasType(ObjectType::NOT) ||
+        offset + 1 >= line.Remaining())
+    {
+        return options;
+    }
+
+    std::vector<std::pair<ObjectType, bool>> negative;
+    for (const ObjectType type : line.At(offset + 1).GetTypes())
+    {
+        if (IsPropertyType(type))
+        {
+            negative.emplace_back(type, true);
+        }
+    }
+
+    if (!negative.empty())
+    {
+        options.push_back({ offset + 2, std::move(negative) });
+    }
+
+    return options;
+}
+
+void ContinueRulePredicates(const RuleLine& line, ParsedPredicates parsed,
+                            std::vector<ParsedPredicates>& results,
+                            bool allowNegated)
+{
+    if (parsed.offset + 1 >= line.Remaining() ||
+        !line.At(parsed.offset).HasType(ObjectType::AND))
+    {
+        results.emplace_back(std::move(parsed));
+        return;
+    }
+
+    auto options =
+        ReadRulePredicateOptions(line, parsed.offset + 1, allowNegated);
+    if (options.empty())
+    {
+        results.emplace_back(std::move(parsed));
+        return;
+    }
+
+    for (ParsedPredicates& option : options)
+    {
+        ParsedPredicates next = parsed;
+        next.offset = option.offset;
+        next.values.insert(next.values.end(), option.values.begin(),
+                           option.values.end());
+        ContinueRulePredicates(line, std::move(next), results, allowNegated);
+    }
+}
+
+std::vector<ParsedPredicates> ReadRulePredicates(const RuleLine& line,
+                                                 std::size_t offset,
+                                                 bool allowNegated)
+{
+    std::vector<ParsedPredicates> results;
+    for (ParsedPredicates& option :
+         ReadRulePredicateOptions(line, offset, allowNegated))
+    {
+        ContinueRulePredicates(line, std::move(option), results,
+                               allowNegated);
+    }
+
+    return results;
 }
 }  // namespace
 
@@ -680,9 +737,9 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
     }
 
     const std::size_t verb = offset++;
-    std::vector<ObjectType> predicates;
-
-    if (!ReadRulePredicates(line, offset, predicates))
+    auto parsedPredicates = ReadRulePredicates(
+        line, offset, line.At(verb).HasType(ObjectType::IS));
+    if (parsedPredicates.empty())
     {
         return;
     }
@@ -691,12 +748,15 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
 
     RetainTypes(subjects, IsNounType);
     RetainTypes(verbs, IsVerbType);
-    RetainTypes(predicates, IsRulePredicate);
-    AddRuleCombinations(m_ruleManager, subjects, verbs, predicates, conditions);
-
-    for (std::size_t i = 0; i < offset; ++i)
+    for (const ParsedPredicates& parsed : parsedPredicates)
     {
-        line.At(i).isRule = true;
+        AddRuleCombinations(m_ruleManager, subjects, verbs, parsed.values,
+                            conditions);
+
+        for (std::size_t i = 0; i < parsed.offset; ++i)
+        {
+            line.At(i).isRule = true;
+        }
     }
 }
 
@@ -706,6 +766,16 @@ bool Game::HasPropertyAtPosition(const ObjectInstance& instance,
 {
     const ObjectInstance atPosition =
         instance.type == ObjectType::ICON_EMPTY ? EmptyAt(position) : instance;
+
+    return HasPropertyForInstanceAtPosition(atPosition, position, property);
+}
+
+bool Game::HasPropertyForInstanceAtPosition(const ObjectInstance& instance,
+                                            const Position& position,
+                                            ObjectType property) const
+{
+    bool hasProperty =
+        IsTextType(instance.type) && property == ObjectType::PUSH;
 
     for (const Rule& rule : m_ruleManager.GetRules(property))
     {
@@ -717,15 +787,20 @@ bool Game::HasPropertyAtPosition(const ObjectInstance& instance,
 
         for (const ObjectType subject : std::get<0>(rule.objects).GetTypes())
         {
-            if (SubjectMatches(subject, atPosition.type) &&
-                MatchesConditionsAt(atPosition, position, rule.conditions))
+            if (SubjectMatches(subject, instance.type) &&
+                MatchesConditionsAt(instance, position, rule.conditions))
             {
-                return true;
+                if (rule.negated)
+                {
+                    return false;
+                }
+
+                hasProperty = true;
             }
         }
     }
 
-    return false;
+    return hasProperty;
 }
 
 bool Game::HasPropertyAt(std::size_t x, std::size_t y,
@@ -904,6 +979,7 @@ ObjectInstance Game::EmptyAt(const Position& position) const
     for (const Rule& rule : m_ruleManager.GetRules(ObjectType::IS))
     {
         if (const auto subjects = std::get<0>(rule.objects).GetTypes();
+            rule.negated ||
             !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
             !std::any_of(subjects.begin(), subjects.end(),
                          [&empty](ObjectType subject) {
@@ -916,7 +992,8 @@ ObjectInstance Game::EmptyAt(const Position& position) const
 
         for (const ObjectType predicate : std::get<2>(rule.objects).GetTypes())
         {
-            if (IsDirectionType(predicate))
+            if (IsDirectionType(predicate) &&
+                HasPropertyForInstanceAtPosition(empty, position, predicate))
             {
                 empty.direction = ToDirection(predicate);
             }
@@ -989,6 +1066,7 @@ void Game::ApplyDirectionProperties(ObjectInstance& instance,
     for (const Rule& rule : rules)
     {
         if (const auto subjects = std::get<0>(rule.objects).GetTypes();
+            rule.negated ||
             !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
             !std::any_of(subjects.begin(), subjects.end(),
                          [&instance](ObjectType subject) {
@@ -1001,7 +1079,8 @@ void Game::ApplyDirectionProperties(ObjectInstance& instance,
 
         for (const ObjectType predicate : std::get<2>(rule.objects).GetTypes())
         {
-            if (IsDirectionType(predicate))
+            if (IsDirectionType(predicate) &&
+                HasPropertyAtPosition(instance, position, predicate))
             {
                 ++counts[DirectionIndex(ToDirection(predicate))];
             }
@@ -1050,7 +1129,8 @@ void Game::ProcessMoveProperty()
 void Game::AddMoveRuleAttempts(const Rule& rule, std::vector<MoveState>& moving,
                                std::size_t& rounds)
 {
-    if (!std::get<2>(rule.objects).HasType(ObjectType::MOVE))
+    if (rule.negated ||
+        !std::get<2>(rule.objects).HasType(ObjectType::MOVE))
     {
         return;
     }
@@ -1098,7 +1178,8 @@ void Game::AppendMatchingMoveObjects(const Rule& rule,
          m_map.At(position.first, position.second).GetInstances())
     {
         if (instance.type == ObjectType::ICON_EMPTY ||
-            !MatchesConditionsAt(instance, position, rule.conditions))
+            !MatchesConditionsAt(instance, position, rule.conditions) ||
+            !HasPropertyAtPosition(instance, position, ObjectType::MOVE))
         {
             continue;
         }
@@ -1126,7 +1207,8 @@ void Game::RegisterEmptyMoveAttemptAt(const Rule& rule,
 
     const ObjectInstance empty = EmptyAt(position);
 
-    if (!MatchesConditionsAt(empty, position, rule.conditions))
+    if (!MatchesConditionsAt(empty, position, rule.conditions) ||
+        !HasPropertyForInstanceAtPosition(empty, position, ObjectType::MOVE))
     {
         return;
     }
@@ -1790,7 +1872,7 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
             instances.begin(), instances.end(),
             [this, &destinationPosition,
              &IsMatched](const ObjectInstance& instance) {
-                return !IsMatched(instance.id) && !IsTextType(instance.type) &&
+                return !IsMatched(instance.id) &&
                        HasPropertyAtPosition(instance, destinationPosition,
                                              ObjectType::STOP) &&
                        !HasPropertyAtPosition(instance, destinationPosition,
@@ -1805,9 +1887,8 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
     for (const ObjectInstance& instance : instances)
     {
         if (!IsMatched(instance.id) &&
-            (IsTextType(instance.type) ||
-             HasPropertyAtPosition(instance, destinationPosition,
-                                   ObjectType::PUSH)) &&
+            HasPropertyAtPosition(instance, destinationPosition,
+                                  ObjectType::PUSH) &&
             HasPropertyAtPosition(instance, destinationPosition,
                                   LockedProperty(dir)) &&
             !HasPropertyAtPosition(instance, destinationPosition,
@@ -1821,10 +1902,9 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
                     [this, &destinationPosition,
                      &IsMatched](const ObjectInstance& instance) {
                         return !IsMatched(instance.id) &&
-                               (IsTextType(instance.type) ||
-                                HasPropertyAtPosition(instance,
-                                                      destinationPosition,
-                                                      ObjectType::PUSH));
+                               HasPropertyAtPosition(instance,
+                                                     destinationPosition,
+                                                     ObjectType::PUSH);
                     }))
     {
         std::vector<ObjectID> pushedIDs;
@@ -1832,9 +1912,8 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
         for (const ObjectInstance& instance : instances)
         {
             if (!IsMatched(instance.id) &&
-                (IsTextType(instance.type) ||
-                 HasPropertyAtPosition(instance, destinationPosition,
-                                       ObjectType::PUSH)) &&
+                HasPropertyAtPosition(instance, destinationPosition,
+                                      ObjectType::PUSH) &&
                 !HasPropertyAtPosition(instance, destinationPosition,
                                        LockedProperty(dir)))
             {
@@ -1849,10 +1928,9 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
                 [this, &destinationPosition,
                  &IsMatched](const ObjectInstance& instance) {
                     return IsMatched(instance.id) ||
-                           (!IsTextType(instance.type) &&
-                            !HasPropertyAtPosition(instance,
-                                                   destinationPosition,
-                                                   ObjectType::PUSH)) ||
+                           !HasPropertyAtPosition(instance,
+                                                  destinationPosition,
+                                                  ObjectType::PUSH) ||
                            HasPropertyAtPosition(instance, destinationPosition,
                                                  ObjectType::WEAK);
                 });
@@ -1883,8 +1961,7 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
          m_map.At(destination.first, destination.second).GetInstances())
     {
         if (!IsMatched(instance.id) &&
-            (IsTextType(instance.type) ||
-             HasPropertyAtPosition(instance, destination, ObjectType::PUSH)) &&
+            HasPropertyAtPosition(instance, destination, ObjectType::PUSH) &&
             !HasPropertyAtPosition(instance, destination, LockedProperty(dir)))
         {
             pushedIDs.emplace_back(instance.id);
@@ -1973,7 +2050,8 @@ void Game::ProcessOpenShut()
 
                 for (const Rule& rule : openRules)
                 {
-                    if (!std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+                    if (rule.negated ||
+                        !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
                         !std::get<2>(rule.objects).HasType(ObjectType::OPEN))
                     {
                         continue;
@@ -1987,6 +2065,8 @@ void Game::ProcessOpenShut()
                             return closerFloats == HasPropertyAtPosition(
                                                        candidate, position,
                                                        ObjectType::FLOAT) &&
+                                   HasPropertyAtPosition(candidate, position,
+                                                         ObjectType::OPEN) &&
                                    std::any_of(
                                        subjects.begin(), subjects.end(),
                                        [&candidate](ObjectType subject) {

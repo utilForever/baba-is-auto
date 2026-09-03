@@ -59,10 +59,14 @@ ObjectType RuleManager::FindPlayer() const
     {
         if (rule.conditions.empty() &&
             std::get<1>(rule.objects).HasType(ObjectType::IS) &&
-            std::get<2>(rule.objects).HasType(ObjectType::YOU))
+            std::get<2>(rule.objects).HasType(ObjectType::YOU) &&
+            !rule.negated)
         {
             const ObjectType type = std::get<0>(rule.objects).GetTypes()[0];
-            return ConvertTextToIcon(type);
+            if (HasProperty({ type }, ObjectType::YOU))
+            {
+                return ConvertTextToIcon(type);
+            }
         }
     }
 
@@ -70,21 +74,34 @@ ObjectType RuleManager::FindPlayer() const
 }
 
 bool RuleManager::HasProperty(const std::vector<ObjectType>& types,
-                              ObjectType property)
+                              ObjectType property) const
 {
     for (auto type : types)
     {
-        type = ConvertIconToText(type);
+        const ObjectType instanceType = ConvertTextToIcon(type);
+        bool hasPositive = false;
+        bool hasNegative = false;
 
         for (auto& rule : m_rules)
         {
+            const auto subjects = std::get<0>(rule.objects).GetTypes();
             if (rule.conditions.empty() &&
                 std::get<1>(rule.objects).HasType(ObjectType::IS) &&
-                std::get<0>(rule.objects).HasType(type) &&
+                std::any_of(subjects.begin(), subjects.end(),
+                            [type, instanceType](ObjectType subject) {
+                                return subject == type ||
+                                       SubjectMatches(subject, instanceType);
+                            }) &&
                 std::get<2>(rule.objects).HasType(property))
             {
-                return true;
+                hasNegative |= rule.negated;
+                hasPositive |= !rule.negated;
             }
+        }
+
+        if (hasPositive && !hasNegative)
+        {
+            return true;
         }
     }
 

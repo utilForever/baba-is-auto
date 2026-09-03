@@ -909,3 +909,20 @@ def test_game_affection_transformation_solution():
 
     _move(game, "URRRRRRRRDDUULDDUULLDRRDRUUUURUURU")
     assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
+def test_game_is_not_properties_match_cpp_behavior():
+    game = pyBaba.Game("Resources/Maps/is_not_properties.txt")
+    rules = game.GetRuleManager()
+
+    assert rules.GetNumRules() == 4
+    assert rules.HasProperty([pyBaba.ObjectType.ICON_ROCK], pyBaba.ObjectType.YOU)
+    assert rules.HasProperty([pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.STOP)
+    assert not rules.HasProperty(
+        [pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.PUSH
+    )
+    assert any(rule.negated for rule in rules.GetRules(pyBaba.ObjectType.PUSH))
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().At(0, 4).HasType(pyBaba.ObjectType.ICON_ROCK)
+    assert game.GetMap().At(1, 4).HasType(pyBaba.ObjectType.ICON_BABA)

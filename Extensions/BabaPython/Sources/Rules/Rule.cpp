@@ -23,24 +23,33 @@ void AddRule(pybind11::module& m)
                        "Object types required by the condition.")
         .def_readwrite("negated", &RuleCondition::negated,
                        "Whether the condition is negated.")
-        .def("__eq__",
-             [](const RuleCondition& left, const RuleCondition& right) {
-                 return left == right;
-             },
-             "Returns whether two conditions contain the same values.");
+        .def(
+            "__eq__",
+            [](const RuleCondition& left, const RuleCondition& right) {
+                return left == right;
+            },
+            "Returns whether two conditions contain the same values.");
 
     pybind11::class_<Rule>(m, "Rule",
-                           "Represents a three-tile rule with optional "
+                           "Represents a subject-verb-predicate rule with "
+                           "optional negation and "
                            "conditions.")
         .def(pybind11::init<Object, Object, Object>(),
-             "Creates a three-tile rule.")
+             "Creates an unconditional rule.")
         .def(pybind11::init<Object, Object, Object,
                             std::vector<RuleCondition>>(),
-             "Creates a three-tile rule with subject conditions.")
+             "Creates a rule with subject conditions.")
+        .def(pybind11::init<Object, Object, Object, std::vector<RuleCondition>,
+                            bool>(),
+             "Creates a rule with subject conditions and optional predicate "
+             "negation.")
         .def_readonly("conditions", &Rule::conditions,
                       "Conditions restricting matching subject instances.")
-        .def("__eq__",
-             [](const Rule& left, const Rule& right) { return left == right; },
-             "Returns whether two rules contain the same objects and "
-             "conditions.");
+        .def_readonly("negated", &Rule::negated,
+                      "Whether the predicate is negated.")
+        .def(
+            "__eq__",
+            [](const Rule& left, const Rule& right) { return left == right; },
+            "Returns whether two rules contain the same objects, "
+            "conditions, and predicate negation.");
 }

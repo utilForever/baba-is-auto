@@ -329,6 +329,12 @@ class Game
                                const Position& position,
                                ObjectType property) const;
 
+    //! Checks an already-positioned instance has a property without resolving
+    //! a synthetic EMPTY instance again.
+    bool HasPropertyForInstanceAtPosition(const ObjectInstance& instance,
+                                          const Position& position,
+                                          ObjectType property) const;
+
     //! Checks whether any object at a position has a property.
     //! \param x The x position.
     //! \param y The y position.

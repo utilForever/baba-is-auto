@@ -128,6 +128,35 @@ constexpr ObjectType ConvertTextToIcon(ObjectType type)
     return static_cast<ObjectType>(convertedVal);
 }
 
+//! Checks whether a type belongs to the ordinary noun set selected by ALL.
+//! \param type The text or icon type to check.
+//! \return Whether ALL selects the type.
+constexpr bool IsAllNoun(ObjectType type)
+{
+    const ObjectType noun = ConvertIconToText(type);
+    return IsNounType(noun) && noun != ObjectType::TEXT &&
+           noun != ObjectType::EMPTY && noun != ObjectType::LEVEL;
+}
+
+//! Checks whether a rule subject selects an object instance type.
+//! \param subject The rule subject.
+//! \param type The object instance type.
+//! \return Whether the subject selects the instance.
+constexpr bool SubjectMatches(ObjectType subject, ObjectType type)
+{
+    if (subject == ObjectType::TEXT)
+    {
+        return IsTextType(type);
+    }
+
+    if (subject == ObjectType::ALL)
+    {
+        return IsIconType(type) && IsAllNoun(type);
+    }
+
+    return ConvertTextToIcon(subject) == type;
+}
+
 //! \brief An enumerator for identifying the play state.
 enum class PlayState
 {

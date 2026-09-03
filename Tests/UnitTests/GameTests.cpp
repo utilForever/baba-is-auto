@@ -2512,3 +2512,173 @@ TEST_CASE("Game - Special noun ALL learns nouns added after load")
     game.MovePlayer(Direction::NONE);
     CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_KEKE));
 }
+
+TEST_CASE("Game - IS NOT overrides only the matching property")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    RuleManager& rules = game.GetRuleManager();
+
+    CHECK(rules.GetNumRules() == 4);
+    CHECK(rules.HasProperty({ ObjectType::ICON_ROCK }, ObjectType::YOU));
+    CHECK(rules.HasProperty({ ObjectType::ICON_BABA }, ObjectType::STOP));
+    CHECK_FALSE(
+        rules.HasProperty({ ObjectType::ICON_BABA }, ObjectType::PUSH));
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(0, 4).HasType(ObjectType::ICON_ROCK));
+    CHECK(game.GetMap().At(1, 4).HasType(ObjectType::ICON_BABA));
+}
+
+TEST_CASE("Game - IS NOT MOVE suppresses automatic movement")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    AddRule(game, ObjectType::KEKE, ObjectType::MOVE, 1);
+    map.AddObject(0, 7, ObjectType::KEKE);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::NOT);
+    map.AddObject(3, 7, ObjectType::MOVE);
+    map.AddObject(2, 5, ObjectType::ICON_KEKE, Direction::RIGHT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(2, 5).HasType(ObjectType::ICON_KEKE));
+}
+
+TEST_CASE("Game - IS NOT OPEN suppresses OPEN interactions")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    AddRule(game, ObjectType::BABA, ObjectType::OPEN, 1);
+    map.AddObject(0, 7, ObjectType::BABA);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::NOT);
+    map.AddObject(3, 7, ObjectType::OPEN);
+    AddRuleAt(game, ObjectType::DOOR, ObjectType::SHUT, 4, 0);
+    map.AddObject(2, 5, ObjectType::ICON_BABA);
+    map.AddObject(2, 5, ObjectType::ICON_DOOR);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(map.At(2, 5).HasType(ObjectType::ICON_BABA));
+    CHECK(map.At(2, 5).HasType(ObjectType::ICON_DOOR));
+}
+
+TEST_CASE("Game - IS NOT direction suppresses direction assignment")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    AddRule(game, ObjectType::BABA, ObjectType::RIGHT, 1);
+    map.AddObject(0, 7, ObjectType::BABA);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::NOT);
+    map.AddObject(3, 7, ObjectType::RIGHT);
+    map.AddObject(2, 5, ObjectType::ICON_BABA, Direction::LEFT);
+
+    game.MovePlayer(Direction::NONE);
+
+    const auto& instances = map.At(2, 5).GetInstances();
+    const auto baba = std::find_if(
+        instances.begin(), instances.end(), [](const ObjectInstance& instance) {
+            return instance.type == ObjectType::ICON_BABA;
+        });
+    REQUIRE(baba != instances.end());
+    CHECK(baba->direction == Direction::LEFT);
+}
+
+TEST_CASE("Game - stacked NOT preserves predicate branches")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    map.AddObject(0, 7, ObjectType::BABA);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::PUSH);
+    map.AddObject(2, 7, ObjectType::NOT);
+    map.AddObject(3, 7, ObjectType::STOP);
+    map.AddObject(3, 7, ObjectType::AND);
+    map.AddObject(4, 7, ObjectType::WIN);
+
+    game.MovePlayer(Direction::NONE);
+
+    const Rule babaPush{ Object({ ObjectType::BABA }),
+                         Object({ ObjectType::IS }),
+                         Object({ ObjectType::PUSH }) };
+    const Rule babaWin{ Object({ ObjectType::BABA }),
+                        Object({ ObjectType::IS }),
+                        Object({ ObjectType::WIN }) };
+    const Rule babaNotStop{ Object({ ObjectType::BABA }),
+                            Object({ ObjectType::IS }),
+                            Object({ ObjectType::STOP }), {}, true };
+    const RuleManager& rules = game.GetRuleManager();
+    const auto pushRules = rules.GetRules(ObjectType::PUSH);
+    const auto winRules = rules.GetRules(ObjectType::WIN);
+    const auto stopRules = rules.GetRules(ObjectType::STOP);
+
+    CHECK(std::find(pushRules.begin(), pushRules.end(), babaPush) !=
+          pushRules.end());
+    CHECK(std::find(winRules.begin(), winRules.end(), babaWin) !=
+          winRules.end());
+    CHECK(std::find(stopRules.begin(), stopRules.end(), babaNotStop) !=
+          stopRules.end());
+}
+
+TEST_CASE("Game - TEXT IS NOT PUSH removes built-in PUSH")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    map.AddObject(0, 7, ObjectType::TEXT);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::NOT);
+    map.AddObject(3, 7, ObjectType::PUSH);
+    map.AddObject(2, 4, ObjectType::KEKE);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+
+    const Rule textNotPush{ Object({ ObjectType::TEXT }),
+                            Object({ ObjectType::IS }),
+                            Object({ ObjectType::PUSH }), {}, true };
+    const auto pushRules = game.GetRuleManager().GetRules(ObjectType::PUSH);
+    CHECK(std::find(pushRules.begin(), pushRules.end(), textNotPush) !=
+          pushRules.end());
+    CHECK(map.At(2, 4).HasType(ObjectType::ICON_BABA));
+    CHECK(map.At(2, 4).HasType(ObjectType::KEKE));
+    CHECK_FALSE(map.At(3, 4).HasType(ObjectType::KEKE));
+}
+
+TEST_CASE("Game - ALL IS NOT YOU agrees with RuleManager")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    map.AddObject(0, 7, ObjectType::ALL);
+    map.AddObject(1, 7, ObjectType::IS);
+    map.AddObject(2, 7, ObjectType::NOT);
+    map.AddObject(3, 7, ObjectType::YOU);
+
+    game.MovePlayer(Direction::NONE);
+
+    const RuleManager& rules = game.GetRuleManager();
+    CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
+    CHECK(rules.FindPlayer() == ObjectType::ICON_EMPTY);
+    CHECK_FALSE(
+        rules.HasProperty({ ObjectType::ICON_BABA }, ObjectType::YOU));
+}
+
+TEST_CASE("Game - non-IS NOT property suffix is not active")
+{
+    Game game(MAPS_DIR "baba_is_you.txt");
+    Map& map = game.GetMap();
+    map.AddObject(0, 7, ObjectType::BABA);
+    map.AddObject(1, 7, ObjectType::HAS);
+    map.AddObject(2, 7, ObjectType::ROCK);
+    map.AddObject(3, 7, ObjectType::AND);
+    map.AddObject(4, 7, ObjectType::NOT);
+    map.AddObject(5, 7, ObjectType::PUSH);
+
+    game.MovePlayer(Direction::NONE);
+
+    CHECK(map.At(0, 7).isRule);
+    CHECK(map.At(1, 7).isRule);
+    CHECK(map.At(2, 7).isRule);
+    CHECK_FALSE(map.At(3, 7).isRule);
+    CHECK_FALSE(map.At(4, 7).isRule);
+    CHECK_FALSE(map.At(5, 7).isRule);
+}

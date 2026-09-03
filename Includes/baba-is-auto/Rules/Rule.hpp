@@ -38,8 +38,10 @@ class Rule
     //! \param obj2 A second object.
     //! \param obj3 A third object.
     //! \param ruleConditions Optional conditions restricting subject instances.
+    //! \param isNegated Whether the predicate is negated.
     Rule(Object obj1, Object obj2, Object obj3,
-         std::vector<RuleCondition> ruleConditions = {});
+         std::vector<RuleCondition> ruleConditions = {},
+         bool isNegated = false);
 
     //! Operator overloading for ==.
     //! \param rhs A right side of Rule object.
@@ -51,6 +53,9 @@ class Rule
 
     //! Optional conditions restricting which subject instances match.
     std::vector<RuleCondition> conditions;
+
+    //! Whether the predicate is negated.
+    bool negated = false;
 };
 }  // namespace baba_is_auto
 

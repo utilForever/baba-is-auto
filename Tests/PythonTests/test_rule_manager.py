@@ -18,3 +18,28 @@ def test_rule_manager_basic():
 	assert rule_manager.GetNumRules() == 2
 	rule_manager.RemoveRule(rule2)
 	assert rule_manager.GetNumRules() == 1
+
+
+def test_rule_manager_all_is_not_property_matches_icons():
+    rule_manager = pyBaba.RuleManager()
+    rule_manager.AddRule(
+        pyBaba.Rule(
+            pyBaba.Object([pyBaba.ObjectType.BABA]),
+            pyBaba.Object([pyBaba.ObjectType.IS]),
+            pyBaba.Object([pyBaba.ObjectType.YOU]),
+        )
+    )
+    rule_manager.AddRule(
+        pyBaba.Rule(
+            pyBaba.Object([pyBaba.ObjectType.ALL]),
+            pyBaba.Object([pyBaba.ObjectType.IS]),
+            pyBaba.Object([pyBaba.ObjectType.YOU]),
+            [],
+            True,
+        )
+    )
+
+    assert not rule_manager.HasProperty(
+        [pyBaba.ObjectType.ICON_BABA], pyBaba.ObjectType.YOU
+    )
+    assert rule_manager.FindPlayer() == pyBaba.ObjectType.ICON_EMPTY
