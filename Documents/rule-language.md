@@ -2,34 +2,20 @@
 
 # Rule-language capability matrix
 
-This page records the rule language implemented by the current simulator. The
-comparison baseline is [Baba Is You version 481d](https://steamcommunity.com/games/736260/announcements/detail/500593045099514416),
-but the matrix is bounded to tokens exported by the simulator's shared `.def`
-files. Official words absent from those files, including `BECOME`, `FACEDBY`,
-`HOLD`, `HAPPY`, and `ANGRY`, cannot be tokenized and are unsupported as a
-class. An `ObjectType` enum value is not, by itself, a supported semantic.
-Statuses mean:
+This page records the rule language implemented by the current simulator. The comparison baseline is [Baba Is You version 481d](https://steamcommunity.com/games/736260/announcements/detail/500593045099514416), but the matrix is bounded to tokens exported by the simulator's shared `.def` files. Official words absent from those files, including `BECOME`, `FACEDBY`, `HOLD`, `HAPPY`, and `ANGRY`, cannot be tokenized and are unsupported as a class. An `ObjectType` enum value is not, by itself, a supported semantic. Statuses mean:
 
 - **Implemented**: current behavior has focused executable evidence.
 - **Partial**: a documented subset works, but the named boundaries remain.
-- **Unsupported**: the token is inert or its special meaning is deliberately
-  not claimed.
+- **Unsupported**: the token is inert or its special meaning is deliberately not claimed.
 
-Map links point to repository-authored fixtures. The
-[`rule_language_examples.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/rule_language_examples.txt)
-rule gallery records original, representative layouts for slices whose focused
-tests construct executable scenarios in code.
+Map links point to repository-authored fixtures. The [`rule_language_examples.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/rule_language_examples.txt) rule gallery records original, representative layouts for slices whose focused tests construct executable scenarios in code.
 
 ## Rule references
 
-External references are comparison aids; repository code, focused tests, and
-maps define the simulator's behavior.
+External references are comparison aids; repository code, focused tests, and maps define the simulator's behavior.
 
 - [Official Baba Is You version 481d announcement](https://steamcommunity.com/games/736260/announcements/detail/500593045099514416)
-- Unofficial Baba Is You Wiki references for
-  [conditions](https://babaiswiki.fandom.com/wiki/Category%3AConditions),
-  [special nouns](https://babaiswiki.fandom.com/wiki/Category%3ASpecial_Nouns),
-  and [order of operations](https://babaiswiki.fandom.com/wiki/Order_of_Operations)
+- Unofficial Baba Is You Wiki references for [conditions](https://babaiswiki.fandom.com/wiki/Category%3AConditions), [special nouns](https://babaiswiki.fandom.com/wiki/Category%3ASpecial_Nouns), and [order of operations](https://babaiswiki.fandom.com/wiki/Order_of_Operations)
 
 ## Grammar
 
@@ -37,7 +23,7 @@ maps define the simulator's behavior.
 | ------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Ordinary noun subjects and predicates | Implemented | Ordinary noun subjects form `IS` property rules and `IS` noun transformations. The narrower `HAS` behavior and inert `MAKE` token are listed separately below.                                                                             | [`Game - Basic`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L68), [`Game - Transformations use one snapshot`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L1259)                                                                                                                                                                                    | [`baba_is_you.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/baba_is_you.txt), [`transformations.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/transformations.txt)                                       |
 | `AND` subject and predicate chains    | Implemented | Subjects and predicates expand into independent rule combinations. Condition targets and consecutive conditions may also be joined with `AND`. Verb chaining is not supported.                                                             | [`Game - Arbitrary AND Chains`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L155), [`Game - Conditional MOVE rules`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L819)                                                                                                                                                                               | [`and_chains.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/and_chains.txt), [`move_conditions.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/move_conditions.txt)                                         |
-| `NOT`                                 | Partial     | `NOT LONELY` and `NOT` before `ON`, `NEAR`, or `FACING` are parsed. Negated subjects, predicates, condition targets, repeated `NOT`, and nested forms are unsupported.                                                                     | [`Game - Conditional MOVE rules`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L819), [`Game - NOT NEAR condition moves a distant object`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L2430), [`Game - NOT FACING condition moves an object facing away`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L2450) | [`move_conditions.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/move_conditions.txt), [`NOT NEAR` and `NOT FACING` examples](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/rule_language_examples.txt#L25-L26) |
+| `NOT`                                 | Partial     | `IS NOT` property predicates, `NOT LONELY`, and `NOT` before `ON`, `NEAR`, or `FACING` are parsed. Negated nouns, subjects, condition targets, repeated `NOT`, and nested forms are unsupported. See property negation below.              | [`Game - Conditional MOVE rules`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L819), [`Game - NOT NEAR condition moves a distant object`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L2430), [`Game - NOT FACING condition moves an object facing away`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L2450) | [`move_conditions.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/move_conditions.txt), [`NOT NEAR` and `NOT FACING` examples](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/rule_language_examples.txt#L25-L26) |
 | Malformed or trailing tokens          | Partial     | Missing or malformed required fields create no rule from that starting position. Once a valid predicate prefix is complete, later tokens that do not continue an `AND` predicate chain are ignored. Scanning continues at later positions. | [`Game - Rule after leading AND`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L176), [`Game - Valid rule prefix ignores trailing token`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L2406)                                                                                                                                                          | [`and_chains.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/and_chains.txt), [`BABA IS YOU NOT`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/rule_language_examples.txt#L24)                                  |
 
 The noun vocabulary is the set in
@@ -53,11 +39,19 @@ separately below. Every other exported noun uses ordinary noun behavior.
 | `HAS`  | Partial     | Noun predicates are produced only when an `OPEN`/`SHUT` interaction destroys the subject. Other destruction paths do not run `HAS`, and property predicates do not grant properties.         | [`Game - OPEN and SHUT destruction spawns HAS before movement`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L2018), [`Game - HAS does not grant properties`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp#L117) | [`BABA HAS ROCK`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/rule_language_examples.txt#L4), [`has_property.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/has_property.txt)   |
 | `MAKE` | Unsupported | The parser recognizes `MAKE` as a verb, but no runtime phase consumes it.                                                                                                                    | No positive executable evidence.                                                                                                                                                                                                                                                               | No conformance map yet.                                                                                                                                                                                                              |
 
+## Property negation (`IS NOT`)
+
+`IS NOT` accepts one property after each `NOT`, horizontally or vertically. Subjects and mixed positive/negative predicates can use `AND`: for example, `BABA AND KEKE IS NOT PUSH AND YOU AND NOT MOVE` grants `YOU` to both nouns while excluding `PUSH` and `MOVE`. Negation belongs only to the immediately following property. Negated noun predicates, repeated `NOT`, and negation with `HAS` or `MAKE` remain unsupported. A malformed continuation leaves an already complete rule prefix intact, as in the grammar table above. Stacked positive predicates and `NOT` retain both `AND` continuations: `BABA IS [YOU + NOT] [AND + PUSH] MOVE` produces `BABA IS YOU`, `BABA IS MOVE`, and `BABA IS NOT PUSH` (brackets denote one cell). Stacked verbs are parsed independently: `BABA [IS + HAS] NOT PUSH AND ROCK` produces only `BABA IS NOT PUSH` and `BABA IS ROCK`, never `BABA HAS ROCK`.
+
+Full stacked-sentence multiplicity remains unsupported. For example, `BABA IS [YOU + STOP] AND MOVE` produces one `MOVE` rule here, versus two in the original game. This existing limitation can affect movement counts and also applies to stacked sentences containing `NOT`.
+
+**A matching negative property rule always overrides all matching positive rules for that property, regardless of rule order or duplicate positive rules.** Other properties and other instances are unaffected. Subject conditions are evaluated independently for positive and negative rules: `KEKE IS MOVE` with `KEKE ON ROCK IS NOT MOVE` stops only the Keke instances on a rock. This also applies to the default pushability of text (`TEXT IS NOT PUSH`), `ALL` subjects, direction assignment, and `EMPTY` properties. Negating a property does not undo an earlier action or reset an object's existing facing; it prevents the property from applying at its next evaluation. Negation does not implement the runtime effects of otherwise unsupported property tokens.
+
+The original minimal map [`is_not_properties.txt`](https://github.com/utilForever/baba-is-auto/blob/main/Resources/Maps/is_not_properties.txt) combines `ROCK IS PUSH AND STOP` with `ROCK IS NOT PUSH`: the rock remains `STOP`, so Baba cannot push it. Breaking the negative rule restores `PUSH`. Focused `Game - IS NOT ...` cases in [`GameTests.cpp`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/UnitTests/GameTests.cpp) cover parsing, precedence, conditions, reparsing/reset, movement, directions, text pushing, and overlap effects. Python parity and rule metadata are covered in [`test_game.py`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py) and [`test_rule_manager.py`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_rule_manager.py).
+
 ## Conditions
 
-Conditions restrict individual subject instances. `RuleManager::FindPlayer`
-and `RuleManager::HasProperty` intentionally query unconditional rules only;
-`Game` performs position-aware condition evaluation.
+Conditions restrict individual subject instances. `RuleManager::FindPlayer` and `RuleManager::HasProperty` intentionally query unconditional rules only; `Game` performs position-aware condition evaluation. Unconditional property queries include `ALL` rules with the same noun membership as `Game`. For example, `BABA IS YOU` with `ALL IS NOT YOU` makes both `HasProperty({BABA}, YOU)` and `HasProperty({ICON_BABA}, YOU)` false, and `FindPlayer()` no longer selects Baba.
 
 | Condition                          | Status      | Current behavior                                                                                                                                                                       | Executable evidence                                                                                                                                                                                                                                                                                                                                                                                                                  | Representative map                                                                                                                                                                                                                                                                         |
 | ---------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -104,35 +98,19 @@ subject instances receiving any implemented property.
 
 ## Python-visible surface
 
-- Python exposes the C++ `ObjectType` names from the shared `.def` files plus
-  the synthetic `LOCKED_*` values. Export does not upgrade an unsupported
-  token to supported behavior.
-- `pyBaba.Game` runs the same core implementation. Focused parity examples
-  cover [`AND` chains](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L392),
-  [`HAS` not granting properties](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L411),
-  [special condition targets](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L805),
-  [`EMPTY` facing](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L814),
-  and [`TEXT`/`ALL` transformations](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L839).
-- `RuleCondition` exposes `op`, `targets`, and `negated`; its binding does not
-  validate that `op` is one of the supported condition tokens. The API is
-  covered by [`test_rule_conditions_are_visible_in_python`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L421).
-- `RuleManager::FindPlayer` and `RuleManager::HasProperty` report only
-  unconditional `IS` rules. Conditional behavior must be observed through
-  `Game` with a concrete position.
-- Some C++ behavior rows have no focused Python parity test yet. They remain
-  C++-implemented behavior, not a promise of Python test coverage.
+- Python exposes the C++ `ObjectType` names from the shared `.def` files plus the synthetic `LOCKED_*` values. Export does not upgrade an unsupported token to supported behavior.
+- `pyBaba.Game` runs the same core implementation. Focused parity examples cover [`AND` chains](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L392), [`HAS` not granting properties](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L411), [special condition targets](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L805), [`EMPTY` facing](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L814), and [`TEXT`/`ALL` transformations](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L839).
+- `RuleCondition` exposes `op`, `targets`, and `negated`; its binding does not validate that `op` is one of the supported condition tokens. The API is covered by [`test_rule_conditions_are_visible_in_python`](https://github.com/utilForever/baba-is-auto/blob/main/Tests/PythonTests/test_game.py#L421).
+- `Rule` accepts an optional fifth constructor argument for predicate negation (after the conditions list), exposed as read-only `predicate_negated` in Python. Rule equality and removal distinguish positive and negative rules.
+- `RuleManager::FindPlayer` and `RuleManager::HasProperty` report only unconditional `IS` rules, with matching negative rules taking precedence separately for each queried type. Conditional behavior must be observed through `Game` with a concrete position.
+- Some C++ behavior rows have no focused Python parity test yet. They remain C++-implemented behavior, not a promise of Python test coverage.
 
 ## Next semantic gaps
 
-The open follow-ups define the next boundaries without requiring a parser
-redesign:
+The open follow-ups define the next boundaries without requiring a parser redesign:
 
-1. [`IS NOT` properties](https://github.com/utilForever/baba-is-auto/issues/139),
-   [`IS NOT` nouns](https://github.com/utilForever/baba-is-auto/issues/140),
-   and [`NOT` precedence](https://github.com/utilForever/baba-is-auto/issues/141)
-2. [`MAKE`](https://github.com/utilForever/baba-is-auto/issues/142) and
-   [`WORD`](https://github.com/utilForever/baba-is-auto/issues/143)
-3. [`GROUP`](https://github.com/utilForever/baba-is-auto/issues/144) and
-   complete [`EMPTY`](https://github.com/utilForever/baba-is-auto/issues/145)
+1. [`IS NOT` nouns](https://github.com/utilForever/baba-is-auto/issues/140) and broader [`NOT` precedence](https://github.com/utilForever/baba-is-auto/issues/141)
+2. [`MAKE`](https://github.com/utilForever/baba-is-auto/issues/142) and [`WORD`](https://github.com/utilForever/baba-is-auto/issues/143)
+3. [`GROUP`](https://github.com/utilForever/baba-is-auto/issues/144) and complete [`EMPTY`](https://github.com/utilForever/baba-is-auto/issues/145)
 4. complete [`TEXT` and `ALL`](https://github.com/utilForever/baba-is-auto/issues/146)
 5. bounded single-map [`LEVEL`](https://github.com/utilForever/baba-is-auto/issues/147)
