@@ -2529,6 +2529,32 @@ void AddWords(Game& game, std::initializer_list<ObjectType> words,
 }
 }  // namespace
 
+TEST_CASE("Game - IS NOT overrides PUSH and preserves STOP")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    auto& rules = game.GetRuleManager();
+    CHECK(rules.GetNumRules() == 4);
+    CHECK_FALSE(rules.HasProperty({ ObjectType::ICON_ROCK }, ObjectType::PUSH));
+    CHECK(rules.HasProperty({ ObjectType::ICON_ROCK }, ObjectType::STOP));
+    CHECK(rules.HasProperty({ ObjectType::ICON_BABA }, ObjectType::YOU));
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_ROCK));
+
+    game.GetMap().RemoveObject(2, 4, ObjectType::NOT);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(3, 6).HasType(ObjectType::ICON_ROCK));
+
+    game.Reset();
+
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_BABA));
+}
+
 TEST_CASE("Game - IS NOT parses mixed AND chains in both directions")
 {
     for (const bool vertical : { false, true })
@@ -2559,6 +2585,147 @@ TEST_CASE("Game - IS NOT parses mixed AND chains in both directions")
     }
 }
 
+TEST_CASE("Game - IS NOT precedence is independent of rule order")
+{
+    for (const bool negativeFirst : { false, true })
+    {
+        Game game(MAPS_DIR "is_not_properties.txt");
+        game.GetMap() = Map(8, 8);
+
+        AddRule(game, ObjectType::BABA, ObjectType::YOU, negativeFirst ? 2 : 0);
+        AddWords(game,
+                 { ObjectType::BABA, ObjectType::IS, ObjectType::NOT,
+                   ObjectType::YOU },
+                 negativeFirst ? 0 : 2);
+        AddRule(game, ObjectType::KEKE, ObjectType::YOU, 4);
+
+        game.GetMap().AddObject(1, 6, ObjectType::ICON_BABA);
+        game.GetMap().AddObject(4, 6, ObjectType::ICON_KEKE);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(game.GetRuleManager().FindPlayer() == ObjectType::ICON_KEKE);
+        CHECK(game.GetRuleManager().HasProperty(
+            { ObjectType::ICON_BABA, ObjectType::ICON_KEKE }, ObjectType::YOU));
+        CHECK(game.GetPlayerIcon() == ObjectType::ICON_KEKE);
+
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(5, 6).HasType(ObjectType::ICON_KEKE));
+    }
+}
+
+TEST_CASE("Game - IS NOT MOVE conditions apply per instance")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(10, 8);
+
+    AddWords(game,
+             { ObjectType::KEKE, ObjectType::IS, ObjectType::MOVE,
+               ObjectType::AND, ObjectType::MOVE },
+             0);
+    AddWords(game,
+             { ObjectType::KEKE, ObjectType::ON, ObjectType::ROCK,
+               ObjectType::IS, ObjectType::NOT, ObjectType::MOVE },
+             2);
+
+    game.GetMap().AddObject(1, 6, ObjectType::ICON_KEKE);
+    game.GetMap().AddObject(1, 6, ObjectType::ICON_ROCK);
+    game.GetMap().AddObject(5, 6, ObjectType::ICON_KEKE);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetMap().At(7, 6).HasType(ObjectType::ICON_KEKE));
+    CHECK(game.GetRuleManager().HasProperty({ ObjectType::KEKE },
+                                            ObjectType::MOVE));
+}
+
+TEST_CASE("Game - IS NOT directions suppress assignment")
+{
+    for (const auto noun : { ObjectType::KEKE, ObjectType::EMPTY })
+    {
+        Game game(MAPS_DIR "is_not_properties.txt");
+        game.GetMap() = Map(10, 8);
+
+        AddRule(game, noun, ObjectType::UP, 0);
+        AddWords(game,
+                 { noun, ObjectType::IS, ObjectType::NOT, ObjectType::UP }, 2);
+        AddWords(game,
+                 { noun, ObjectType::FACING, ObjectType::UP, ObjectType::IS,
+                   ObjectType::ROCK },
+                 4);
+
+        game.GetMap().AddObject(1, 6, ObjectType::ICON_KEKE);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(game.GetMap().GetPositions(ObjectType::ICON_ROCK).empty());
+        CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_KEKE));
+        CHECK(game.GetMap().At(1, 6).GetInstances().front().direction ==
+              Direction::RIGHT);
+    }
+}
+
+TEST_CASE("Game - IS NOT OPEN prevents overlap destruction")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(8, 8);
+
+    AddRule(game, ObjectType::KEY, ObjectType::OPEN, 0);
+    AddWords(
+        game,
+        { ObjectType::KEY, ObjectType::IS, ObjectType::NOT, ObjectType::OPEN },
+        2);
+    AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 4);
+
+    game.GetMap().AddObject(1, 6, ObjectType::ICON_KEY);
+    game.GetMap().AddObject(1, 6, ObjectType::ICON_DOOR);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_KEY));
+    CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_DOOR));
+}
+
+TEST_CASE("Game - IS NOT PUSH disables default text pushing")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(8, 8);
+
+    AddRule(game, ObjectType::BABA, ObjectType::YOU, 0);
+    AddWords(
+        game,
+        { ObjectType::TEXT, ObjectType::IS, ObjectType::NOT, ObjectType::PUSH },
+        2);
+
+    game.GetMap().AddObject(1, 6, ObjectType::ICON_BABA);
+    game.GetMap().AddObject(2, 6, ObjectType::FLAG);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 6).HasType(ObjectType::FLAG));
+    CHECK_FALSE(game.GetMap().At(3, 6).HasType(ObjectType::FLAG));
+}
+
+TEST_CASE("Game - IS NOT PUSH preserves text STOP")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(8, 8);
+
+    AddRule(game, ObjectType::BABA, ObjectType::YOU, 0);
+    AddWords(
+        game,
+        { ObjectType::TEXT, ObjectType::IS, ObjectType::NOT, ObjectType::PUSH },
+        2);
+    AddRule(game, ObjectType::TEXT, ObjectType::STOP, 4);
+
+    game.GetMap().AddObject(1, 6, ObjectType::ICON_BABA);
+    game.GetMap().AddObject(2, 6, ObjectType::FLAG);
+
+    game.MovePlayer(Direction::NONE);
+    game.MovePlayer(Direction::RIGHT);
+    CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_BABA));
+    CHECK(game.GetMap().At(2, 6).HasType(ObjectType::FLAG));
+}
+
 TEST_CASE("Game - IS NOT preserves stacked positive predicates")
 {
     Game game(MAPS_DIR "is_not_properties.txt");
@@ -2571,6 +2738,27 @@ TEST_CASE("Game - IS NOT preserves stacked positive predicates")
     game.MovePlayer(Direction::NONE);
     CHECK(game.GetRuleManager().HasProperty({ ObjectType::BABA },
                                             ObjectType::YOU));
+}
+
+TEST_CASE("Game - IS NOT MOVE suppresses EMPTY movement")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(8, 8);
+
+    AddWords(game,
+             { ObjectType::EMPTY, ObjectType::IS, ObjectType::MOVE,
+               ObjectType::AND, ObjectType::RIGHT },
+             0);
+    AddWords(game,
+             { ObjectType::EMPTY, ObjectType::IS, ObjectType::NOT,
+               ObjectType::MOVE },
+             2);
+    AddRule(game, ObjectType::ROCK, ObjectType::PUSH, 4);
+
+    game.GetMap().AddObject(3, 6, ObjectType::ICON_ROCK);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().At(3, 6).HasType(ObjectType::ICON_ROCK));
 }
 
 TEST_CASE("Game - IS NOT rejects unsupported predicates")
@@ -2644,6 +2832,36 @@ TEST_CASE("Game - IS NOT keeps both stacked AND continuations")
         CHECK(rules.HasProperty({ ObjectType::BABA }, ObjectType::STOP) ==
               hasStop);
         CHECK(rules.GetNumRules() == (hasStop ? 4 : 3));
+    }
+}
+
+TEST_CASE("Game - IS NOT ALL agrees with unconditional property queries")
+{
+    for (const bool negativeFirst : { false, true })
+    {
+        Game game(MAPS_DIR "is_not_properties.txt");
+        game.GetMap() = Map(8, 8);
+
+        AddRule(game, ObjectType::BABA, ObjectType::YOU, negativeFirst ? 2 : 0);
+        AddWords(game,
+                 { ObjectType::ALL, ObjectType::IS, ObjectType::NOT,
+                   ObjectType::YOU },
+                 negativeFirst ? 0 : 2);
+        AddRule(game, ObjectType::BABA, ObjectType::PUSH, 4);
+
+        game.GetMap().AddObject(1, 6, ObjectType::ICON_BABA);
+        game.MovePlayer(Direction::NONE);
+
+        const auto& rules = game.GetRuleManager();
+        CHECK_FALSE(rules.HasProperty({ ObjectType::BABA }, ObjectType::YOU));
+        CHECK_FALSE(
+            rules.HasProperty({ ObjectType::ICON_BABA }, ObjectType::YOU));
+        CHECK(rules.HasProperty({ ObjectType::BABA }, ObjectType::PUSH));
+        CHECK(rules.FindPlayer() == ObjectType::ICON_EMPTY);
+        CHECK(game.GetPlayerIcon() == ObjectType::ICON_EMPTY);
+
+        game.MovePlayer(Direction::RIGHT);
+        CHECK(game.GetMap().At(1, 6).HasType(ObjectType::ICON_BABA));
     }
 }
 

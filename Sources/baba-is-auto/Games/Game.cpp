@@ -748,6 +748,14 @@ bool Game::HasPropertyAtPosition(const ObjectInstance& instance,
 {
     const ObjectInstance atPosition =
         instance.type == ObjectType::ICON_EMPTY ? EmptyAt(position) : instance;
+    return HasPropertyForInstance(atPosition, position, property);
+}
+
+bool Game::HasPropertyForInstance(const ObjectInstance& instance,
+                                  const Position& position,
+                                  ObjectType property) const
+{
+    bool positive = IsTextType(instance.type) && property == ObjectType::PUSH;
 
     for (const Rule& rule : m_ruleManager.GetRules(property))
     {
@@ -759,15 +767,20 @@ bool Game::HasPropertyAtPosition(const ObjectInstance& instance,
 
         for (const ObjectType subject : std::get<0>(rule.objects).GetTypes())
         {
-            if (SubjectMatches(subject, atPosition.type) &&
-                MatchesConditionsAt(atPosition, position, rule.conditions))
+            if (SubjectMatches(subject, instance.type) &&
+                MatchesConditionsAt(instance, position, rule.conditions))
             {
-                return true;
+                if (rule.predicateNegated)
+                {
+                    return false;
+                }
+
+                positive = true;
             }
         }
     }
 
-    return false;
+    return positive;
 }
 
 bool Game::HasPropertyAt(std::size_t x, std::size_t y,
@@ -946,6 +959,7 @@ ObjectInstance Game::EmptyAt(const Position& position) const
     for (const Rule& rule : m_ruleManager.GetRules(ObjectType::IS))
     {
         if (const auto subjects = std::get<0>(rule.objects).GetTypes();
+            rule.predicateNegated ||
             !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
             !std::any_of(subjects.begin(), subjects.end(),
                          [&empty](ObjectType subject) {
@@ -958,7 +972,8 @@ ObjectInstance Game::EmptyAt(const Position& position) const
 
         for (const ObjectType predicate : std::get<2>(rule.objects).GetTypes())
         {
-            if (IsDirectionType(predicate))
+            if (IsDirectionType(predicate) &&
+                HasPropertyForInstance(empty, position, predicate))
             {
                 empty.direction = ToDirection(predicate);
             }
@@ -1031,6 +1046,7 @@ void Game::ApplyDirectionProperties(ObjectInstance& instance,
     for (const Rule& rule : rules)
     {
         if (const auto subjects = std::get<0>(rule.objects).GetTypes();
+            rule.predicateNegated ||
             !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
             !std::any_of(subjects.begin(), subjects.end(),
                          [&instance](ObjectType subject) {
@@ -1043,7 +1059,8 @@ void Game::ApplyDirectionProperties(ObjectInstance& instance,
 
         for (const ObjectType predicate : std::get<2>(rule.objects).GetTypes())
         {
-            if (IsDirectionType(predicate))
+            if (IsDirectionType(predicate) &&
+                HasPropertyForInstance(instance, position, predicate))
             {
                 ++counts[DirectionIndex(ToDirection(predicate))];
             }
@@ -1092,7 +1109,9 @@ void Game::ProcessMoveProperty()
 void Game::AddMoveRuleAttempts(const Rule& rule, std::vector<MoveState>& moving,
                                std::size_t& rounds)
 {
-    if (!std::get<2>(rule.objects).HasType(ObjectType::MOVE))
+    if (rule.predicateNegated ||
+        !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+        !std::get<2>(rule.objects).HasType(ObjectType::MOVE))
     {
         return;
     }
@@ -1140,7 +1159,8 @@ void Game::AppendMatchingMoveObjects(const Rule& rule,
          m_map.At(position.first, position.second).GetInstances())
     {
         if (instance.type == ObjectType::ICON_EMPTY ||
-            !MatchesConditionsAt(instance, position, rule.conditions))
+            !MatchesConditionsAt(instance, position, rule.conditions) ||
+            !HasPropertyAtPosition(instance, position, ObjectType::MOVE))
         {
             continue;
         }
@@ -1168,7 +1188,8 @@ void Game::RegisterEmptyMoveAttemptAt(const Rule& rule,
 
     const ObjectInstance empty = EmptyAt(position);
 
-    if (!MatchesConditionsAt(empty, position, rule.conditions))
+    if (!MatchesConditionsAt(empty, position, rule.conditions) ||
+        !HasPropertyForInstance(empty, position, ObjectType::MOVE))
     {
         return;
     }
@@ -1377,7 +1398,8 @@ std::vector<Game::Transformation> Game::FindTransformations() const
 
     for (const Rule& rule : m_ruleManager.GetRules(ObjectType::IS))
     {
-        if (!std::get<1>(rule.objects).HasType(ObjectType::IS))
+        if (rule.predicateNegated ||
+            !std::get<1>(rule.objects).HasType(ObjectType::IS))
         {
             continue;
         }
@@ -1832,7 +1854,7 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
             instances.begin(), instances.end(),
             [this, &destinationPosition,
              &IsMatched](const ObjectInstance& instance) {
-                return !IsMatched(instance.id) && !IsTextType(instance.type) &&
+                return !IsMatched(instance.id) &&
                        HasPropertyAtPosition(instance, destinationPosition,
                                              ObjectType::STOP) &&
                        !HasPropertyAtPosition(instance, destinationPosition,
@@ -1847,9 +1869,8 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
     for (const ObjectInstance& instance : instances)
     {
         if (!IsMatched(instance.id) &&
-            (IsTextType(instance.type) ||
-             HasPropertyAtPosition(instance, destinationPosition,
-                                   ObjectType::PUSH)) &&
+            HasPropertyAtPosition(instance, destinationPosition,
+                                  ObjectType::PUSH) &&
             HasPropertyAtPosition(instance, destinationPosition,
                                   LockedProperty(dir)) &&
             !HasPropertyAtPosition(instance, destinationPosition,
@@ -1863,10 +1884,9 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
                     [this, &destinationPosition,
                      &IsMatched](const ObjectInstance& instance) {
                         return !IsMatched(instance.id) &&
-                               (IsTextType(instance.type) ||
-                                HasPropertyAtPosition(instance,
-                                                      destinationPosition,
-                                                      ObjectType::PUSH));
+                               HasPropertyAtPosition(instance,
+                                                     destinationPosition,
+                                                     ObjectType::PUSH);
                     }))
     {
         std::vector<ObjectID> pushedIDs;
@@ -1874,9 +1894,8 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
         for (const ObjectInstance& instance : instances)
         {
             if (!IsMatched(instance.id) &&
-                (IsTextType(instance.type) ||
-                 HasPropertyAtPosition(instance, destinationPosition,
-                                       ObjectType::PUSH)) &&
+                HasPropertyAtPosition(instance, destinationPosition,
+                                      ObjectType::PUSH) &&
                 !HasPropertyAtPosition(instance, destinationPosition,
                                        LockedProperty(dir)))
             {
@@ -1891,10 +1910,8 @@ bool Game::CanMove(std::size_t x, std::size_t y, Direction dir,
                 [this, &destinationPosition,
                  &IsMatched](const ObjectInstance& instance) {
                     return IsMatched(instance.id) ||
-                           (!IsTextType(instance.type) &&
-                            !HasPropertyAtPosition(instance,
-                                                   destinationPosition,
-                                                   ObjectType::PUSH)) ||
+                           !HasPropertyAtPosition(instance, destinationPosition,
+                                                  ObjectType::PUSH) ||
                            HasPropertyAtPosition(instance, destinationPosition,
                                                  ObjectType::WEAK);
                 });
@@ -1925,8 +1942,7 @@ void Game::ProcessMove(std::size_t x, std::size_t y, Direction dir,
          m_map.At(destination.first, destination.second).GetInstances())
     {
         if (!IsMatched(instance.id) &&
-            (IsTextType(instance.type) ||
-             HasPropertyAtPosition(instance, destination, ObjectType::PUSH)) &&
+            HasPropertyAtPosition(instance, destination, ObjectType::PUSH) &&
             !HasPropertyAtPosition(instance, destination, LockedProperty(dir)))
         {
             pushedIDs.emplace_back(instance.id);
@@ -2015,7 +2031,8 @@ void Game::ProcessOpenShut()
 
                 for (const Rule& rule : openRules)
                 {
-                    if (!std::get<1>(rule.objects).HasType(ObjectType::IS) ||
+                    if (rule.predicateNegated ||
+                        !std::get<1>(rule.objects).HasType(ObjectType::IS) ||
                         !std::get<2>(rule.objects).HasType(ObjectType::OPEN))
                     {
                         continue;
@@ -2036,7 +2053,9 @@ void Game::ProcessOpenShut()
                                                subject, candidate.type);
                                        }) &&
                                    MatchesConditionsAt(candidate, position,
-                                                       rule.conditions);
+                                                       rule.conditions) &&
+                                   HasPropertyAtPosition(candidate, position,
+                                                         ObjectType::OPEN);
                         });
 
                     if (opener == instances.end())

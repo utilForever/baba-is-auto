@@ -911,6 +911,59 @@ def test_game_affection_transformation_solution():
     assert game.GetPlayState() == pyBaba.PlayState.WON
 
 
+def test_is_not_preserves_other_properties_and_reparses(tmp_path):
+    game = pyBaba.Game("Resources/Maps/is_not_properties.txt")
+    rules = game.GetRuleManager()
+    assert rules.GetNumRules() == 4
+    assert not rules.HasProperty([pyBaba.ObjectType.ICON_ROCK], pyBaba.ObjectType.PUSH)
+    assert rules.HasProperty([pyBaba.ObjectType.ICON_ROCK], pyBaba.ObjectType.STOP)
+    assert game.GetPlayerIcon() == pyBaba.ObjectType.ICON_BABA
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_BABA) == [(1, 6)]
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_ROCK) == [(2, 6)]
+
+    level = _write_level(
+        Path("Resources/Maps/is_not_properties.txt"), tmp_path / "positive.txt",
+        [(2, 4, pyBaba.ObjectType.ICON_EMPTY)],
+    )
+    positive = pyBaba.Game(str(level))
+
+    positive.MovePlayer(pyBaba.Direction.RIGHT)
+    assert positive.GetMap().GetPositions(pyBaba.ObjectType.ICON_BABA) == [(2, 6)]
+    assert positive.GetMap().GetPositions(pyBaba.ObjectType.ICON_ROCK) == [(3, 6)]
+
+    game.Reset()
+
+    game.MovePlayer(pyBaba.Direction.RIGHT)
+    assert game.GetMap().GetPositions(pyBaba.ObjectType.ICON_BABA) == [(1, 6)]
+
+
+def test_is_not_move_condition_applies_per_instance(tmp_path):
+    obj = pyBaba.ObjectType
+    rows = [
+        [obj.KEKE, obj.IS, obj.MOVE, obj.AND, obj.MOVE], [],
+        [obj.KEKE, obj.ON, obj.ROCK, obj.IS, obj.NOT, obj.MOVE], [], [], [],
+        [obj.ICON_EMPTY, obj.ICON_KEKE, obj.ICON_EMPTY, obj.ICON_EMPTY, obj.ICON_KEKE],
+    ]
+    level = _write_level(
+        Path("Resources/Maps/is_not_properties.txt"), tmp_path / "conditional.txt",
+        [(x, y, row[x] if x < len(row) else obj.ICON_EMPTY)
+         for y, row in enumerate(rows) for x in range(7)],
+        stacked=[(1, 6, obj.ICON_ROCK)],
+    )
+
+    game = pyBaba.Game(str(level))
+    rules = game.GetRuleManager().GetRules(obj.MOVE)
+    negative = [rule for rule in rules if rule.predicate_negated]
+    assert len(negative) == 1
+    assert negative[0].conditions[0].op == obj.ON
+    assert not negative[0].conditions[0].negated
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().GetPositions(obj.ICON_KEKE) == [(1, 6), (6, 6)]
+
+
 def test_is_not_stacked_words_keep_positive_and_continuation(tmp_path):
     obj = pyBaba.ObjectType
     rows = [[obj.BABA, obj.IS, obj.YOU, obj.AND, obj.MOVE], [], [], [], [], [],

@@ -329,6 +329,11 @@ class Game
                                const Position& position,
                                ObjectType property) const;
 
+    //! Resolves a property using the supplied facing, without rebuilding EMPTY.
+    bool HasPropertyForInstance(const ObjectInstance& instance,
+                                const Position& position,
+                                ObjectType property) const;
+
     //! Checks whether any object at a position has a property.
     //! \param x The x position.
     //! \param y The y position.
