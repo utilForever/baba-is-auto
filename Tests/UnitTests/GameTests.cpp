@@ -2513,6 +2513,140 @@ TEST_CASE("Game - Special noun ALL learns nouns added after load")
     CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_KEKE));
 }
 
+namespace
+{
+void AddWords(Game& game, std::initializer_list<ObjectType> words,
+              std::size_t y, bool vertical = false)
+{
+    std::size_t offset = 0;
+
+    for (const ObjectType word : words)
+    {
+        game.GetMap().AddObject(vertical ? y : offset, vertical ? offset : y,
+                                word);
+        ++offset;
+    }
+}
+}  // namespace
+
+TEST_CASE("Game - IS NOT parses mixed AND chains in both directions")
+{
+    for (const bool vertical : { false, true })
+    {
+        Game game(MAPS_DIR "is_not_properties.txt");
+        game.GetMap() = Map(14, 14);
+
+        AddWords(game,
+                 { ObjectType::BABA, ObjectType::AND, ObjectType::KEKE,
+                   ObjectType::IS, ObjectType::NOT, ObjectType::PUSH,
+                   ObjectType::AND, ObjectType::YOU, ObjectType::AND,
+                   ObjectType::NOT, ObjectType::MOVE },
+                 0, vertical);
+
+        game.MovePlayer(Direction::NONE);
+
+        auto& rules = game.GetRuleManager();
+        CHECK(rules.GetNumRules() == 6);
+
+        for (const auto noun : { ObjectType::BABA, ObjectType::KEKE })
+        {
+            CHECK(rules.HasProperty({ noun }, ObjectType::YOU));
+            CHECK_FALSE(rules.HasProperty({ noun }, ObjectType::PUSH));
+            CHECK_FALSE(rules.HasProperty({ noun }, ObjectType::MOVE));
+        }
+
+        CHECK(game.GetMap().At(vertical ? 0 : 10, vertical ? 10 : 0).isRule);
+    }
+}
+
+TEST_CASE("Game - IS NOT preserves stacked positive predicates")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(3, 3);
+
+    AddRule(game, ObjectType::BABA, ObjectType::YOU, 0);
+
+    game.GetMap().AddObject(2, 0, ObjectType::NOT);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetRuleManager().HasProperty({ ObjectType::BABA },
+                                            ObjectType::YOU));
+}
+
+TEST_CASE("Game - IS NOT rejects unsupported predicates")
+{
+    for (const auto words :
+         { std::initializer_list<ObjectType>{ ObjectType::BABA, ObjectType::IS,
+                                              ObjectType::NOT },
+           { ObjectType::BABA, ObjectType::IS, ObjectType::NOT,
+             ObjectType::ROCK },
+           { ObjectType::BABA, ObjectType::IS, ObjectType::NOT, ObjectType::NOT,
+             ObjectType::YOU },
+           { ObjectType::BABA, ObjectType::HAS, ObjectType::NOT,
+             ObjectType::YOU } })
+    {
+        Game game(MAPS_DIR "is_not_properties.txt");
+        game.GetMap() = Map(8, 8);
+
+        AddWords(game, words, 0);
+
+        game.MovePlayer(Direction::NONE);
+        CHECK(game.GetRuleManager().GetNumRules() == 0);
+    }
+}
+
+TEST_CASE("Game - IS NOT keeps both stacked AND continuations")
+{
+    for (const bool vertical : { false, true })
+    {
+        Game game(MAPS_DIR "is_not_properties.txt");
+        game.GetMap() = Map(8, 8);
+
+        AddWords(game,
+                 { ObjectType::BABA, ObjectType::IS, ObjectType::YOU,
+                   ObjectType::AND, ObjectType::MOVE },
+                 0, vertical);
+
+        game.GetMap().AddObject(vertical ? 0 : 2, vertical ? 2 : 0,
+                                ObjectType::NOT);
+        game.GetMap().AddObject(vertical ? 0 : 3, vertical ? 3 : 0,
+                                ObjectType::PUSH);
+
+        SUBCASE("positive continuation")
+        {
+            // Do nothing
+        }
+
+        SUBCASE("negative continuation")
+        {
+            game.GetMap().AddObject(vertical ? 0 : 4, vertical ? 4 : 0,
+                                    ObjectType::AND);
+            game.GetMap().AddObject(vertical ? 0 : 5, vertical ? 5 : 0,
+                                    ObjectType::STOP);
+        }
+
+        game.GetMap().AddObject(1, 6, ObjectType::ICON_BABA);
+        game.MovePlayer(Direction::NONE);
+
+        const auto& rules = game.GetRuleManager();
+        CHECK(rules.HasProperty({ ObjectType::BABA }, ObjectType::YOU));
+        CHECK(rules.HasProperty({ ObjectType::BABA }, ObjectType::MOVE));
+
+        const auto pushRules = rules.GetRules(ObjectType::PUSH);
+        REQUIRE(pushRules.size() == 1);
+        CHECK(pushRules.front().predicateNegated);
+        CHECK(game.GetMap().At(2, 6).HasType(ObjectType::ICON_BABA));
+        CHECK(game.GetMap().At(vertical ? 0 : 4, vertical ? 4 : 0).isRule);
+
+        const bool hasStop = game.GetMap()
+                                 .At(vertical ? 0 : 5, vertical ? 5 : 0)
+                                 .HasType(ObjectType::STOP);
+        CHECK(rules.HasProperty({ ObjectType::BABA }, ObjectType::STOP) ==
+              hasStop);
+        CHECK(rules.GetNumRules() == (hasStop ? 4 : 3));
+    }
+}
+
 TEST_CASE("RuleManager - IS NOT ALL shares subject membership")
 {
     RuleManager rules;
@@ -2549,4 +2683,83 @@ TEST_CASE("RuleManager - IS NOT ALL shares subject membership")
         CHECK(rules.HasProperty({ type }, ObjectType::YOU));
         CHECK(rules.HasProperty({ ConvertTextToIcon(type) }, ObjectType::YOU));
     }
+}
+
+TEST_CASE("Game - IS NOT keeps stacked verb paths independent")
+{
+    for (const auto verb : { ObjectType::HAS, ObjectType::MAKE })
+    {
+        for (const bool vertical : { false, true })
+        {
+            for (const bool positivePath : { false, true })
+            {
+                Game game(MAPS_DIR "is_not_properties.txt");
+                game.GetMap() = Map(8, 8);
+
+                AddWords(
+                    game,
+                    { ObjectType::BABA, ObjectType::IS, ObjectType::NOT,
+                      ObjectType::PUSH, ObjectType::AND, ObjectType::ROCK },
+                    0, vertical);
+
+                game.GetMap().AddObject(vertical ? 0 : 1, vertical ? 1 : 0,
+                                        verb);
+                if (positivePath)
+                {
+                    game.GetMap().AddObject(vertical ? 0 : 2, vertical ? 2 : 0,
+                                            ObjectType::FLAG);
+                }
+
+                game.MovePlayer(Direction::NONE);
+
+                const auto& rules = game.GetRuleManager();
+                const auto otherRules = rules.GetRules(verb);
+                CHECK(otherRules.size() == (positivePath ? 1 : 0));
+
+                if (positivePath)
+                {
+                    REQUIRE(otherRules.size() == 1);
+                    CHECK(otherRules.front() ==
+                          Rule(Object({ ObjectType::BABA }), Object({ verb }),
+                               Object({ ObjectType::FLAG })));
+                }
+
+                CHECK(rules.GetRules(ObjectType::IS).size() ==
+                      (positivePath ? 3 : 2));
+
+                const auto pushRules = rules.GetRules(ObjectType::PUSH);
+                REQUIRE(pushRules.size() == 1);
+                CHECK(pushRules.front().predicateNegated);
+                CHECK(game.GetMap()
+                          .At(vertical ? 0 : 5, vertical ? 5 : 0)
+                          .isRule);
+            }
+        }
+    }
+}
+
+TEST_CASE("Game - IS NOT does not create HAS drops through a stacked verb")
+{
+    Game game(MAPS_DIR "is_not_properties.txt");
+    game.GetMap() = Map(10, 9);
+
+    AddWords(game,
+             { ObjectType::BABA, ObjectType::IS, ObjectType::NOT,
+               ObjectType::PUSH, ObjectType::AND, ObjectType::ROCK },
+             0);
+
+    game.GetMap().AddObject(1, 0, ObjectType::HAS);
+
+    AddRule(game, ObjectType::BABA, ObjectType::BABA, 2);
+    AddRule(game, ObjectType::BABA, ObjectType::OPEN, 4);
+    AddRule(game, ObjectType::DOOR, ObjectType::SHUT, 6);
+
+    game.GetMap().AddObject(2, 8, ObjectType::ICON_BABA);
+    game.GetMap().AddObject(2, 8, ObjectType::ICON_DOOR);
+
+    game.MovePlayer(Direction::NONE);
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_BABA).empty());
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_DOOR).empty());
+    CHECK(game.GetMap().GetPositions(ObjectType::ICON_ROCK).empty());
+    CHECK(game.GetRuleManager().GetRules(ObjectType::HAS).empty());
 }

@@ -177,21 +177,25 @@ void RetainTypes(std::vector<ObjectType>& types, Predicate predicate)
                 types.end());
 }
 
+struct RulePredicate
+{
+    ObjectType type;
+    bool negated;
+};
+
 void AddRuleCombinations(RuleManager& rules,
                          const std::vector<ObjectType>& subjects,
-                         const std::vector<ObjectType>& verbs,
-                         const std::vector<ObjectType>& predicates,
+                         ObjectType verb,
+                         const std::vector<RulePredicate>& predicates,
                          const std::vector<RuleCondition>& conditions)
 {
     for (const ObjectType subject : subjects)
     {
-        for (const ObjectType verb : verbs)
+        for (const RulePredicate& predicate : predicates)
         {
-            for (const ObjectType predicate : predicates)
-            {
-                rules.AddRule({ Object({ subject }), Object({ verb }),
-                                Object({ predicate }), conditions });
-            }
+            rules.AddRule({ Object({ subject }), Object({ verb }),
+                            Object({ predicate.type }), conditions,
+                            predicate.negated });
         }
     }
 }
@@ -408,27 +412,67 @@ bool ReadRuleConditions(const RuleLine& line, std::size_t& offset,
 }
 
 bool ReadRulePredicates(const RuleLine& line, std::size_t& offset,
-                        std::vector<ObjectType>& predicates)
+                        std::vector<RulePredicate>& predicates,
+                        bool allowNegated)
 {
-    if (offset >= line.Remaining() ||
-        (!line.At(offset).HasNounType() && !line.At(offset).HasPropertyType()))
+    if (offset >= line.Remaining())
     {
         return false;
     }
 
-    predicates = line.At(offset++).GetTypes();
+    // Stacked positive predicates and NOT may lead to different AND cells.
+    std::vector<bool> starts(line.Remaining(), false);
+    starts[offset] = true;
 
-    while (offset + 1 < line.Remaining() &&
-           line.At(offset).HasType(ObjectType::AND) &&
-           (line.At(offset + 1).HasNounType() ||
-            line.At(offset + 1).HasPropertyType()))
+    for (std::size_t start = offset; start < starts.size(); ++start)
     {
-        const auto types = line.At(offset + 1).GetTypes();
-        predicates.insert(predicates.end(), types.begin(), types.end());
-        offset += 2;
+        if (!starts[start])
+        {
+            continue;
+        }
+
+        for (const bool negated : { false, true })
+        {
+            if (negated &&
+                (!allowNegated || !line.At(start).HasType(ObjectType::NOT)))
+            {
+                continue;
+            }
+
+            const std::size_t predicate = start + (negated ? 1 : 0);
+
+            if (predicate >= line.Remaining())
+            {
+                continue;
+            }
+
+            auto types = line.At(predicate).GetTypes();
+
+            RetainTypes(types, negated ? IsPropertyType : IsRulePredicate);
+
+            if (types.empty())
+            {
+                continue;
+            }
+
+            for (const ObjectType type : types)
+            {
+                predicates.push_back({ type, negated });
+            }
+
+            const std::size_t next = predicate + 1;
+
+            offset = std::max(offset, next);
+
+            if (next + 1 < line.Remaining() &&
+                line.At(next).HasType(ObjectType::AND))
+            {
+                starts[next + 1] = true;
+            }
+        }
     }
 
-    return true;
+    return !predicates.empty();
 }
 }  // namespace
 
@@ -672,22 +716,27 @@ void Game::ParseRule(std::size_t x, std::size_t y, RuleDirection direction)
         return;
     }
 
-    const std::size_t verb = offset++;
-    std::vector<ObjectType> predicates;
-
-    if (!ReadRulePredicates(line, offset, predicates))
-    {
-        return;
-    }
-
-    std::vector<ObjectType> verbs = line.At(verb).GetTypes();
+    std::vector<ObjectType> verbs = line.At(offset++).GetTypes();
 
     RetainTypes(subjects, IsNounType);
     RetainTypes(verbs, IsVerbType);
-    RetainTypes(predicates, IsRulePredicate);
-    AddRuleCombinations(m_ruleManager, subjects, verbs, predicates, conditions);
 
-    for (std::size_t i = 0; i < offset; ++i)
+    std::size_t ruleEnd = 0;
+
+    for (const ObjectType verb : verbs)
+    {
+        std::size_t next = offset;
+        std::vector<RulePredicate> predicates;
+
+        if (ReadRulePredicates(line, next, predicates, verb == ObjectType::IS))
+        {
+            AddRuleCombinations(m_ruleManager, subjects, verb, predicates,
+                                conditions);
+            ruleEnd = std::max(ruleEnd, next);
+        }
+    }
+
+    for (std::size_t i = 0; i < ruleEnd; ++i)
     {
         line.At(i).isRule = true;
     }

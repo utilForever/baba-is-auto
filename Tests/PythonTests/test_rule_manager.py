@@ -44,6 +44,14 @@ def test_is_not_rule_identity_and_precedence(negative_first):
     assert manager.FindPlayer() == pyBaba.ObjectType.ICON_BABA
 
 
+def test_is_not_parser_exposes_predicate_negation():
+    rules = pyBaba.Game("Resources/Maps/is_not_properties.txt").GetRuleManager()
+    push_rules = rules.GetRules(pyBaba.ObjectType.PUSH)
+    assert len(push_rules) == 2
+    assert sorted(rule.predicate_negated for rule in push_rules) == [False, True]
+    assert all(not rule.predicate_negated for rule in rules.GetRules(pyBaba.ObjectType.STOP))
+
+
 def test_is_not_find_player_checks_each_subject():
     obj = pyBaba.ObjectType
 

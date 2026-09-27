@@ -909,3 +909,58 @@ def test_game_affection_transformation_solution():
 
     _move(game, "URRRRRRRRDDUULDDUULLDRRDRUUUURUURU")
     assert game.GetPlayState() == pyBaba.PlayState.WON
+
+
+def test_is_not_stacked_words_keep_positive_and_continuation(tmp_path):
+    obj = pyBaba.ObjectType
+    rows = [[obj.BABA, obj.IS, obj.YOU, obj.AND, obj.MOVE], [], [], [], [], [],
+            [obj.ICON_EMPTY, obj.ICON_BABA]]
+    level = _write_level(
+        Path("Resources/Maps/is_not_properties.txt"), tmp_path / "stacked_not.txt",
+        [(x, y, row[x] if x < len(row) else obj.ICON_EMPTY)
+         for y, row in enumerate(rows) for x in range(7)],
+        stacked=[(2, 0, obj.NOT), (3, 0, obj.PUSH)],
+    )
+
+    game = pyBaba.Game(str(level))
+    rules = game.GetRuleManager()
+    assert rules.GetNumRules() == 3
+    assert rules.HasProperty([obj.BABA], obj.YOU)
+    assert rules.HasProperty([obj.BABA], obj.MOVE)
+    assert rules.GetRules(obj.PUSH)[0].predicate_negated
+
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().GetPositions(obj.ICON_BABA) == [(2, 6)]
+
+
+def test_is_not_does_not_create_has_drops_through_a_stacked_verb(tmp_path):
+    obj = pyBaba.ObjectType
+    width, height = 10, 9
+    layers = [[obj.ICON_EMPTY] * (width * height) for _ in range(2)]
+
+    for y, words in [
+        (0, [obj.BABA, obj.IS, obj.NOT, obj.PUSH, obj.AND, obj.ROCK]),
+        (2, [obj.BABA, obj.IS, obj.BABA]),
+        (4, [obj.BABA, obj.IS, obj.OPEN]),
+        (6, [obj.DOOR, obj.IS, obj.SHUT]),
+    ]:
+        for x, word in enumerate(words):
+            layers[0][y * width + x] = word
+
+    layers[1][1] = obj.HAS
+    layers[0][8 * width + 2] = obj.ICON_BABA
+    layers[1][8 * width + 2] = obj.ICON_DOOR
+
+    level = tmp_path / "stacked_verb.txt"
+    level.write_text(
+        f"{width} {height}\n" + "\n".join(
+            " ".join(str(int(value)) for value in layer) for layer in layers
+        ), encoding="utf-8",
+    )
+
+    game = pyBaba.Game(str(level))
+    game.MovePlayer(pyBaba.Direction.NONE)
+    assert game.GetMap().GetPositions(obj.ICON_BABA) == []
+    assert game.GetMap().GetPositions(obj.ICON_DOOR) == []
+    assert game.GetMap().GetPositions(obj.ICON_ROCK) == []
+    assert game.GetRuleManager().GetRules(obj.HAS) == []
