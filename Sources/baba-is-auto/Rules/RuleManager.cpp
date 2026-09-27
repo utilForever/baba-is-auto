@@ -57,12 +57,17 @@ ObjectType RuleManager::FindPlayer() const
 {
     for (auto& rule : m_rules)
     {
-        if (rule.conditions.empty() &&
+        if (!rule.predicateNegated && rule.conditions.empty() &&
             std::get<1>(rule.objects).HasType(ObjectType::IS) &&
             std::get<2>(rule.objects).HasType(ObjectType::YOU))
         {
-            const ObjectType type = std::get<0>(rule.objects).GetTypes()[0];
-            return ConvertTextToIcon(type);
+            for (const ObjectType type : std::get<0>(rule.objects).GetTypes())
+            {
+                if (HasProperty({ type }, ObjectType::YOU))
+                {
+                    return ConvertTextToIcon(type);
+                }
+            }
         }
     }
 
@@ -70,21 +75,36 @@ ObjectType RuleManager::FindPlayer() const
 }
 
 bool RuleManager::HasProperty(const std::vector<ObjectType>& types,
-                              ObjectType property)
+                              ObjectType property) const
 {
     for (auto type : types)
     {
         type = ConvertIconToText(type);
 
+        bool positive = false;
+
         for (auto& rule : m_rules)
         {
             if (rule.conditions.empty() &&
                 std::get<1>(rule.objects).HasType(ObjectType::IS) &&
-                std::get<0>(rule.objects).HasType(type) &&
+                (std::get<0>(rule.objects).HasType(type) ||
+                 (std::get<0>(rule.objects).HasType(ObjectType::ALL) &&
+                  IsAllNoun(type))) &&
                 std::get<2>(rule.objects).HasType(property))
             {
-                return true;
+                if (rule.predicateNegated)
+                {
+                    positive = false;
+                    break;
+                }
+
+                positive = true;
             }
+        }
+
+        if (positive)
+        {
+            return true;
         }
     }
 

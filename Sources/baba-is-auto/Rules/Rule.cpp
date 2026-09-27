@@ -16,14 +16,15 @@ bool RuleCondition::operator==(const RuleCondition& rhs) const
 }
 
 Rule::Rule(Object obj1, Object obj2, Object obj3,
-           std::vector<RuleCondition> ruleConditions)
-    : conditions(std::move(ruleConditions))
+           std::vector<RuleCondition> ruleConditions, bool negatePredicate)
+    : conditions(std::move(ruleConditions)), predicateNegated(negatePredicate)
 {
     objects = { std::move(obj1), std::move(obj2), std::move(obj3) };
 }
 
 bool Rule::operator==(const Rule& rhs) const
 {
-    return objects == rhs.objects && conditions == rhs.conditions;
+    return objects == rhs.objects && conditions == rhs.conditions &&
+           predicateNegated == rhs.predicateNegated;
 }
 }  // namespace baba_is_auto

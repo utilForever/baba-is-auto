@@ -111,6 +111,14 @@ constexpr ObjectType ConvertIconToText(ObjectType type)
     return static_cast<ObjectType>(convertedVal);
 }
 
+//! Checks whether a noun or its icon belongs to an ALL subject.
+constexpr bool IsAllNoun(ObjectType type)
+{
+    const ObjectType noun = ConvertIconToText(type);
+    return IsNounType(noun) && noun != ObjectType::TEXT &&
+           noun != ObjectType::EMPTY && noun != ObjectType::LEVEL;
+}
+
 //! Converts text type to icon type.
 //! \param type The text type to convert.
 //! \return The converted icon type.

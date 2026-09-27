@@ -2512,3 +2512,41 @@ TEST_CASE("Game - Special noun ALL learns nouns added after load")
     game.MovePlayer(Direction::NONE);
     CHECK(game.GetMap().At(0, 0).HasType(ObjectType::ICON_KEKE));
 }
+
+TEST_CASE("RuleManager - IS NOT ALL shares subject membership")
+{
+    RuleManager rules;
+    rules.AddRule({ Object({ ObjectType::ALL }), Object({ ObjectType::IS }),
+                    Object({ ObjectType::PUSH }) });
+    rules.AddRule({ Object({ ObjectType::BABA }),
+                    Object({ ObjectType::IS }),
+                    Object({ ObjectType::PUSH }),
+                    {},
+                    true });
+    CHECK_FALSE(rules.HasProperty({ ObjectType::ICON_BABA }, ObjectType::PUSH));
+    CHECK(rules.HasProperty({ ObjectType::ROCK }, ObjectType::PUSH));
+    CHECK(rules.HasProperty({ ObjectType::ICON_ROCK }, ObjectType::PUSH));
+    CHECK(rules.HasProperty({ ObjectType::BABA, ObjectType::ROCK },
+                            ObjectType::PUSH));
+
+    for (const auto type :
+         { ObjectType::TEXT, ObjectType::EMPTY, ObjectType::LEVEL })
+    {
+        CHECK_FALSE(rules.HasProperty({ type }, ObjectType::PUSH));
+        rules.AddRule({ Object({ type }), Object({ ObjectType::IS }),
+                        Object({ ObjectType::YOU }) });
+    }
+
+    rules.AddRule({ Object({ ObjectType::ALL }),
+                    Object({ ObjectType::IS }),
+                    Object({ ObjectType::YOU }),
+                    {},
+                    true });
+
+    for (const auto type :
+         { ObjectType::TEXT, ObjectType::EMPTY, ObjectType::LEVEL })
+    {
+        CHECK(rules.HasProperty({ type }, ObjectType::YOU));
+        CHECK(rules.HasProperty({ ConvertTextToIcon(type) }, ObjectType::YOU));
+    }
+}

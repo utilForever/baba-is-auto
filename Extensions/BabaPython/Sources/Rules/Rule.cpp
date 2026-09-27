@@ -37,10 +37,16 @@ void AddRule(pybind11::module& m)
         .def(pybind11::init<Object, Object, Object,
                             std::vector<RuleCondition>>(),
              "Creates a three-tile rule with subject conditions.")
+        .def(pybind11::init<Object, Object, Object, std::vector<RuleCondition>,
+                            bool>(),
+             "Creates a rule with subject conditions and predicate negation.")
         .def_readonly("conditions", &Rule::conditions,
                       "Conditions restricting matching subject instances.")
-        .def("__eq__",
-             [](const Rule& left, const Rule& right) { return left == right; },
-             "Returns whether two rules contain the same objects and "
-             "conditions.");
+        .def_readonly("predicate_negated", &Rule::predicateNegated,
+                      "Whether the IS property predicate is negated.")
+        .def(
+            "__eq__",
+            [](const Rule& left, const Rule& right) { return left == right; },
+            "Returns whether two rules contain the same objects and "
+            "conditions, including predicate negation.");
 }

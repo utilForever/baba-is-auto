@@ -146,13 +146,6 @@ constexpr ObjectType LockedProperty(Direction direction)
     return ObjectType::ICON_EMPTY;
 }
 
-constexpr bool IsAllNoun(ObjectType type)
-{
-    const ObjectType noun = ConvertIconToText(type);
-    return IsNounType(noun) && noun != ObjectType::TEXT &&
-           noun != ObjectType::EMPTY && noun != ObjectType::LEVEL;
-}
-
 constexpr bool IsSpawnableAllNoun(ObjectType type)
 {
     const ObjectType noun = ConvertIconToText(type);

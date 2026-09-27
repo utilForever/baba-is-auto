@@ -48,10 +48,13 @@ class RuleManager
     //! Checks an object has a specific unconditional property.
     //! Conditional properties require an instance position and are evaluated
     //! by Game against map instances.
+    //! Matching negative rules override positive rules for the same type.
+    //! ALL subjects use the same noun membership as Game.
     //! \param types A list of object types to check it has property.
     //! \param property The property to check.
     //! \return The flag indicates that an object has specific property.
-    bool HasProperty(const std::vector<ObjectType>& types, ObjectType property);
+    bool HasProperty(const std::vector<ObjectType>& types,
+                     ObjectType property) const;
 
  private:
     std::vector<Rule> m_rules;
